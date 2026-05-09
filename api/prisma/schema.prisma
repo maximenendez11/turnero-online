@@ -1,0 +1,271 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  @@map("users")
+}
+
+enum BusinessStatus {
+  active
+  inactive
+}
+
+model Business {
+  id           String          @id @default(uuid())
+  name         String
+  slug         String?         @unique
+  description  String?
+  address      String
+  timezone     String          @default("America/Argentina/Buenos_Aires")
+  currency     String          @default("ARS")
+  whatsapp     String?
+  instagram    String?
+  openingHours String?
+  bookingIntervalMin Int       @default(30)
+  maxAppointmentsPerSlot Int   @default(1)
+  postalCode   String?
+  neighborhood String?
+  locality     String?
+  province     String?
+  country      String?
+  status       BusinessStatus  @default(active)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  screens        Screen[]
+  slides         Slide[]
+  businessImages BusinessImage[]
+  services       BusinessService[]
+  staffMembers   StaffMember[]
+  bookings       Booking[]
+
+  @@map("businesses")
+}
+
+enum DepositMode {
+  none
+  fixed
+  percent
+}
+
+model BusinessService {
+  id             String      @id @default(uuid())
+  businessId     String
+  name           String
+  description    String?
+  durationMin    Int
+  price          Decimal     @db.Decimal(10, 2)
+  depositMode    DepositMode @default(none)
+  depositValue   Decimal     @default(0) @db.Decimal(10, 2)
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  business       Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  staffLinks     StaffService[]
+  bookings       Booking[]
+
+  @@index([businessId])
+  @@map("business_services")
+}
+
+model StaffMember {
+  id          String   @id @default(uuid())
+  businessId  String
+  fullName    String
+  bio         String?
+  avatarUrl   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceLinks StaffService[]
+  bookings    Booking[]
+
+  @@index([businessId])
+  @@map("staff_members")
+}
+
+model StaffService {
+  id        String @id @default(uuid())
+  staffId   String
+  serviceId String
+
+  staff     StaffMember      @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service   BusinessService  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, serviceId])
+  @@map("staff_services")
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  code          String        @unique
+  businessId    String
+  serviceId     String
+  staffId       String
+  customerName  String
+  customerEmail String
+  customerPhone String?
+  notes         String?
+  startsAt      DateTime
+  durationMin   Int
+  status        BookingStatus @default(confirmed)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  business      Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service       BusinessService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff         StaffMember     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, startsAt])
+  @@index([staffId, startsAt])
+  @@map("bookings")
+}
+
+model Screen {
+  id         String   @id @default(uuid())
+  businessId String
+  name       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt DateTime?
+
+  business     Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  screenSlides ScreenSlide[]
+
+  @@map("screens")
+}
+
+enum SlideType {
+  image
+  video
+}
+
+enum ConditionMode {
+  all
+  any
+}
+
+model Slide {
+  id            String        @id @default(uuid())
+  businessId    String
+  title         String?
+  type          SlideType
+  duration      Int
+  order         Int
+  conditionMode ConditionMode @default(all)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?
+
+  business    Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  mediaLinks  SlideMedia[]
+  screenLinks ScreenSlide[]
+
+  @@map("slides")
+}
+
+model SlideMedia {
+  id      String @id @default(uuid())
+  slideId String
+  mediaId String
+  order   Int
+
+  slide Slide         @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  media BusinessImage @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@map("slide_media")
+}
+
+model BusinessImage {
+  id         String   @id @default(uuid())
+  businessId String
+  fileUrl    String
+  uploadedAt DateTime @default(now())
+  width      Int?
+  height     Int?
+  sizeBytes  Int
+  mimeType   String?
+
+  business   Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  slideLinks SlideMedia[]
+
+  @@map("business_images")
+}
+
+model ScreenSlide {
+  id       String @id @default(uuid())
+  screenId String
+  slideId  String
+  position Int
+
+  screen     Screen          @relation(fields: [screenId], references: [id], onDelete: Cascade)
+  slide      Slide           @relation(fields: [slideId], references: [id], onDelete: Cascade)
+  conditions SlideCondition[]
+
+  @@map("screen_slides")
+}
+
+enum ConditionType {
+  day
+  time
+  data
+}
+
+enum ConditionOperator {
+  eq
+  gt
+  gte
+  lt
+  lte
+  between
+  in
+}
+
+model SlideCondition {
+  id            String            @id @default(uuid())
+  screenSlideId String
+  type          ConditionType
+  field         String
+  operator      ConditionOperator
+  value         Json
+  value2        Json?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  screenSlide ScreenSlide @relation(fields: [screenSlideId], references: [id], onDelete: Cascade)
+
+  @@map("slide_conditions")
+}

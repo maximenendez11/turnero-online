@@ -1,0 +1,36 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# --ignore-scripts: postinstall (prisma:generate) se ejecuta después de copiar el código
+RUN npm install --ignore-scripts
+
+# Copy source code
+COPY . .
+
+# API URL en build (por defecto localhost; en Coolify pasar --build-arg NX_API_URL=https://api-pixel-tv.overclocksolutions.xyz/api)
+ARG NX_API_URL=http://localhost:3000/api
+ENV NX_API_URL=$NX_API_URL
+
+# Build: heap limitado para caber en Raspberry Pi / servidores con 4GB RAM (subir a 4096 si tienes más)
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+RUN npx nx build web --configuration=production
+
+# Stage 2: Production with Nginx
+FROM nginx:alpine AS production
+
+# Copy built files
+COPY --from=builder /app/dist/web/browser /usr/share/nginx/html
+
+# Copy nginx configuration (ruta respecto al context = raíz del repo)
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

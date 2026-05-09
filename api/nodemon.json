@@ -1,0 +1,7 @@
+{
+  "watch": ["src", "prisma"],
+  "ext": "ts,json,prisma",
+  "ignore": ["node_modules", "dist", "*.spec.ts", "*.test.ts"],
+  "exec": "nx run api:build && node ../dist/api/main.js",
+  "delay": "500"
+}

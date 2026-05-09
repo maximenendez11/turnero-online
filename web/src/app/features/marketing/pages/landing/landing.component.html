@@ -1,0 +1,186 @@
+<header class="top-appbar">
+  <nav class="nav-shell">
+    <div class="brand">
+      <span class="material-symbols-outlined logo-icon">business_center</span>
+      <span class="brand-text">Zenith Booking</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Funcionalidades</a>
+      <a href="#pricing">Precios</a>
+      <a class="nav-accent" routerLink="/auth/login">Acceso</a>
+    </div>
+    <div class="nav-actions">
+      <span class="material-symbols-outlined">notifications</span>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-content">
+      <div class="badge">
+        <span class="dot"></span>
+        <span>El Nuevo Estandar para SaaS</span>
+      </div>
+      <h1>Impulsa tu Negocio con Reservas de Precision</h1>
+      <p>
+        Una sofisticada plataforma multi-inquilino disenada para proveedores de servicios de alto
+        volumen. Programacion en tiempo real, flujos de trabajo automatizados y analiticas a escala
+        global en una interfaz minimalista.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" routerLink="/auth/register">Comenzar Prueba Gratis</a>
+        <a class="btn btn-glass" routerLink="/c/search">Reservar como cliente</a>
+      </div>
+    </div>
+    <div class="hero-image-wrap">
+      <div class="glass panel">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpjjplAG61hmfxyS-hcAMNSL3Op449d-GVcGAuVg9tfvXDA2UxquGIWbp4XLhDQ_bTTxJJ1DPSPlNr5jMty85zJdtPBYKXHLps6kizmr9_Jxg8wzw_XITVL-YMIYhJmX0XYpzlas63bUOmXuZNhmG71vTnP8fDZ4YFEGmuzQKSdYZ6xxfBD5o_UCeb84f219ei_1Ihgikai5aZ8KlXGUUS3lMvqeUWVnPtY8Q9YDnm0MKv42MV3GB-Tgm95ozaPbWumvpgiZPgP5Y"
+          alt="Zenith Booking Dashboard"
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="features section-shell" id="features">
+    <h2>Disenado para la Excelencia</h2>
+    <div class="feature-grid">
+      <article class="glass feature feature-main">
+        <span class="material-symbols-outlined feature-icon">bolt</span>
+        <h3>Optimizacion con IA</h3>
+        <p>
+          Nuestros algoritmos propietarios analizan sus patrones de trafico para sugerir horarios de
+          reserva optimos, maximizando sus ingresos por hora sin aumentar la complejidad.
+        </p>
+      </article>
+      <article class="glass feature">
+        <span class="material-symbols-outlined feature-icon feature-secondary">security</span>
+        <h3>Seguridad Empresarial</h3>
+        <p>
+          Cifrado de extremo a extremo para todos los datos de los clientes y controles de acceso
+          basados en roles para todo su personal.
+        </p>
+      </article>
+      <article class="glass feature">
+        <span class="material-symbols-outlined feature-icon feature-tertiary">speed</span>
+        <h3>Latencia de 0.2s</h3>
+        <p>
+          Los servidores distribuidos globalmente garantizan que su pagina de reservas se cargue de
+          forma instantanea para cualquier cliente.
+        </p>
+      </article>
+      <article class="glass feature feature-wide">
+        <div>
+          <span class="material-symbols-outlined feature-icon">hub</span>
+          <h3>Integracion Unificada</h3>
+          <p>
+            Sincronice con Google Calendar, Stripe, Zapier y su CRM existente. Un unico centro para
+            todo su ecosistema.
+          </p>
+        </div>
+        <div class="integration-chips">
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span class="material-symbols-outlined">payments</span>
+          <span class="material-symbols-outlined">api</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="login section-shell" id="login">
+    <div class="glass login-card">
+      <div class="login-header">
+        <h2>Bienvenido de Nuevo</h2>
+        <p>Acceda a su panel de control empresarial y gestione sus citas con Zenith Booking.</p>
+      </div>
+      <form class="login-form" (submit)="$event.preventDefault()">
+        <label>
+          <span>Correo Electronico</span>
+          <input type="email" placeholder="propietario@empresa.com" />
+        </label>
+        <label>
+          <span>Contrasena</span>
+          <input type="password" placeholder="••••••••" />
+        </label>
+        <a class="btn btn-primary full" routerLink="/auth/login">Iniciar Sesion</a>
+      </form>
+      <div class="divider"><span>o continuar con</span></div>
+      <div class="social-actions">
+        <button class="btn btn-glass" type="button">
+          <span class="material-symbols-outlined">mail</span>
+          Google
+        </button>
+        <button class="btn btn-glass" type="button">
+          <span class="material-symbols-outlined">smartphone</span>
+          Apple
+        </button>
+      </div>
+      <p class="register-text">
+        Nuevo en Zenith? <a routerLink="/auth/register">Crear una cuenta</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="section-shell stats-grid">
+      <article>
+        <p class="value">12M+</p>
+        <p>Reservas Procesadas</p>
+      </article>
+      <article>
+        <p class="value">99.9%</p>
+        <p>Garantia de Disponibilidad</p>
+      </article>
+      <article>
+        <p class="value">24/7</p>
+        <p>Soporte Experto</p>
+      </article>
+      <article>
+        <p class="value">150+</p>
+        <p>Paises Servidos</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer" id="pricing">
+  <div class="section-shell footer-grid">
+    <div>
+      <div class="brand footer-brand">
+        <span class="material-symbols-outlined logo-icon">business_center</span>
+        <span class="brand-text">Zenith Booking</span>
+      </div>
+      <p>Un ecosistema de reservas multi-inquilino premium para empresas de alto crecimiento.</p>
+    </div>
+    <div>
+      <h4>Producto</h4>
+      <a href="#">Funcionalidades</a>
+      <a href="#">Referencia API</a>
+      <a href="#">Integraciones</a>
+      <a href="#">Empresa</a>
+    </div>
+    <div>
+      <h4>Recursos</h4>
+      <a href="#">Documentacion</a>
+      <a href="#">Centro de Soporte</a>
+      <a href="#">Registro de Cambios</a>
+      <a href="#">Casos de Exito</a>
+    </div>
+    <div>
+      <h4>Boletin</h4>
+      <p>Novedades sobre lanzamientos y consejos para el crecimiento empresarial.</p>
+      <div class="newsletter">
+        <input type="text" placeholder="Email" />
+        <button class="btn btn-primary" type="button">Unirse</button>
+      </div>
+    </div>
+  </div>
+  <div class="section-shell footer-bottom">
+    <p>© 2024 Zenith Booking. Todos los derechos reservados.</p>
+    <div>
+      <a href="#">Politica de Privacidad</a>
+      <a href="#">Terminos de Servicio</a>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,51 @@
+---
+alwaysApply: true
+---
+
+# Angular + NestJS Rules
+
+## General
+- Prioritize clean, maintainable, and scalable code.
+- Use strict typing with TypeScript.
+- Do not break existing styles or functionality.
+- Reuse existing components, services, and utilities whenever possible.
+
+## Angular
+- Use standalone components.
+- Prefer Signals or RxJS depending on the use case.
+- Split large components into smaller, focused components.
+- Avoid heavy logic inside templates.
+- Move shared logic into services.
+- Follow a feature-based folder structure.
+- Prefer prime ng UI components
+
+Suggested structure:
+
+/features  
+  /users  
+    users.page.ts  
+    users.service.ts  
+    users.store.ts  
+    users.component.ts  
+
+## NestJS
+- Follow a modular architecture.
+- Use DTOs with `class-validator` for validation.
+- Keep controllers thin and move business logic to services.
+- Use providers and dependency injection properly.
+- Handle errors using NestJS exceptions or filters.
+
+## API
+- Maintain consistent REST endpoints.
+
+Naming conventions:
+
+GET /users  
+POST /users  
+GET /users/:id  
+
+## Code Style
+- Enable strict TypeScript configuration.
+- Avoid using `any`.
+- Use properly typed interfaces and models.
+- Prefer small, reusable functions.

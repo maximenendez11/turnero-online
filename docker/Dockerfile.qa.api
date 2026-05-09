@@ -1,0 +1,40 @@
+# Stage 1: Build
+FROM node:20-bookworm-slim AS builder
+
+WORKDIR /app
+
+# Solo dependencias primero → se cachea mientras no cambien package*.json ni schema
+COPY package*.json ./
+COPY api/prisma ./api/prisma
+RUN npm install
+
+# Código fuente; esta capa invalida la caché en cada cambio de código, pero npm ya está instalado
+COPY . .
+
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+RUN npx nx build api
+
+# Stage 2: Production
+FROM node:20-bookworm-slim
+
+RUN apt-get update -y && \
+    apt-get install -y openssl ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app/package*.json ./
+# Sin npm prune: en Coolify (Pi) el paso falla con RuntimeException; la imagen queda algo más grande
+COPY --from=builder /app/node_modules ./node_modules
+
+COPY --from=builder /app/dist/api ./dist/api
+COPY --from=builder /app/api/prisma ./api/prisma
+
+RUN npx prisma generate --schema=api/prisma/schema.prisma
+
+COPY docker/api-entrypoint.sh ./
+RUN chmod +x api-entrypoint.sh
+
+EXPOSE 3000
+
+CMD ["./api-entrypoint.sh"]

@@ -1,0 +1,21 @@
+---
+description: Keep files small by extracting subcomponents
+alwaysApply: true
+---
+
+# File Size And Subcomponents
+
+- Keep source files under 400 lines whenever possible.
+- Hard limit: do not create or extend files beyond 500 lines.
+- If a file approaches 350-400 lines, extract UI blocks and logic into focused subcomponents/services/helpers before adding more code.
+- Prefer splitting by responsibility (view, state, api, mapper, utils) instead of by arbitrary chunks.
+- For Angular pages, move inline template/styles into dedicated `*.html` and `*.scss` files early.
+- Large repeated UI sections must be standalone/reusable components, not duplicated markup.
+
+## Example
+
+```ts
+// BAD: booking-page.component.ts with 520 lines and inline template/styles.
+// GOOD: booking-page.component.ts + booking-page.component.html + booking-page.component.scss
+// and extracted step-specific blocks into subcomponents when needed.
+```
