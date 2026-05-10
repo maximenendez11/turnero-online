@@ -282,6 +282,19 @@ export class BookingPageComponent {
     return `${this.capitalize(datePart)} · ${timePart}`;
   }
 
+  /** Sticky summary: servicio, precio y (si hay) fecha/hora. */
+  summaryFooterLine(): string {
+    const svc = this.flow.value.service;
+    const name = svc?.name?.trim() ? svc.name : '-';
+    const price = svc?.price?.trim() ? svc.price : '—';
+    const head = `${name} · ${price}`;
+    const at = this.flow.value.startsAt;
+    if (!at) return head;
+    const sched = this.summaryScheduleShort();
+    if (sched === '-') return head;
+    return `${head} · ${sched}`;
+  }
+
   /** Compact line for sticky summary (consistent with selected slot). */
   summaryScheduleShort(): string {
     const at = this.flow.value.startsAt;

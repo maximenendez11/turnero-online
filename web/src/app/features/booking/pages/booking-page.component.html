@@ -152,7 +152,7 @@
   <footer class="summary" [class.summary--stack]="step === 4">
     <div class="summary-main">
       <strong>Resumen</strong>
-      <p *ngIf="step !== 4">{{ flow.value.service?.name || '-' }} · {{ summaryScheduleShort() }}</p>
+      <p *ngIf="step !== 4">{{ summaryFooterLine() }}</p>
       <p *ngIf="step === 4 && confirmedBooking">
         {{ confirmedBooking.service?.name || '—' }} · {{ formatBookingInstantShort(confirmedBooking.startsAt) }}
       </p>
