@@ -10,8 +10,6 @@ export type PublicBusiness = {
   name: string;
   description: string | null;
   address: string;
-  locality: string | null;
-  neighborhood: string | null;
 };
 
 export type PublicService = {
@@ -20,27 +18,15 @@ export type PublicService = {
   description: string | null;
   durationMin: number;
   price: string;
-  depositMode: 'none' | 'fixed' | 'percent';
-  depositValue: string;
-};
-
-export type PublicStaff = {
-  id: string;
-  fullName: string;
-  bio: string | null;
-  avatarUrl: string | null;
 };
 
 export type AvailabilityResponse = { slots: string[] };
 
 export type CreateBookingPayload = {
   serviceId: string;
-  staffId: string;
   startsAt: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string;
-  notes?: string;
+  customerFullName: string;
+  customerContact: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -67,15 +53,8 @@ export class PublicBookingApiService {
     );
   }
 
-  getStaff(slug: string, serviceId: string): Observable<PublicStaff[]> {
-    const params = new HttpParams().set('serviceId', serviceId);
-    return this.http.get<PublicStaff[] | { staff?: PublicStaff[] }>(this.api(`/businesses/${slug}/staff`), { params }).pipe(
-      map((response) => this.asArray<PublicStaff>(response, 'staff')),
-    );
-  }
-
-  getAvailability(slug: string, serviceId: string, staffId: string, date: string): Observable<AvailabilityResponse> {
-    const params = new HttpParams().set('serviceId', serviceId).set('staffId', staffId).set('date', date);
+  getAvailability(slug: string, serviceId: string, date: string): Observable<AvailabilityResponse> {
+    const params = new HttpParams().set('serviceId', serviceId).set('date', date);
     return this.http.get<AvailabilityResponse>(this.api(`/businesses/${slug}/availability`), { params });
   }
 

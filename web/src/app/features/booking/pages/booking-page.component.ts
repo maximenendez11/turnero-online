@@ -5,14 +5,15 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { rememberBooking } from '../../customer/recent-bookings.storage';
 import { BookingFlowService } from '../services/booking-flow.service';
-import { PublicBookingApiService, PublicService, PublicStaff } from '../services/public-booking-api.service';
+import { PublicBookingApiService, PublicService } from '../services/public-booking-api.service';
 
 type ConfirmedBooking = {
   code: string;
   startsAt: string;
   status: string;
+  customerFullName?: string;
+  customerContact?: string;
   service?: { name: string; durationMin: number };
-  staff?: { fullName: string };
 };
 
 @Component({
@@ -36,16 +37,12 @@ export class BookingPageComponent {
   stepTitle = 'Elegir servicio';
   stepSubtitle = 'Selecciona el servicio que quieres reservar.';
   services: PublicService[] = [];
-  staff: PublicStaff[] = [];
   days: string[] = [];
   selectedDay = '';
   slots: string[] = [];
   servicesLoading = false;
-  staffLoading = false;
-  staffError = false;
-  customerName = '';
-  customerEmail = '';
-  customerPhone = '';
+  customerFullName = '';
+  customerContact = '';
   confirmedBooking: ConfirmedBooking | null = null;
   successBookingLoading = false;
 
@@ -55,11 +52,9 @@ export class BookingPageComponent {
       this.step = dataStep;
     } else {
       const path = this.route.snapshot.routeConfig?.path ?? '';
-      if (path.includes('/staff')) this.step = 2;
-      if (path.includes('/date-time')) this.step = 3;
-      if (path.includes('/confirm')) this.step = 4;
-      if (path.includes('/payment')) this.step = 5;
-      if (path.includes('/success')) this.step = 5;
+      if (path.includes('/date-time')) this.step = 2;
+      if (path.includes('/confirm')) this.step = 3;
+      if (path.includes('/success')) this.step = 4;
     }
     this.init();
   }
@@ -88,32 +83,23 @@ export class BookingPageComponent {
       }
     } else if (this.step === 2) {
       await businessLoad;
-      this.stepTitle = 'Elegir profesional';
-      this.stepSubtitle = 'Selecciona el profesional para tu turno.';
-      if (!this.flow.value.service) {
-        await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
-        return;
-      }
-      await this.loadStaffWithRetry();
-    } else if (this.step === 3) {
-      await businessLoad;
       this.stepTitle = 'Elegir fecha y hora';
       this.stepSubtitle = 'Escoge una franja con disponibilidad.';
-      if (!this.flow.value.service || !this.flow.value.staff) {
+      if (!this.flow.value.service) {
         await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
         return;
       }
       this.days = this.generateNextDays();
       this.selectedDay = this.days[0];
       await this.loadSlots();
-    } else if (this.step === 4) {
+    } else if (this.step === 3) {
       await businessLoad;
       this.stepTitle = 'Confirmar reserva';
       this.stepSubtitle = 'Completa tus datos para confirmar.';
-      if (!this.flow.value.service || !this.flow.value.staff || !this.flow.value.startsAt) {
+      if (!this.flow.value.service || !this.flow.value.startsAt) {
         await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
       }
-    } else if (this.step === 5) {
+    } else if (this.step === 4) {
       await businessLoad;
       this.stepTitle = 'Reserva confirmada';
       this.stepSubtitle = 'Tu turno fue reservado correctamente.';
@@ -127,10 +113,6 @@ export class BookingPageComponent {
     this.flow.selectService(service);
   }
 
-  pickStaff(staff: PublicStaff): void {
-    this.flow.selectStaff(staff);
-  }
-
   async pickDay(day: string): Promise<void> {
     this.selectedDay = day;
     await this.loadSlots();
@@ -142,37 +124,36 @@ export class BookingPageComponent {
 
   canContinue(): boolean {
     if (this.step === 1) return !!this.flow.value.service;
-    if (this.step === 2) return !!this.flow.value.staff;
-    if (this.step === 3) return !!this.flow.value.startsAt;
+    if (this.step === 2) return !!this.flow.value.startsAt;
     return false;
   }
 
   canReserve(): boolean {
-    return !!this.customerName && !!this.customerEmail && !!this.flow.value.startsAt;
+    return (
+      this.customerFullName.trim().length >= 2 &&
+      this.customerContact.trim().length >= 3 &&
+      !!this.flow.value.startsAt
+    );
   }
 
   async goNext(): Promise<void> {
-    if (this.step === 1) await this.router.navigateByUrl(`/${this.tenantSlug}/book/staff`);
-    if (this.step === 2) await this.router.navigateByUrl(`/${this.tenantSlug}/book/date-time`);
-    if (this.step === 3) await this.router.navigateByUrl(`/${this.tenantSlug}/book/confirm`);
+    if (this.step === 1) await this.router.navigateByUrl(`/${this.tenantSlug}/book/date-time`);
+    if (this.step === 2) await this.router.navigateByUrl(`/${this.tenantSlug}/book/confirm`);
   }
 
   async goPrev(): Promise<void> {
     if (this.step === 2) await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
-    if (this.step === 3) await this.router.navigateByUrl(`/${this.tenantSlug}/book/staff`);
-    if (this.step === 4) await this.router.navigateByUrl(`/${this.tenantSlug}/book/date-time`);
+    if (this.step === 3) await this.router.navigateByUrl(`/${this.tenantSlug}/book/date-time`);
   }
 
   async reserve(): Promise<void> {
-    if (!this.flow.value.service || !this.flow.value.staff || !this.flow.value.startsAt) return;
+    if (!this.flow.value.service || !this.flow.value.startsAt) return;
     const result = await firstValueFrom(
       this.api.createBooking(this.tenantSlug, {
         serviceId: this.flow.value.service.id,
-        staffId: this.flow.value.staff.id,
         startsAt: this.flow.value.startsAt,
-        customerName: this.customerName,
-        customerEmail: this.customerEmail,
-        customerPhone: this.customerPhone,
+        customerFullName: this.customerFullName.trim(),
+        customerContact: this.customerContact.trim(),
       }),
     );
     rememberBooking({
@@ -196,19 +177,15 @@ export class BookingPageComponent {
   }
 
   private async loadSlots(): Promise<void> {
-    if (!this.flow.value.service || !this.flow.value.staff) return;
+    if (!this.flow.value.service) return;
     const availability = await firstValueFrom(
-      this.api.getAvailability(this.tenantSlug, this.flow.value.service.id, this.flow.value.staff.id, this.selectedDay),
+      this.api.getAvailability(this.tenantSlug, this.flow.value.service.id, this.selectedDay),
     );
     this.slots = availability.slots;
   }
 
   async reloadServices(): Promise<void> {
     await this.loadServicesWithRetry();
-  }
-
-  async reloadStaff(): Promise<void> {
-    await this.loadStaffWithRetry();
   }
 
   private async loadServicesWithRetry(): Promise<void> {
@@ -256,39 +233,6 @@ export class BookingPageComponent {
       }
     } finally {
       this.successBookingLoading = false;
-      this.cdr.markForCheck();
-    }
-  }
-
-  private async loadStaffWithRetry(): Promise<void> {
-    if (!this.flow.value.service) return;
-    this.staffLoading = true;
-    this.staffError = false;
-    this.cdr.markForCheck();
-    try {
-      this.staff = await firstValueFrom(
-        this.api.getStaff(this.tenantSlug, this.flow.value.service.id).pipe(
-          timeout(8000),
-          catchError(() => of([] as PublicStaff[])),
-        ),
-      );
-      this.cdr.markForCheck();
-      if (this.staff.length > 0) {
-        return;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 350));
-      this.staff = await firstValueFrom(
-        this.api.getStaff(this.tenantSlug, this.flow.value.service.id).pipe(
-          timeout(8000),
-          catchError(() => of([] as PublicStaff[])),
-        ),
-      );
-      this.staffError = this.staff.length === 0;
-    } catch {
-      this.staff = [];
-      this.staffError = true;
-    } finally {
-      this.staffLoading = false;
       this.cdr.markForCheck();
     }
   }

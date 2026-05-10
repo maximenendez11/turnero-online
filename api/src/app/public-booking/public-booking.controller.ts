@@ -21,19 +21,13 @@ export class PublicBookingController {
     return this.service.getServices(slug);
   }
 
-  @Get('businesses/:slug/staff')
-  getStaff(@Param('slug') slug: string, @Query('serviceId') serviceId?: string) {
-    return this.service.getStaff(slug, serviceId);
-  }
-
   @Get('businesses/:slug/availability')
   getAvailability(
     @Param('slug') slug: string,
     @Query('serviceId') serviceId: string,
-    @Query('staffId') staffId: string,
     @Query('date') date: string,
   ) {
-    return this.service.getAvailability(slug, serviceId, staffId, date);
+    return this.service.getAvailability(slug, serviceId, date);
   }
 
   @Post('businesses/:slug/bookings')

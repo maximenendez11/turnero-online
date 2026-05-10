@@ -9,18 +9,10 @@ export type OnboardingDraft = {
   businessDescription: string;
   address: string;
   timezone: string;
-  currency: string;
-  whatsapp: string;
-  instagram: string;
   serviceName: string;
   serviceDurationMin: number;
   servicePrice: number;
-  openingHours: string;
   bookingIntervalMin: number;
-  maxAppointmentsPerSlot: number;
-  requiresDeposit: boolean;
-  depositMode: 'none' | 'fixed' | 'percent';
-  depositValue: number;
 };
 
 const DEFAULT_DRAFT: OnboardingDraft = {
@@ -29,18 +21,10 @@ const DEFAULT_DRAFT: OnboardingDraft = {
   businessDescription: '',
   address: '',
   timezone: 'America/Argentina/Buenos_Aires',
-  currency: 'ARS',
-  whatsapp: '',
-  instagram: '',
   serviceName: '',
   serviceDurationMin: 45,
   servicePrice: 0,
-  openingHours: 'Lunes a Viernes 09:00 a 19:00',
   bookingIntervalMin: 30,
-  maxAppointmentsPerSlot: 1,
-  requiresDeposit: false,
-  depositMode: 'none',
-  depositValue: 0,
 };
 
 @Injectable({ providedIn: 'root' })

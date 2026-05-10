@@ -49,7 +49,7 @@ export const appRoutes: Route[] = [
       import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
     data: {
       step: 1,
-      total: 5,
+      total: 4,
       title: 'Perfil del Negocio',
       description: 'Configura identidad y datos principales de tu negocio.',
       fields: ['Nombre', 'Categoria', 'Descripcion'],
@@ -63,9 +63,9 @@ export const appRoutes: Route[] = [
       import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
     data: {
       step: 2,
-      total: 5,
+      total: 4,
       title: 'Servicios Iniciales',
-      description: 'Define duracion, precio y modalidad de pago por servicio.',
+      description: 'Define duracion y precio de tu primer servicio.',
       fields: ['Servicio', 'Duracion', 'Precio'],
       prev: '/onboarding/business-profile',
       next: '/onboarding/schedule',
@@ -78,26 +78,11 @@ export const appRoutes: Route[] = [
       import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
     data: {
       step: 3,
-      total: 5,
-      title: 'Horario y Disponibilidad',
-      description: 'Define apertura, intervalos y limites por franja.',
-      fields: ['Zona horaria', 'Apertura', 'Intervalo de reserva'],
+      total: 4,
+      title: 'Disponibilidad',
+      description: 'Zona horaria e intervalo entre turnos ofrecidos.',
+      fields: ['Zona horaria', 'Intervalo de reserva'],
       prev: '/onboarding/services',
-      next: '/onboarding/payments',
-    },
-  },
-  {
-    path: 'onboarding/payments',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
-    data: {
-      step: 4,
-      total: 5,
-      title: 'Pagos y Depositos',
-      description: 'Configura reserva gratis o deposito obligatorio.',
-      fields: ['Modo', 'Porcentaje deposito', 'Politica de reembolso'],
-      prev: '/onboarding/schedule',
       next: '/onboarding/review',
     },
   },
@@ -107,12 +92,12 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
     data: {
-      step: 5,
-      total: 5,
+      step: 4,
+      total: 4,
       title: 'Revision Final',
       description: 'Valida tu configuracion antes de activar el negocio.',
-      fields: ['Confirmacion legal', 'Facturacion', 'Publicacion'],
-      prev: '/onboarding/payments',
+      fields: ['Resumen', 'Publicacion'],
+      prev: '/onboarding/schedule',
       next: '/app/dashboard',
     },
   },
@@ -134,7 +119,7 @@ export const appRoutes: Route[] = [
       import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
     data: {
       title: 'Calendario Maestro',
-      description: 'Gestiona agenda, conflictos y disponibilidad del staff.',
+      description: 'Gestiona agenda, conflictos y disponibilidad.',
       highlights: ['Vista diaria', 'Bloques ocupados', 'Arrastrar y soltar'],
     },
   },
@@ -156,19 +141,8 @@ export const appRoutes: Route[] = [
       import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
     data: {
       title: 'Servicios',
-      description: 'Administra catalogo, duraciones, precios e imagenes.',
-      highlights: ['Catalogo', 'Depositos', 'Politicas'],
-    },
-  },
-  {
-    path: 'app/staff',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Staff',
-      description: 'Equipo, especialidades, horarios y dias libres.',
-      highlights: ['Empleados', 'Especialidades', 'Ausencias'],
+      description: 'Administra catalogo, duraciones y precios.',
+      highlights: ['Catalogo', 'Duraciones', 'Precios'],
     },
   },
   {
@@ -252,20 +226,6 @@ export const appRoutes: Route[] = [
       title: 'Elige tu Servicio',
       subtitle: 'Selecciona el servicio ideal para tu reserva.',
       cta: 'Continuar',
-      next: '../staff',
-    },
-  },
-  {
-    path: ':tenantSlug/book/staff',
-    canActivate: [tenantGuard],
-    loadComponent: () =>
-      import('./features/booking/pages/booking-page.component').then((m) => m.BookingPageComponent),
-    data: {
-      step: 2,
-      title: 'Elige Profesional',
-      subtitle: 'Selecciona el especialista disponible.',
-      cta: 'Siguiente',
-      prev: '../service',
       next: '../date-time',
     },
   },
@@ -275,10 +235,10 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./features/booking/pages/booking-page.component').then((m) => m.BookingPageComponent),
     data: {
-      step: 3,
+      step: 2,
       title: 'Fecha y Horario',
       subtitle: 'Escoge una franja horaria disponible.',
-      prev: '../staff',
+      prev: '../service',
       cta: 'Confirmar datos',
       next: '../confirm',
     },
@@ -289,25 +249,11 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./features/booking/pages/booking-page.component').then((m) => m.BookingPageComponent),
     data: {
-      step: 4,
+      step: 3,
       title: 'Confirmacion',
       subtitle: 'Verifica tus datos antes de finalizar.',
       prev: '../date-time',
-      cta: 'Ir a pago',
-      next: '../payment',
-    },
-  },
-  {
-    path: ':tenantSlug/book/payment',
-    canActivate: [tenantGuard],
-    loadComponent: () =>
-      import('./features/booking/pages/booking-page.component').then((m) => m.BookingPageComponent),
-    data: {
-      step: 5,
-      title: 'Deposito',
-      subtitle: 'Completa el pago del deposito si aplica.',
-      prev: '../confirm',
-      cta: 'Finalizar reserva',
+      cta: 'Reservar',
       next: '../success/ABC123',
     },
   },
@@ -317,7 +263,7 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./features/booking/pages/booking-page.component').then((m) => m.BookingPageComponent),
     data: {
-      step: 5,
+      step: 4,
       title: 'Reserva Confirmada',
       subtitle: 'Tu turno fue creado correctamente.',
       prev: '../confirm',

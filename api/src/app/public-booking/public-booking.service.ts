@@ -15,8 +15,8 @@ export class PublicBookingService {
         ? {
             OR: [
               { name: { contains: query } },
-              { locality: { contains: query } },
-              { neighborhood: { contains: query } },
+              { description: { contains: query } },
+              { address: { contains: query } },
             ],
           }
         : {}),
@@ -30,8 +30,6 @@ export class PublicBookingService {
         name: true,
         description: true,
         address: true,
-        locality: true,
-        neighborhood: true,
       },
       orderBy: { name: 'asc' },
       take: 20,
@@ -48,10 +46,7 @@ export class PublicBookingService {
         description: true,
         address: true,
         timezone: true,
-        currency: true,
-        openingHours: true,
         bookingIntervalMin: true,
-        maxAppointmentsPerSlot: true,
       },
     });
     if (!business) throw new NotFoundException('Business not found');
@@ -68,37 +63,12 @@ export class PublicBookingService {
         description: true,
         durationMin: true,
         price: true,
-        depositMode: true,
-        depositValue: true,
       },
       orderBy: { name: 'asc' },
     });
   }
 
-  async getStaff(slug: string, serviceId?: string) {
-    const business = await this.getBusinessBySlug(slug);
-    return this.prisma.staffMember.findMany({
-      where: {
-        businessId: business.id,
-        isActive: true,
-        ...(serviceId ? { serviceLinks: { some: { serviceId } } } : {}),
-      },
-      select: {
-        id: true,
-        fullName: true,
-        bio: true,
-        avatarUrl: true,
-      },
-      orderBy: { fullName: 'asc' },
-    });
-  }
-
-  async getAvailability(
-    slug: string,
-    serviceId: string,
-    staffId: string,
-    dateIso: string,
-  ) {
+  async getAvailability(slug: string, serviceId: string, dateIso: string) {
     const business = await this.getBusinessBySlug(slug);
     const service = await this.prisma.businessService.findFirst({
       where: { id: serviceId, businessId: business.id, isActive: true },
@@ -106,23 +76,22 @@ export class PublicBookingService {
     });
     if (!service) throw new NotFoundException('Service not found');
 
-    const staff = await this.prisma.staffMember.findFirst({
-      where: { id: staffId, businessId: business.id, isActive: true },
-      select: { id: true },
-    });
-    if (!staff) throw new NotFoundException('Staff not found');
-
     const day = new Date(dateIso);
     if (Number.isNaN(day.getTime())) throw new BadRequestException('Invalid date');
-    const startOfDay = new Date(day);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(day);
+
+    const weekday = day.getDay();
+    const windows = await this.prisma.businessOpeningWindow.findMany({
+      where: { businessId: business.id, weekday },
+      orderBy: [{ sortOrder: 'asc' }, { startMin: 'asc' }],
+    });
+
+    const startOfDay = this.startOfLocalDay(day);
+    const endOfDay = new Date(startOfDay);
     endOfDay.setHours(23, 59, 59, 999);
 
     const bookings = await this.prisma.booking.findMany({
       where: {
         businessId: business.id,
-        staffId,
         startsAt: { gte: startOfDay, lte: endOfDay },
         status: { not: BookingStatus.cancelled },
       },
@@ -131,21 +100,20 @@ export class PublicBookingService {
 
     const interval = Math.max(15, business.bookingIntervalMin || 30);
     const slots: string[] = [];
-    const slotCursor = new Date(startOfDay);
-    slotCursor.setHours(9, 0, 0, 0);
-    const closeAt = new Date(startOfDay);
-    closeAt.setHours(19, 0, 0, 0);
 
-    while (slotCursor < closeAt) {
-      const currentSlot = new Date(slotCursor);
-      const currentEnd = new Date(currentSlot.getTime() + service.durationMin * 60_000);
-      const overlaps = bookings.some((booking) => {
-        const bookedStart = new Date(booking.startsAt);
-        const bookedEnd = new Date(bookedStart.getTime() + booking.durationMin * 60_000);
-        return currentSlot < bookedEnd && bookedStart < currentEnd;
-      });
-      if (!overlaps) slots.push(currentSlot.toISOString());
-      slotCursor.setMinutes(slotCursor.getMinutes() + interval);
+    for (const w of windows) {
+      for (let cursorMin = w.startMin; cursorMin + service.durationMin <= w.endMin; cursorMin += interval) {
+        const slotStart = this.atMinutesOnLocalDay(day, cursorMin);
+        const slotEnd = new Date(slotStart.getTime() + service.durationMin * 60_000);
+        const overlaps = bookings.some((booking) => {
+          const bookedStart = new Date(booking.startsAt);
+          const bookedEnd = new Date(bookedStart.getTime() + booking.durationMin * 60_000);
+          return slotStart < bookedEnd && bookedStart < slotEnd;
+        });
+        if (!overlaps) {
+          slots.push(slotStart.toISOString());
+        }
+      }
     }
 
     return { slots };
@@ -159,12 +127,6 @@ export class PublicBookingService {
     });
     if (!service) throw new NotFoundException('Service not found');
 
-    const staff = await this.prisma.staffMember.findFirst({
-      where: { id: dto.staffId, businessId: business.id, isActive: true },
-      select: { id: true },
-    });
-    if (!staff) throw new NotFoundException('Staff not found');
-
     const startsAt = new Date(dto.startsAt);
     if (Number.isNaN(startsAt.getTime())) throw new BadRequestException('Invalid datetime');
 
@@ -175,11 +137,8 @@ export class PublicBookingService {
         code,
         businessId: business.id,
         serviceId: dto.serviceId,
-        staffId: dto.staffId,
-        customerName: dto.customerName,
-        customerEmail: dto.customerEmail,
-        customerPhone: dto.customerPhone,
-        notes: dto.notes,
+        customerFullName: dto.customerFullName.trim(),
+        customerContact: dto.customerContact.trim(),
         startsAt,
         durationMin: service.durationMin,
         status: BookingStatus.confirmed,
@@ -200,10 +159,21 @@ export class PublicBookingService {
       where: { businessId: business.id, code },
       include: {
         service: { select: { name: true, durationMin: true } },
-        staff: { select: { fullName: true } },
       },
     });
     if (!booking) throw new NotFoundException('Booking not found');
     return booking;
+  }
+
+  private startOfLocalDay(d: Date): Date {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+  }
+
+  /** Minutos desde 00:00 del mismo día calendario local que `d`. */
+  private atMinutesOnLocalDay(d: Date, minutesFromMidnight: number): Date {
+    const base = this.startOfLocalDay(d);
+    const out = new Date(base);
+    out.setMinutes(out.getMinutes() + minutesFromMidnight);
+    return out;
   }
 }

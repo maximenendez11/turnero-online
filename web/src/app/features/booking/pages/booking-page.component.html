@@ -42,32 +42,7 @@
       </p>
     </div>
 
-    <p class="error-msg" *ngIf="step === 2 && staffError && !staffLoading">
-      No se pudieron cargar profesionales.
-    </p>
-    <button class="retry-btn" type="button" *ngIf="step === 2 && staffError && !staffLoading" (click)="reloadStaff()">
-      Reintentar
-    </button>
-
-    <div *ngIf="step === 2" class="mock-grid">
-      <div *ngIf="staffLoading && staff.length === 0" class="skeleton-list">
-        <div class="skeleton-card" *ngFor="let _ of [1, 2, 3]"></div>
-      </div>
-      <button
-        type="button"
-        *ngFor="let item of staff"
-        [class.selected]="flow.value.staff?.id === item.id"
-        (click)="pickStaff(item)"
-      >
-        <strong>{{ item.fullName }}</strong>
-        <span>{{ item.bio || 'Profesional disponible' }}</span>
-      </button>
-      <p class="empty-msg" *ngIf="!staffLoading && staff.length === 0 && !staffError">
-        No hay profesionales disponibles para este servicio.
-      </p>
-    </div>
-
-    <div *ngIf="step === 3">
+    <div *ngIf="step === 2">
       <div class="days">
         <button type="button" *ngFor="let day of days" [class.selected]="day === selectedDay" (click)="pickDay(day)">
           {{ day }}
@@ -85,30 +60,26 @@
       </div>
     </div>
 
-    <div *ngIf="step === 4" class="confirm">
+    <div *ngIf="step === 3" class="confirm">
       <p><strong>Servicio:</strong> {{ flow.value.service?.name }}</p>
-      <p><strong>Profesional:</strong> {{ flow.value.staff?.fullName }}</p>
       <p><strong>Horario:</strong> {{ flow.value.startsAt | date: 'dd/MM HH:mm' }}</p>
       <label>
-        Nombre
-        <input [(ngModel)]="customerName" />
+        Nombre completo
+        <input [(ngModel)]="customerFullName" name="customerFullName" />
       </label>
       <label>
-        Email
-        <input [(ngModel)]="customerEmail" />
-      </label>
-      <label>
-        Telefono
-        <input [(ngModel)]="customerPhone" />
+        Contacto (email, telefono, etc.)
+        <input [(ngModel)]="customerContact" name="customerContact" />
       </label>
     </div>
 
-    <div *ngIf="step === 5" class="success-block">
+    <div *ngIf="step === 4" class="success-block">
       <p class="muted" *ngIf="successBookingLoading">Cargando detalle del turno...</p>
       <ng-container *ngIf="confirmedBooking as b">
         <p><strong>Código:</strong> {{ b.code }}</p>
         <p><strong>Servicio:</strong> {{ b.service?.name || '—' }}</p>
-        <p><strong>Profesional:</strong> {{ b.staff?.fullName || '—' }}</p>
+        <p *ngIf="b.customerFullName"><strong>Cliente:</strong> {{ b.customerFullName }}</p>
+        <p *ngIf="b.customerContact"><strong>Contacto:</strong> {{ b.customerContact }}</p>
         <p><strong>Horario:</strong> {{ b.startsAt | date: 'dd/MM/yyyy HH:mm' }}</p>
         <p><strong>Estado:</strong> {{ b.status }}</p>
       </ng-container>
@@ -124,22 +95,22 @@
   <footer class="summary">
     <div>
       <strong>Resumen</strong>
-      <p *ngIf="step !== 5">{{ flow.value.service?.name || '-' }} · {{ flow.value.staff?.fullName || '-' }}</p>
-      <p *ngIf="step === 5 && confirmedBooking">
-        {{ confirmedBooking.service?.name || '—' }} · {{ confirmedBooking.staff?.fullName || '—' }}
+      <p *ngIf="step !== 4">{{ flow.value.service?.name || '-' }} · {{ flow.value.startsAt ? (flow.value.startsAt | date: 'dd/MM HH:mm') : '-' }}</p>
+      <p *ngIf="step === 4 && confirmedBooking">
+        {{ confirmedBooking.service?.name || '—' }} · {{ confirmedBooking.startsAt | date: 'dd/MM HH:mm' }}
       </p>
-      <p *ngIf="step === 5 && !confirmedBooking">{{ bookingCode || '—' }}</p>
+      <p *ngIf="step === 4 && !confirmedBooking">{{ bookingCode || '—' }}</p>
     </div>
     <div class="actions">
-      <ng-container *ngIf="step === 5">
+      <ng-container *ngIf="step === 4">
         <a class="btn-nav ghost" routerLink="/c/appointments">Mis turnos</a>
         <a class="btn-nav primary" *ngIf="bookingCode" [routerLink]="['/', tenantSlug, 'manage', bookingCode]">Ver turno</a>
         <a class="btn-nav ghost" [routerLink]="['/', tenantSlug, 'book', 'service']">Nueva reserva</a>
       </ng-container>
-      <ng-container *ngIf="step !== 5">
+      <ng-container *ngIf="step !== 4">
         <button class="ghost" type="button" *ngIf="step > 1" (click)="goPrev()">Atras</button>
-        <button type="button" *ngIf="step < 4" (click)="goNext()" [disabled]="!canContinue()">Continuar</button>
-        <button type="button" *ngIf="step === 4" (click)="reserve()" [disabled]="!canReserve()">Reservar</button>
+        <button type="button" *ngIf="step < 3" (click)="goNext()" [disabled]="!canContinue()">Continuar</button>
+        <button type="button" *ngIf="step === 3" (click)="reserve()" [disabled]="!canReserve()">Reservar</button>
       </ng-container>
     </div>
   </footer>

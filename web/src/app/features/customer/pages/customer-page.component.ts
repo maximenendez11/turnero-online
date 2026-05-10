@@ -46,7 +46,8 @@ type CustomerPageData = {
         <div class="booking-card" *ngIf="booking">
           <p><strong>Codigo:</strong> {{ booking.code }}</p>
           <p><strong>Servicio:</strong> {{ booking.service?.name }}</p>
-          <p><strong>Profesional:</strong> {{ booking.staff?.fullName }}</p>
+          <p *ngIf="booking.customerFullName"><strong>Cliente:</strong> {{ booking.customerFullName }}</p>
+          <p *ngIf="booking.customerContact"><strong>Contacto:</strong> {{ booking.customerContact }}</p>
           <p><strong>Horario:</strong> {{ booking.startsAt | date: 'dd/MM HH:mm' }}</p>
           <p><strong>Estado:</strong> {{ booking.status }}</p>
           <a class="back-link" routerLink="/c/appointments">Volver a mis turnos</a>

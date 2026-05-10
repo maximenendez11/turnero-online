@@ -1,8 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DepositMode, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { OnboardingSetupDto } from './dto/onboarding-setup.dto';
+
+/** Lun–Vie 09:00–18:00 (minutos desde medianoche), mismo horario que seed demo. */
+const DEFAULT_WEEKDAYS = [1, 2, 3, 4, 5] as const;
+const DEFAULT_START_MIN = 9 * 60;
+const DEFAULT_END_MIN = 18 * 60;
 
 @Injectable()
 export class OnboardingService {
@@ -15,10 +20,6 @@ export class OnboardingService {
     }
     const slug = await this.uniqueSlug(baseSlug);
 
-    const depositMode = this.resolveDepositMode(dto);
-    const depositValue =
-      depositMode === DepositMode.none ? new Prisma.Decimal(0) : new Prisma.Decimal(dto.depositValue);
-
     const result = await this.prisma.$transaction(async (tx) => {
       const business = await tx.business.create({
         data: {
@@ -27,61 +28,39 @@ export class OnboardingService {
           description: dto.businessDescription?.trim() || null,
           address: dto.address.trim(),
           timezone: dto.timezone,
-          currency: dto.currency,
-          whatsapp: dto.whatsapp?.trim() || null,
-          instagram: dto.instagram?.trim() || null,
-          openingHours: dto.openingHours,
           bookingIntervalMin: dto.bookingIntervalMin,
-          maxAppointmentsPerSlot: dto.maxAppointmentsPerSlot,
           status: 'active',
         },
         select: { id: true, slug: true },
       });
 
-      const service = await tx.businessService.create({
+      await tx.businessService.create({
         data: {
           businessId: business.id,
           name: dto.serviceName.trim(),
           description: dto.businessDescription?.trim() || null,
           durationMin: dto.serviceDurationMin,
           price: new Prisma.Decimal(dto.servicePrice),
-          depositMode,
-          depositValue,
           isActive: true,
         },
-        select: { id: true },
       });
 
-      const staff = await tx.staffMember.create({
-        data: {
-          businessId: business.id,
-          fullName: 'Profesional principal',
-          isActive: true,
-        },
-        select: { id: true },
-      });
-
-      await tx.staffService.create({
-        data: { staffId: staff.id, serviceId: service.id },
-      });
+      for (const weekday of DEFAULT_WEEKDAYS) {
+        await tx.businessOpeningWindow.create({
+          data: {
+            businessId: business.id,
+            weekday,
+            startMin: DEFAULT_START_MIN,
+            endMin: DEFAULT_END_MIN,
+            sortOrder: 0,
+          },
+        });
+      }
 
       return { businessId: business.id, slug: business.slug as string };
     });
 
     return result;
-  }
-
-  private resolveDepositMode(dto: OnboardingSetupDto): DepositMode {
-    if (!dto.requiresDeposit || dto.depositMode === 'none') {
-      return DepositMode.none;
-    }
-    if (dto.depositMode === 'fixed') {
-      return DepositMode.fixed;
-    }
-    if (dto.depositMode === 'percent') {
-      return DepositMode.percent;
-    }
-    return DepositMode.none;
   }
 
   private slugify(text: string): string {

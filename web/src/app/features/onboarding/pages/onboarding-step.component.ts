@@ -68,57 +68,27 @@ type OnboardingData = {
 
             <ng-container *ngSwitchCase="'schedule'">
               <label>
-                <span>Horario de apertura</span>
-                <input [(ngModel)]="draft.openingHours" name="openingHours" type="text" />
-              </label>
-              <label>
-                <span>Intervalo de reservas (min)</span>
-                <input [(ngModel)]="draft.bookingIntervalMin" name="bookingIntervalMin" type="number" />
-              </label>
-              <label>
-                <span>Maximo por franja</span>
-                <input
-                  [(ngModel)]="draft.maxAppointmentsPerSlot"
-                  name="maxAppointmentsPerSlot"
-                  type="number"
-                />
-              </label>
-              <label>
                 <span>Zona horaria</span>
                 <input [(ngModel)]="draft.timezone" name="timezone" type="text" />
               </label>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'payments'">
-              <label class="check">
-                <input [(ngModel)]="draft.requiresDeposit" name="requiresDeposit" type="checkbox" />
-                <span>Requerir deposito para reservar</span>
-              </label>
               <label>
-                <span>Modo deposito</span>
-                <select [(ngModel)]="draft.depositMode" name="depositMode">
-                  <option value="none">Sin deposito</option>
-                  <option value="fixed">Monto fijo</option>
-                  <option value="percent">Porcentaje</option>
-                </select>
+                <span>Intervalo entre turnos (min)</span>
+                <input [(ngModel)]="draft.bookingIntervalMin" name="bookingIntervalMin" type="number" />
               </label>
-              <label>
-                <span>Valor deposito</span>
-                <input [(ngModel)]="draft.depositValue" name="depositValue" type="number" />
-              </label>
-              <label>
-                <span>Moneda</span>
-                <input [(ngModel)]="draft.currency" name="currency" type="text" />
-              </label>
+              <p class="hint-inline">
+                El horario de apertura inicial es lun–vie 9:00–18:00; podrás ajustarlo luego desde la base de datos o
+                futuras pantallas de configuración.
+              </p>
             </ng-container>
 
             <ng-container *ngSwitchDefault>
               <div class="review">
                 <p><strong>Negocio:</strong> {{ draft.businessName || '-' }}</p>
                 <p><strong>Categoria:</strong> {{ draft.businessCategory || '-' }}</p>
-                <p><strong>Horario:</strong> {{ draft.openingHours || '-' }}</p>
+                <p><strong>Direccion:</strong> {{ draft.address || '-' }}</p>
+                <p><strong>Zona horaria:</strong> {{ draft.timezone || '-' }}</p>
+                <p><strong>Intervalo reservas:</strong> {{ draft.bookingIntervalMin || 0 }} min</p>
                 <p><strong>Servicio:</strong> {{ draft.serviceName || '-' }} ({{ draft.servicePrice || 0 }})</p>
-                <p><strong>Deposito:</strong> {{ draft.requiresDeposit ? 'Si' : 'No' }}</p>
                 <p><strong>Link publico:</strong></p>
                 <code>{{ bookingLink || '(completa nombre del negocio)' }}</code>
               </div>
@@ -157,6 +127,12 @@ type OnboardingData = {
       }
       p {
         color: #c2c6d6;
+      }
+      .hint-inline {
+        font-size: 0.82rem;
+        color: #8c909f;
+        margin: 0;
+        line-height: 1.35;
       }
       .progress {
         width: 100%;
