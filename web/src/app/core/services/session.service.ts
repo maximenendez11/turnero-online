@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
 const TOKEN_KEY = 'zb.accessToken';
+const REFRESH_KEY = 'zb.refreshToken';
 const EMAIL_KEY = 'zb.userEmail';
 
 @Injectable({ providedIn: 'root' })
@@ -15,12 +16,17 @@ export class SessionService {
     return localStorage.getItem(TOKEN_KEY);
   }
 
+  getRefreshToken(): string | null {
+    return localStorage.getItem(REFRESH_KEY);
+  }
+
   getEmail(): string | null {
     return localStorage.getItem(EMAIL_KEY);
   }
 
-  signInWithToken(accessToken: string, email?: string): void {
+  signInWithTokens(accessToken: string, refreshToken: string, email?: string): void {
     localStorage.setItem(TOKEN_KEY, accessToken);
+    localStorage.setItem(REFRESH_KEY, refreshToken);
     if (email) {
       localStorage.setItem(EMAIL_KEY, email);
     }
@@ -29,6 +35,7 @@ export class SessionService {
 
   signOut(): void {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(EMAIL_KEY);
     this.authenticated.set(false);
   }

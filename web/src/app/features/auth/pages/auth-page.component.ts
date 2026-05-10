@@ -76,14 +76,14 @@ export class AuthPageComponent {
         const res = await firstValueFrom(
           this.authApi.register({ email: emailTrim, password: this.password }),
         );
-        this.session.signInWithToken(res.accessToken, res.email);
+        this.session.signInWithTokens(res.accessToken, res.refreshToken, res.email);
         this.onboarding.reset();
         await this.router.navigateByUrl('/onboarding/business-profile');
         return;
       }
 
       const res = await firstValueFrom(this.authApi.login({ email: emailTrim, password: this.password }));
-      this.session.signInWithToken(res.accessToken, res.email);
+      this.session.signInWithTokens(res.accessToken, res.refreshToken, res.email);
       if (res.role === 'ADMIN') {
         this.onboarding.markCompleted();
         await this.router.navigateByUrl('/app/appointments');

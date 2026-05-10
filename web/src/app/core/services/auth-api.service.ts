@@ -5,6 +5,7 @@ import { ConfigService } from './config.service';
 
 export type AuthResponse = {
   accessToken: string;
+  refreshToken: string;
   email: string;
   /** Mismo enum que en la API (`ADMIN` | `USER`). */
   role: 'ADMIN' | 'USER';

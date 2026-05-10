@@ -21,6 +21,15 @@
 
 .toolbar {
   margin: 0.75rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.toolbar--split {
+  justify-content: space-between;
+  align-items: center;
 }
 
 .toolbar label {
@@ -28,6 +37,54 @@
   gap: 0.25rem;
   font-size: 0.8rem;
   color: dv.$dv-on-surface-variant;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.cal-nav__label {
+  min-width: 10.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  color: dv.$dv-on-surface;
+}
+
+.cal-nav__btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid dv.$dv-outline-variant;
+  background: dv.$dv-surface-container-low;
+  color: dv.$dv-on-surface;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cal-nav__btn:hover {
+  background: dv.$dv-surface-container-high;
+}
+
+.cal-nav__today {
+  margin-left: 0.35rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid dv.$dv-outline-variant;
+  background: transparent;
+  color: dv.$dv-primary;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+
+.cal-nav__today:hover {
+  background: color-mix(in srgb, dv.$dv-primary 12%, transparent);
 }
 
 select,
@@ -41,35 +98,239 @@ select,
 }
 
 .cell-input--wide {
-  min-width: 11rem;
+  width: 100%;
+  min-width: 12rem;
 }
 
-.table-wrap {
+.cal-wrap {
+  border: 1px solid dv.$dv-outline-variant;
+  border-radius: dv.$dv-radius-xl;
+  /* Sin overflow-y:hidden: en layout flex el grid con filas 1fr podía colapsar y verse solo una fila. */
+  overflow-x: auto;
+  background: dv.$dv-surface-container-low;
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  background: dv.$dv-outline-variant;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: dv.$dv-outline;
+}
+
+.cal-weekdays span {
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  background: dv.$dv-surface-container-low;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* Altura explícita por fila: `1fr` sin altura en el contenedor dejaba una sola fila visible en algunos navegadores. */
+  grid-template-rows: repeat(6, minmax(5.75rem, auto));
+  gap: 1px;
+  background: dv.$dv-outline-variant;
+  align-content: start;
+  min-height: calc(6 * 5.75rem + 5px);
+}
+
+.cal-cell {
+  background: dv.$dv-surface-container;
+  padding: 0.35rem;
+  min-height: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+.cal-cell--muted {
+  opacity: 0.45;
+}
+
+.cal-cell--today {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, dv.$dv-primary 55%, transparent);
+}
+
+.cal-cell__num {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: dv.$dv-on-surface;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.cal-cell--today .cal-cell__num {
+  color: dv.$dv-primary;
+}
+
+.cal-cell__events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.cal-event {
+  border: 0;
+  border-radius: dv.$dv-radius-sm;
+  padding: 0.2rem 0.35rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  background: color-mix(in srgb, dv.$dv-primary 22%, dv.$dv-surface-container-high);
+  color: dv.$dv-on-surface;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.cal-event:hover {
+  filter: brightness(1.08);
+}
+
+.cal-event--pending {
+  background: color-mix(in srgb, #e8c07d 28%, dv.$dv-surface-container-high);
+}
+
+.cal-event--cancelled {
+  opacity: 0.65;
+  text-decoration: line-through;
+}
+
+.cal-event--selected {
+  outline: 2px solid dv.$dv-primary;
+  outline-offset: 1px;
+}
+
+.cal-event__time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-event__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cal-hint {
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border-top: 1px solid dv.$dv-outline-variant;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.booking-detail {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid dv.$dv-outline-variant;
+  background: dv.$dv-surface-container-low;
+}
+
+.booking-detail__head {
+  position: relative;
+  padding-right: 4rem;
+  margin-bottom: 1rem;
+}
+
+.booking-detail__head h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.booking-detail__close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  border: 0;
+  background: transparent;
+  color: dv.$dv-on-surface-variant;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.booking-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.booking-detail__grid label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: dv.$dv-on-surface-variant;
+}
+
+.booking-detail__full {
+  grid-column: 1 / -1;
+}
+
+.booking-detail__foot {
+  margin-top: 1rem;
+}
+
+.bookings-list {
+  margin-top: 1.5rem;
+}
+
+.bookings-list__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.bookings-list__tz {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+}
+
+.bookings-list__wrap {
   overflow-x: auto;
   border: 1px solid dv.$dv-outline-variant;
   border-radius: dv.$dv-radius-xl;
 }
 
-table {
+.bookings-list table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
-th,
-td {
+.bookings-list th,
+.bookings-list td {
   text-align: left;
-  padding: 0.5rem 0.55rem;
+  padding: 0.45rem 0.55rem;
   border-bottom: 1px solid dv.$dv-outline-variant;
-  vertical-align: middle;
 }
 
-th {
+.bookings-list th {
   color: dv.$dv-outline;
   font-weight: 600;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.btn-link {
+  background: none;
+  border: 0;
+  color: dv.$dv-primary;
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+  padding: 0;
 }
 
 .btn-save {
@@ -77,10 +338,10 @@ th {
   color: dv.$dv-on-primary;
   border: 0;
   border-radius: dv.$dv-radius-md;
-  padding: 0.35rem 0.55rem;
+  padding: 0.45rem 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
 }
 
 .btn-save:disabled {
@@ -88,6 +349,23 @@ th {
   cursor: not-allowed;
 }
 
-.empty {
-  padding: 1rem;
+@media (max-width: 720px) {
+  .cal-grid {
+    grid-template-rows: repeat(6, minmax(4.25rem, auto));
+    min-height: calc(6 * 4.25rem + 5px);
+  }
+
+  .cal-cell {
+    min-height: 4.25rem;
+    padding: 0.25rem;
+  }
+
+  .cal-event {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.25rem;
+  }
+
+  .cal-event__title {
+    display: none;
+  }
 }

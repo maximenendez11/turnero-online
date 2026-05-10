@@ -9,7 +9,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
   const url = req.url;
-  if (url.includes('/auth/login') || url.includes('/auth/register')) {
+  if (url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh')) {
     return next(req);
   }
   return next(

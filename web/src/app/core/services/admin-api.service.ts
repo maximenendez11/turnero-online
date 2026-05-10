@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ConfigService } from './config.service';
@@ -58,12 +58,39 @@ export class AdminApiService {
     return `${this.config.getApiUrl()}/admin${path}`;
   }
 
+  /**
+   * Evita 304 + cuerpo vacío en el navegador (Angular recibe null → lista vacía en pantalla).
+   * curl sin caché sigue viendo JSON; el cliente SPA reutilizaba ETag y perdía el body.
+   */
+  private cacheBustParams(extra?: Record<string, string>): HttpParams {
+    let p = new HttpParams().set('_cb', String(Date.now()));
+    if (extra) {
+      for (const [k, v] of Object.entries(extra)) {
+        p = p.set(k, v);
+      }
+    }
+    return p;
+  }
+
+  private jsonNoCacheHeaders(): HttpHeaders {
+    return new HttpHeaders({
+      'Cache-Control': 'no-cache, no-store, max-age=0',
+      Pragma: 'no-cache',
+    });
+  }
+
   getBusinesses(): Observable<AdminBusinessListItem[]> {
-    return this.http.get<AdminBusinessListItem[]>(this.url('/businesses'));
+    return this.http.get<AdminBusinessListItem[]>(this.url('/businesses'), {
+      params: this.cacheBustParams(),
+      headers: this.jsonNoCacheHeaders(),
+    });
   }
 
   getBusiness(id: string): Observable<AdminBusinessDetail> {
-    return this.http.get<AdminBusinessDetail>(this.url(`/businesses/${id}`));
+    return this.http.get<AdminBusinessDetail>(this.url(`/businesses/${id}`), {
+      params: this.cacheBustParams(),
+      headers: this.jsonNoCacheHeaders(),
+    });
   }
 
   patchBusiness(id: string, body: Record<string, unknown>): Observable<AdminBusinessDetail> {
@@ -89,8 +116,13 @@ export class AdminApiService {
   }
 
   getBookings(businessId?: string): Observable<AdminBookingRow[]> {
-    const params = businessId ? new HttpParams().set('businessId', businessId) : undefined;
-    return this.http.get<AdminBookingRow[]>(this.url('/bookings'), { params });
+    const params = businessId
+      ? this.cacheBustParams({ businessId })
+      : this.cacheBustParams();
+    return this.http.get<AdminBookingRow[]>(this.url('/bookings'), {
+      params,
+      headers: this.jsonNoCacheHeaders(),
+    });
   }
 
   patchBooking(bookingId: string, body: Record<string, unknown>): Observable<AdminBookingRow> {
