@@ -21,7 +21,7 @@ export class BookingFlowService {
     this.state.set({ service, startsAt: null });
   }
 
-  selectSlot(startsAt: string): void {
+  selectSlot(startsAt: string | null): void {
     this.state.set({ ...this.state(), startsAt });
   }
 

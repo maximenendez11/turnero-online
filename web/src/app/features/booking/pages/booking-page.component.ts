@@ -33,6 +33,8 @@ export class BookingPageComponent {
   readonly tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? 'peluqueria-demo';
   readonly bookingCode = this.route.snapshot.paramMap.get('bookingCode') ?? '';
   businessName = '';
+  /** IANA tz from API; used to show confirmed bookings aligned to the business calendar. */
+  businessTimezone: string | null = null;
   step = 1;
   stepTitle = 'Elegir servicio';
   stepSubtitle = 'Selecciona el servicio que quieres reservar.';
@@ -40,7 +42,10 @@ export class BookingPageComponent {
   days: string[] = [];
   selectedDay = '';
   slots: string[] = [];
+  slotsLoading = false;
   servicesLoading = false;
+
+  readonly stepperLabels = ['Servicio', 'Fecha', 'Datos', 'Listo'] as const;
   customerFullName = '';
   customerContact = '';
   confirmedBooking: ConfirmedBooking | null = null;
@@ -67,9 +72,13 @@ export class BookingPageComponent {
       ),
     ).then((business) => {
       if (business && typeof business === 'object' && 'name' in business) {
-        this.businessName = String((business as { name: string }).name);
+        const b = business as { name: string; timezone?: string | null };
+        this.businessName = String(b.name);
+        this.businessTimezone =
+          typeof b.timezone === 'string' && b.timezone.trim().length > 0 ? b.timezone.trim() : null;
       } else {
         this.businessName = this.tenantSlug.replace(/-/g, ' ');
+        this.businessTimezone = null;
       }
       this.cdr.markForCheck();
     });
@@ -98,6 +107,8 @@ export class BookingPageComponent {
       this.stepSubtitle = 'Completa tus datos para confirmar.';
       if (!this.flow.value.service || !this.flow.value.startsAt) {
         await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
+      } else {
+        this.ensureSelectedDayForSlot(this.flow.value.startsAt);
       }
     } else if (this.step === 4) {
       await businessLoad;
@@ -116,10 +127,21 @@ export class BookingPageComponent {
   async pickDay(day: string): Promise<void> {
     this.selectedDay = day;
     await this.loadSlots();
+    const current = this.flow.value.startsAt;
+    if (current && !this.slots.includes(current)) {
+      this.flow.selectSlot(null);
+    }
   }
 
   pickSlot(slot: string): void {
     this.flow.selectSlot(slot);
+  }
+
+  stepAriaLabel(index: number, stepNumber: number): string {
+    const label = this.stepperLabels[index];
+    if (this.step > stepNumber) return `${label}, completado`;
+    if (this.step === stepNumber) return `${label}, paso actual`;
+    return `${label}, pendiente`;
   }
 
   canContinue(): boolean {
@@ -168,20 +190,201 @@ export class BookingPageComponent {
   private generateNextDays(): string[] {
     const days: string[] = [];
     const current = new Date();
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 7; i += 1) {
       const next = new Date(current);
       next.setDate(current.getDate() + i);
-      days.push(next.toISOString().slice(0, 10));
+      days.push(this.toLocalDateKey(next));
     }
     return days;
   }
 
+  /** YYYY-MM-DD in the user's local calendar (avoid UTC drift from toISOString). */
+  private toLocalDateKey(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  /**
+   * If the user lands on confirm with a slot but no selected day (e.g. restored flow),
+   * pick the local calendar day that matches the slot start in the business timezone when set,
+   * otherwise the browser's local calendar.
+   */
+  private ensureSelectedDayForSlot(startsAt: string): void {
+    if (this.selectedDay) return;
+    const key = this.dateKeyForInstant(startsAt);
+    if (key) this.selectedDay = key;
+  }
+
+  private dateKeyForInstant(iso: string): string | null {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return null;
+    const tz = this.businessTimezone;
+    if (tz) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).formatToParts(d);
+        const y = parts.find((p) => p.type === 'year')?.value;
+        const m = parts.find((p) => p.type === 'month')?.value;
+        const day = parts.find((p) => p.type === 'day')?.value;
+        if (y && m && day) return `${y}-${m}-${day}`;
+      } catch {
+        /* invalid tz */
+      }
+    }
+    return this.toLocalDateKey(d);
+  }
+
+  /** Wall clock in the user's browser (matches how slot chips were chosen). */
+  private timeFromSlotLocal(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('es', { hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
+  }
+
+  private longDateFromDayKey(dayKey: string): string {
+    const d = this.parseLocalDay(dayKey);
+    return new Intl.DateTimeFormat('es', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }).format(d);
+  }
+
+  dayParts(isoDate: string): { dow: string; dayNum: string; month: string } {
+    const d = this.parseLocalDay(isoDate);
+    const dow = new Intl.DateTimeFormat('es', { weekday: 'short' }).format(d).replace('.', '');
+    const dayNum = new Intl.DateTimeFormat('es', { day: 'numeric' }).format(d);
+    const month = new Intl.DateTimeFormat('es', { month: 'short' }).format(d).replace('.', '');
+    return { dow: this.capitalize(dow), dayNum, month: this.capitalize(month) };
+  }
+
+  slotTimeLabel(slot: string): string {
+    return this.timeFromSlotLocal(slot) || slot;
+  }
+
+  /**
+   * Uses the calendar day the user chose (chip row), not the UTC instant's local date,
+   * so the label matches "Martes 12" even when the ISO instant falls on the previous local day.
+   */
+  selectedSlotSummary(): string {
+    const at = this.flow.value.startsAt;
+    if (!at) return '';
+    const dayKey = this.selectedDay || this.dateKeyForInstant(at);
+    if (!dayKey) return '';
+    const datePart = this.longDateFromDayKey(dayKey);
+    const timePart = this.timeFromSlotLocal(at);
+    return `${this.capitalize(datePart)} · ${timePart}`;
+  }
+
+  /** Compact line for sticky summary (consistent with selected slot). */
+  summaryScheduleShort(): string {
+    const at = this.flow.value.startsAt;
+    if (!at) return '-';
+    const dayKey = this.selectedDay || this.dateKeyForInstant(at);
+    if (!dayKey) return '-';
+    const d = this.parseLocalDay(dayKey);
+    const date = new Intl.DateTimeFormat('es', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
+    return `${date} · ${this.timeFromSlotLocal(at)}`;
+  }
+
+  /** Confirm step: date from chosen day + wall time in business (or local) TZ. */
+  confirmHorarioLine(): string {
+    const at = this.flow.value.startsAt;
+    if (!at) return '-';
+    const dayKey = this.selectedDay || this.dateKeyForInstant(at);
+    if (!dayKey) return '-';
+    const d = this.parseLocalDay(dayKey);
+    const date = new Intl.DateTimeFormat('es', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(d);
+    return `${date} ${this.timeFromSlotLocal(at)}`;
+  }
+
+  /** Success / API payload: full datetime in business TZ when available. */
+  formatBookingInstant(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const opts: Intl.DateTimeFormatOptions = {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    };
+    const tz = this.businessTimezone;
+    if (tz) {
+      try {
+        const fmt = new Intl.DateTimeFormat('es', { ...opts, timeZone: tz });
+        return this.capitalize(fmt.format(d));
+      } catch {
+        /* fall through */
+      }
+    }
+    return this.capitalize(new Intl.DateTimeFormat('es', opts).format(d));
+  }
+
+  formatBookingInstantShort(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    const opts: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    };
+    const tz = this.businessTimezone;
+    if (tz) {
+      try {
+        return new Intl.DateTimeFormat('es', { ...opts, timeZone: tz }).format(d);
+      } catch {
+        /* fall through */
+      }
+    }
+    return new Intl.DateTimeFormat('es', opts).format(d);
+  }
+
+  private parseLocalDay(isoDate: string): Date {
+    const [y, m, d] = isoDate.split('-').map((x) => Number.parseInt(x, 10));
+    return new Date(y, (m || 1) - 1, d || 1);
+  }
+
+  private capitalize(s: string): string {
+    if (!s) return s;
+    return s.charAt(0).toLocaleUpperCase('es') + s.slice(1);
+  }
+
   private async loadSlots(): Promise<void> {
     if (!this.flow.value.service) return;
-    const availability = await firstValueFrom(
-      this.api.getAvailability(this.tenantSlug, this.flow.value.service.id, this.selectedDay),
-    );
-    this.slots = availability.slots;
+    this.slotsLoading = true;
+    this.slots = [];
+    this.cdr.markForCheck();
+    try {
+      const availability = await firstValueFrom(
+        this.api.getAvailability(this.tenantSlug, this.flow.value.service.id, this.selectedDay),
+      );
+      this.slots = availability.slots;
+    } catch {
+      this.slots = [];
+    } finally {
+      this.slotsLoading = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async reloadServices(): Promise<void> {

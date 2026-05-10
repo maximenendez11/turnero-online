@@ -1,9 +1,31 @@
 <main class="booking-shell">
   <header>
     <h1>{{ businessName || 'Reserva Publica' }}</h1>
-    <p>{{ stepTitle }}</p>
-    <div class="steps">
-      <span *ngFor="let n of [1, 2, 3, 4]" [class.active]="n <= step">{{ n }}</span>
+    <p class="header-subtitle">{{ stepTitle }}</p>
+    <div class="booking-stepper" role="list" aria-label="Progreso de la reserva">
+      <ng-container *ngFor="let n of [1, 2, 3, 4]; let i = index">
+        <div class="stepper-item" role="listitem">
+          <div
+            class="stepper-node"
+            [class.done]="step > n"
+            [class.current]="step === n"
+            [class.todo]="step < n"
+            [attr.aria-current]="step === n ? 'step' : null"
+            [attr.aria-label]="stepAriaLabel(i, n)"
+          >
+            <span class="stepper-check" *ngIf="step > n" aria-hidden="true">&#10003;</span>
+            <span class="stepper-num" *ngIf="step <= n">{{ n }}</span>
+          </div>
+          <span class="stepper-caption">{{ stepperLabels[i] }}</span>
+        </div>
+        <div
+          *ngIf="i < 3"
+          class="stepper-connector"
+          [class.done]="step > n"
+          role="presentation"
+          aria-hidden="true"
+        ></div>
+      </ng-container>
     </div>
   </header>
 
@@ -42,27 +64,62 @@
       </p>
     </div>
 
-    <div *ngIf="step === 2">
-      <div class="days">
-        <button type="button" *ngFor="let day of days" [class.selected]="day === selectedDay" (click)="pickDay(day)">
-          {{ day }}
-        </button>
+    <div *ngIf="step === 2" class="datetime-picker">
+      <div class="datetime-section">
+        <h3 class="datetime-heading">Fecha</h3>
+        <p class="datetime-hint">Elegí el día de tu cita.</p>
+        <div class="day-strip" role="tablist" aria-label="Días disponibles">
+          <button
+            type="button"
+            *ngFor="let day of days"
+            role="tab"
+            class="day-chip"
+            [class.selected]="day === selectedDay"
+            [attr.aria-selected]="day === selectedDay"
+            (click)="pickDay(day)"
+          >
+            <span class="day-chip-dow">{{ dayParts(day).dow }}</span>
+            <span class="day-chip-num">{{ dayParts(day).dayNum }}</span>
+            <span class="day-chip-mon">{{ dayParts(day).month }}</span>
+          </button>
+        </div>
       </div>
-      <div class="slots">
-        <button
-          type="button"
-          *ngFor="let slot of slots"
-          [class.selected]="flow.value.startsAt === slot"
-          (click)="pickSlot(slot)"
-        >
-          {{ slot | date: 'HH:mm' }}
-        </button>
+
+      <div class="datetime-section">
+        <h3 class="datetime-heading">Hora</h3>
+        <p class="datetime-hint" *ngIf="slotsLoading">Cargando horarios disponibles…</p>
+        <p class="datetime-hint" *ngIf="!slotsLoading">Horarios libres para el día elegido.</p>
+
+        <div class="slots-skeleton" *ngIf="slotsLoading" aria-hidden="true">
+          <span class="slot-skel" *ngFor="let _ of [1, 2, 3, 4, 5, 6, 7, 8]"></span>
+        </div>
+
+        <div class="slots-grid" *ngIf="!slotsLoading && slots.length > 0">
+          <button
+            type="button"
+            *ngFor="let slot of slots"
+            class="slot-chip"
+            [class.selected]="flow.value.startsAt === slot"
+            (click)="pickSlot(slot)"
+          >
+            {{ slotTimeLabel(slot) }}
+          </button>
+        </div>
+
+        <p class="empty-msg slots-empty" *ngIf="!slotsLoading && slots.length === 0">
+          No hay horarios disponibles para esta fecha. Probá con otro día.
+        </p>
       </div>
+
+      <p class="selection-preview" *ngIf="flow.value.startsAt">
+        <span class="selection-preview-label">Selección</span>
+        {{ selectedSlotSummary() }}
+      </p>
     </div>
 
     <div *ngIf="step === 3" class="confirm">
       <p><strong>Servicio:</strong> {{ flow.value.service?.name }}</p>
-      <p><strong>Horario:</strong> {{ flow.value.startsAt | date: 'dd/MM HH:mm' }}</p>
+      <p><strong>Horario:</strong> {{ confirmHorarioLine() }}</p>
       <label>
         Nombre completo
         <input [(ngModel)]="customerFullName" name="customerFullName" />
@@ -80,7 +137,7 @@
         <p><strong>Servicio:</strong> {{ b.service?.name || '—' }}</p>
         <p *ngIf="b.customerFullName"><strong>Cliente:</strong> {{ b.customerFullName }}</p>
         <p *ngIf="b.customerContact"><strong>Contacto:</strong> {{ b.customerContact }}</p>
-        <p><strong>Horario:</strong> {{ b.startsAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+        <p><strong>Horario:</strong> {{ formatBookingInstant(b.startsAt) }}</p>
         <p><strong>Estado:</strong> {{ b.status }}</p>
       </ng-container>
       <p *ngIf="!successBookingLoading && !confirmedBooking && bookingCode" class="muted">
@@ -92,12 +149,12 @@
     </div>
   </section>
 
-  <footer class="summary">
-    <div>
+  <footer class="summary" [class.summary--stack]="step === 4">
+    <div class="summary-main">
       <strong>Resumen</strong>
-      <p *ngIf="step !== 4">{{ flow.value.service?.name || '-' }} · {{ flow.value.startsAt ? (flow.value.startsAt | date: 'dd/MM HH:mm') : '-' }}</p>
+      <p *ngIf="step !== 4">{{ flow.value.service?.name || '-' }} · {{ summaryScheduleShort() }}</p>
       <p *ngIf="step === 4 && confirmedBooking">
-        {{ confirmedBooking.service?.name || '—' }} · {{ confirmedBooking.startsAt | date: 'dd/MM HH:mm' }}
+        {{ confirmedBooking.service?.name || '—' }} · {{ formatBookingInstantShort(confirmedBooking.startsAt) }}
       </p>
       <p *ngIf="step === 4 && !confirmedBooking">{{ bookingCode || '—' }}</p>
     </div>
