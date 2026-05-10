@@ -1,113 +1,269 @@
-<section class="admin-page">
+<section class="admin-page" [attr.aria-busy]="saving()">
   <header class="admin-page__head">
-    <h1>Negocio</h1>
-    <p class="muted">Datos del comercio, horarios de apertura y servicios.</p>
+    <h1>Mi negocio</h1>
+    <p class="lead">Editá la ficha pública, los horarios en los que aceptás reservas y el catálogo de servicios.</p>
   </header>
 
-  <p class="error" *ngIf="error()">{{ error() }}</p>
-  <p class="muted" *ngIf="loading()">Cargando…</p>
+  <div class="notice notice--ok" *ngIf="notice()?.kind === 'ok'" role="status">{{ notice()!.text }}</div>
+  <div class="notice notice--err" *ngIf="notice()?.kind === 'err'" role="alert">{{ notice()!.text }}</div>
+  <p class="error" *ngIf="error() && !notice()">{{ error() }}</p>
 
-  <div *ngIf="!loading() && businesses().length === 0" class="muted">
-    No tenés ningún negocio asignado. Completá el onboarding o pedí acceso de administrador.
+  <div class="skeleton" *ngIf="loading()">
+    <div class="skeleton__line"></div>
+    <div class="skeleton__line skeleton__line--short"></div>
   </div>
 
-  <div *ngIf="!loading() && businesses().length > 0" class="panels">
-    <div class="field-row" *ngIf="businesses().length > 1">
-      <label>
-        <span>Negocio a editar</span>
-        <select [(ngModel)]="selectedBusinessId" (ngModelChange)="onBusinessChange()">
+  <div *ngIf="!loading() && businesses().length === 0" class="empty-state">
+    <p>No hay ningún negocio vinculado a tu cuenta.</p>
+    <p class="muted">Completá el onboarding o iniciá sesión con un usuario administrador.</p>
+  </div>
+
+  <div *ngIf="!loading() && businesses().length > 0" class="stack">
+    <div class="toolbar" *ngIf="businesses().length > 1">
+      <label class="toolbar__field">
+        <span class="label-caps">Negocio</span>
+        <select
+          class="input input--lg"
+          [(ngModel)]="selectedBusinessId"
+          (ngModelChange)="onBusinessChange()"
+          [attr.aria-label]="'Elegir negocio a editar'"
+        >
           <option *ngFor="let b of businesses()" [value]="b.id">{{ b.name }}</option>
         </select>
       </label>
     </div>
 
     <ng-container *ngIf="detail as d">
-      <article class="card">
-        <h2>Datos generales</h2>
-        <div class="grid2">
-          <label><span>Nombre</span><input [(ngModel)]="d.name" /></label>
-          <label><span>Slug público</span><input [(ngModel)]="d.slug" /></label>
-          <label class="full"><span>Dirección</span><input [(ngModel)]="d.address" /></label>
-          <label class="full"><span>Descripción</span><textarea rows="2" [(ngModel)]="d.description"></textarea></label>
-          <label><span>Zona horaria</span><input [(ngModel)]="d.timezone" /></label>
-          <label><span>Intervalo reservas (min)</span><input type="number" [(ngModel)]="d.bookingIntervalMin" /></label>
-          <label><span>Estado</span>
-            <select [(ngModel)]="d.status">
-              <option value="active">Activo</option>
-              <option value="inactive">Inactivo</option>
-            </select>
-          </label>
+      <div class="settings-tabs">
+        <div class="settings-tabs__list" role="tablist" aria-label="Secciones de configuración del negocio">
+          <button
+            type="button"
+            class="settings-tabs__tab"
+            role="tab"
+            id="tab-datos"
+            [class.settings-tabs__tab--active]="settingsTab() === 'datos'"
+            [attr.aria-selected]="settingsTab() === 'datos'"
+            [attr.tabindex]="settingsTab() === 'datos' ? 0 : -1"
+            (click)="setSettingsTab('datos')"
+          >
+            Datos
+          </button>
+          <button
+            type="button"
+            class="settings-tabs__tab"
+            role="tab"
+            id="tab-horarios"
+            [class.settings-tabs__tab--active]="settingsTab() === 'horarios'"
+            [attr.aria-selected]="settingsTab() === 'horarios'"
+            [attr.tabindex]="settingsTab() === 'horarios' ? 0 : -1"
+            (click)="setSettingsTab('horarios')"
+          >
+            Horarios
+          </button>
+          <button
+            type="button"
+            class="settings-tabs__tab"
+            role="tab"
+            id="tab-servicios"
+            [class.settings-tabs__tab--active]="settingsTab() === 'servicios'"
+            [attr.aria-selected]="settingsTab() === 'servicios'"
+            [attr.tabindex]="settingsTab() === 'servicios' ? 0 : -1"
+            (click)="setSettingsTab('servicios')"
+          >
+            Servicios
+          </button>
         </div>
-        <button type="button" class="btn-primary" [disabled]="saving()" (click)="saveCore()">Guardar datos</button>
-      </article>
 
-      <article class="card">
-        <h2>Horarios (minutos desde medianoche)</h2>
-        <p class="hint">Día 0 = domingo … 6 = sábado. Varios tramos el mismo día = varias filas con el mismo día.</p>
-        <table class="mini">
-          <thead>
-            <tr>
-              <th>Día</th>
-              <th>Inicio (min)</th>
-              <th>Fin (min)</th>
-              <th>Orden</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let w of windowsDraft; let i = index">
-              <td>
-                <select [(ngModel)]="w.weekday">
-                  <option *ngFor="let label of weekdayLabels; let day = index" [ngValue]="day">{{ day }} — {{ label }}</option>
-                </select>
-              </td>
-              <td><input type="number" [(ngModel)]="w.startMin" /></td>
-              <td><input type="number" [(ngModel)]="w.endMin" /></td>
-              <td><input type="number" [(ngModel)]="w.sortOrder" /></td>
-              <td><button type="button" class="btn-ghost" (click)="removeWindowRow(i)">Quitar</button></td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="row-actions">
-          <button type="button" class="btn-ghost" (click)="addWindowRow()">Agregar tramo</button>
-          <button type="button" class="btn-primary" [disabled]="saving()" (click)="saveWindows()">Guardar horarios</button>
+        <div class="settings-tabs__panels">
+          <div
+            class="settings-tabs__panel"
+            role="tabpanel"
+            id="panel-datos"
+            aria-labelledby="tab-datos"
+            [hidden]="settingsTab() !== 'datos'"
+          >
+            <article class="card" aria-labelledby="sec-datos">
+              <div class="card__head">
+                <h2 id="sec-datos">Datos generales</h2>
+                <p class="card__hint">Nombre, dirección y estado se muestran en la búsqueda pública.</p>
+              </div>
+              <fieldset class="field-grid" [disabled]="saving()">
+                <legend class="sr-only">Datos del comercio</legend>
+                <label class="span-2">
+                  <span class="label-caps">Nombre del negocio</span>
+                  <input class="input" [(ngModel)]="d.name" autocomplete="organization" />
+                </label>
+                <label>
+                  <span class="label-caps">Slug público</span>
+                  <input class="input" [(ngModel)]="d.slug" spellcheck="false" autocapitalize="off" />
+                  <span class="micro-hint" *ngIf="publicBookingPreview">Reserva pública: <code>{{ publicBookingPreview }}</code></span>
+                </label>
+                <label>
+                  <span class="label-caps">Estado</span>
+                  <select class="input" [(ngModel)]="d.status">
+                    <option value="active">Activo (visible para reservas)</option>
+                    <option value="inactive">Inactivo</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  <span class="label-caps">Dirección</span>
+                  <input class="input" [(ngModel)]="d.address" autocomplete="street-address" />
+                </label>
+                <label class="span-2">
+                  <span class="label-caps">Descripción</span>
+                  <textarea class="input input--area" rows="3" [(ngModel)]="d.description"></textarea>
+                </label>
+                <label>
+                  <span class="label-caps">Zona horaria</span>
+                  <input class="input" [(ngModel)]="d.timezone" />
+                </label>
+                <label>
+                  <span class="label-caps">Intervalo entre turnos (min)</span>
+                  <input class="input" type="number" min="5" step="5" [(ngModel)]="d.bookingIntervalMin" />
+                  <span class="micro-hint">Ej. 30: el cliente ve franjas cada 30 min dentro de tus horarios.</span>
+                </label>
+              </fieldset>
+              <footer class="card__footer">
+                <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="saveCore()">
+                  {{ saving() ? 'Guardando…' : 'Guardar datos' }}
+                </button>
+              </footer>
+            </article>
+          </div>
+
+          <div
+            class="settings-tabs__panel"
+            role="tabpanel"
+            id="panel-horarios"
+            aria-labelledby="tab-horarios"
+            [hidden]="settingsTab() !== 'horarios'"
+          >
+            <article class="card" aria-labelledby="sec-horarios">
+              <div class="card__head">
+                <h2 id="sec-horarios">Horarios de apertura</h2>
+                <p class="card__hint">Definí en qué días y rangas horarias se ofrecen turnos. Podés sumar varias filas el mismo día (ej. mañana y tarde).</p>
+              </div>
+              <div class="hours-list" role="list">
+                <div class="hours-row" *ngFor="let w of windowsDraft; let i = index" role="listitem">
+                  <label class="hours-row__day">
+                    <span class="label-caps">Día</span>
+                    <select class="input" [(ngModel)]="w.weekday">
+                      <option *ngFor="let label of weekdayLabels; let day = index" [ngValue]="day">{{ label }}</option>
+                    </select>
+                  </label>
+                  <label class="hours-row__time hours-row__time--from">
+                    <span class="label-caps">Desde</span>
+                    <input
+                      class="input"
+                      type="time"
+                      [ngModel]="minutesToTime(w.startMin)"
+                      (ngModelChange)="setStartFromTime(w, $event)"
+                    />
+                  </label>
+                  <label class="hours-row__time hours-row__time--to">
+                    <span class="label-caps">Hasta</span>
+                    <input
+                      class="input"
+                      type="time"
+                      [ngModel]="minutesToTime(w.endMin)"
+                      (ngModelChange)="setEndFromTime(w, $event)"
+                    />
+                  </label>
+                  <button type="button" class="btn btn--ghost hours-row__remove" (click)="removeWindowRow(i)" [attr.aria-label]="'Quitar tramo ' + (i + 1)">
+                    Quitar
+                  </button>
+                </div>
+              </div>
+              <p class="muted tiny" *ngIf="windowsDraft.length === 0">Todavía no hay tramos. Agregá al menos uno para que aparezcan turnos disponibles.</p>
+              <footer class="card__footer card__footer--split">
+                <button type="button" class="btn btn--ghost" (click)="addWindowRow()">+ Agregar tramo</button>
+                <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="saveWindows()">
+                  {{ saving() ? 'Guardando…' : 'Guardar horarios' }}
+                </button>
+              </footer>
+            </article>
+          </div>
+
+          <div
+            class="settings-tabs__panel"
+            role="tabpanel"
+            id="panel-servicios"
+            aria-labelledby="tab-servicios"
+            [hidden]="settingsTab() !== 'servicios'"
+          >
+            <article class="card" aria-labelledby="sec-servicios">
+              <div class="card__head">
+                <h2 id="sec-servicios">Servicios</h2>
+                <p class="card__hint">Nombre, duración y precio son los que ve el cliente al reservar.</p>
+              </div>
+
+              <div class="service-cards">
+                <div class="service-card" *ngFor="let s of d.services">
+                  <div class="service-card__top">
+                    <label class="grow">
+                      <span class="label-caps">Nombre</span>
+                      <input class="input" [(ngModel)]="s.name" />
+                    </label>
+                    <label class="service-card__active">
+                      <input type="checkbox" [(ngModel)]="s.isActive" />
+                      <span>Visible</span>
+                    </label>
+                  </div>
+                  <label>
+                    <span class="label-caps">Descripción</span>
+                    <input class="input" [(ngModel)]="s.description" />
+                  </label>
+                  <div class="service-card__nums">
+                    <label>
+                      <span class="label-caps">Duración (min)</span>
+                      <input class="input" type="number" min="5" step="5" [(ngModel)]="s.durationMin" />
+                    </label>
+                    <label>
+                      <span class="label-caps">Precio</span>
+                      <input
+                        class="input"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        [ngModel]="priceNumber(s)"
+                        (ngModelChange)="setServicePrice(s, $event)"
+                      />
+                    </label>
+                  </div>
+                  <div class="service-card__actions">
+                    <button type="button" class="btn btn--primary btn--sm" [disabled]="saving()" (click)="saveService(s)">Guardar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="new-service">
+                <h3 class="new-service__title" id="new-svc">Alta rápida de servicio</h3>
+                <div class="new-service__grid" [attr.aria-labelledby]="'new-svc'">
+                  <label>
+                    <span class="label-caps">Nombre</span>
+                    <input class="input" [(ngModel)]="newService.name" placeholder="Ej. Corte clásico" />
+                  </label>
+                  <label>
+                    <span class="label-caps">Duración (min)</span>
+                    <input class="input" type="number" min="5" [(ngModel)]="newService.durationMin" />
+                  </label>
+                  <label>
+                    <span class="label-caps">Precio</span>
+                    <input class="input" type="number" min="0" step="0.01" [(ngModel)]="newService.price" />
+                  </label>
+                  <label class="span-row">
+                    <span class="label-caps">Descripción (opcional)</span>
+                    <input class="input" [(ngModel)]="newService.description" />
+                  </label>
+                </div>
+                <button type="button" class="btn btn--secondary" [disabled]="saving() || !newService.name.trim()" (click)="addService()">
+                  Añadir servicio
+                </button>
+              </div>
+            </article>
+          </div>
         </div>
-      </article>
-
-      <article class="card">
-        <h2>Servicios</h2>
-        <table class="mini">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Min</th>
-              <th>Precio</th>
-              <th>Activo</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let s of d.services">
-              <td><input [(ngModel)]="s.name" /></td>
-              <td><input [(ngModel)]="s.description" /></td>
-              <td><input type="number" [(ngModel)]="s.durationMin" /></td>
-              <td><input type="number" [ngModel]="priceNumber(s)" (ngModelChange)="setServicePrice(s, $event)" /></td>
-              <td><input type="checkbox" [(ngModel)]="s.isActive" /></td>
-              <td><button type="button" class="btn-primary" [disabled]="saving()" (click)="saveService(s)">Guardar</button></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 class="sub">Nuevo servicio</h3>
-        <div class="grid2">
-          <label><span>Nombre</span><input [(ngModel)]="newService.name" /></label>
-          <label><span>Duración (min)</span><input type="number" [(ngModel)]="newService.durationMin" /></label>
-          <label><span>Precio</span><input type="number" [(ngModel)]="newService.price" /></label>
-          <label class="full"><span>Descripción</span><input [(ngModel)]="newService.description" /></label>
-        </div>
-        <button type="button" class="btn-primary" [disabled]="saving()" (click)="addService()">Crear servicio</button>
-      </article>
+      </div>
     </ng-container>
   </div>
 </section>

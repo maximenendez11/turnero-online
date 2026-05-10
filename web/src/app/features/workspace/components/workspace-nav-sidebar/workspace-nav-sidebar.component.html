@@ -1,26 +1,48 @@
-<nav
-  class="nav-sidebar"
-  [class.nav-sidebar--rail]="variant === 'rail'"
-  [class.nav-sidebar--compact]="variant === 'compact'"
-  [attr.aria-label]="variant === 'rail' ? 'Navegación principal del workspace' : 'Accesos rápidos del workspace'"
->
-  <div class="nav-sidebar__brand">
-    <span class="nav-sidebar__eyebrow">{{ eyebrow }}</span>
-    <h2 class="nav-sidebar__title">{{ title }}</h2>
-  </div>
+<ng-container [ngSwitch]="variant">
+  <nav
+    *ngSwitchCase="'rail'"
+    class="nav-sidebar nav-sidebar--rail"
+    aria-label="Navegación principal del workspace"
+  >
+    <div class="nav-sidebar__brand">
+      <span class="nav-sidebar__eyebrow">{{ eyebrow }}</span>
+      <h2 class="nav-sidebar__title">{{ title }}</h2>
+    </div>
 
-  <p class="nav-sidebar__section-label">Menú</p>
+    <p class="nav-sidebar__section-label">Menú</p>
 
-  <ul class="nav-sidebar__list">
-    <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__item">
-      <a
-        class="nav-sidebar__link"
-        [routerLink]="link.path"
-        routerLinkActive="nav-sidebar__link--active"
-        [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
-      >
-        <span class="nav-sidebar__link-text">{{ link.label }}</span>
-      </a>
-    </li>
-  </ul>
-</nav>
+    <ul class="nav-sidebar__list">
+      <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__item">
+        <a
+          class="nav-sidebar__link"
+          [routerLink]="link.path"
+          routerLinkActive="nav-sidebar__link--active"
+          [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
+        >
+          <span class="nav-sidebar__link-text">{{ link.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <nav *ngSwitchCase="'topbar'" class="nav-sidebar nav-sidebar--topbar" aria-label="Navegación del workspace">
+    <div class="nav-sidebar__topbar-inner">
+      <div class="nav-sidebar__topbar-brand">
+        <span class="nav-sidebar__eyebrow nav-sidebar__eyebrow--topbar">{{ eyebrow }}</span>
+        <span class="nav-sidebar__topbar-title">{{ title }}</span>
+      </div>
+      <ul class="nav-sidebar__topbar-list">
+        <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__topbar-item">
+          <a
+            class="nav-sidebar__link nav-sidebar__link--topbar"
+            [routerLink]="link.path"
+            routerLinkActive="nav-sidebar__link--active"
+            [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
+          >
+            {{ link.label }}
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</ng-container>

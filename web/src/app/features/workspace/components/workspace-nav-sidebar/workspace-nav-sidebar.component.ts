@@ -3,7 +3,8 @@ import { Component, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { WORKSPACE_NAV_LINKS, type WorkspaceNavLink } from '../../workspace-nav.config';
 
-export type WorkspaceNavSidebarVariant = 'rail' | 'compact';
+/** `rail`: columna lateral (desktop). `topbar`: barra horizontal (móvil, con el sidebar oculto en el layout). */
+export type WorkspaceNavSidebarVariant = 'rail' | 'topbar';
 
 @Component({
   standalone: true,
@@ -20,7 +21,6 @@ export class WorkspaceNavSidebarComponent {
   protected readonly linkActiveExact = { exact: true };
   protected readonly linkActiveSubset = { exact: false };
 
-  /** Rail fijo (desktop) o rejilla compacta (móvil). */
   @Input() variant: WorkspaceNavSidebarVariant = 'rail';
 
   /** Marca de sección / producto. */

@@ -18,8 +18,11 @@
   flex-direction: column;
 }
 
-.workspace-layout__mobile-nav {
-  padding: dv.$dv-space-md dv.$dv-space-md 0;
+.workspace-layout__mobile-topnav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 0;
 }
 
 .workspace-layout__top {
@@ -53,7 +56,7 @@
     min-height: 100vh;
   }
 
-  .workspace-layout__mobile-nav {
+  .workspace-layout__mobile-topnav {
     display: none;
   }
 }

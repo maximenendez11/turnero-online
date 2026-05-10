@@ -102,30 +102,73 @@
   flex: 1;
 }
 
-/* Variante compacta: móvil, misma jerarquía visual en rejilla */
-.nav-sidebar--compact {
-  padding: 0;
+/* Barra superior en móvil (el rail va en aside oculto < breakpoint) */
+.nav-sidebar--topbar {
+  width: 100%;
+  border-bottom: 1px solid dv.$dv-outline-variant;
+  background: color-mix(in srgb, dv.$dv-surface-container-low 94%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
-.nav-sidebar--compact .nav-sidebar__brand,
-.nav-sidebar--compact .nav-sidebar__section-label {
-  display: none;
-}
-
-.nav-sidebar--compact .nav-sidebar__list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.nav-sidebar__topbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: dv.$dv-space-sm;
+  padding: 0.6rem dv.$dv-space-md;
+  max-width: 100%;
 }
 
-.nav-sidebar--compact .nav-sidebar__link {
-  text-align: center;
+.nav-sidebar__topbar-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.nav-sidebar__eyebrow--topbar {
+  margin-bottom: 0;
+  font-size: 10px;
+}
+
+.nav-sidebar__topbar-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: dv.$dv-on-surface;
+  line-height: 1.25;
+}
+
+.nav-sidebar__topbar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.nav-sidebar__topbar-item {
+  margin: 0;
+}
+
+.nav-sidebar__link--topbar {
+  white-space: nowrap;
+  padding: 0.42rem 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 500;
+  border-radius: dv.$dv-radius-lg;
   border: 1px solid dv.$dv-outline-variant;
-  border-radius: dv.$dv-radius-xl;
-  padding: 0.48rem 0.55rem;
-  background: color-mix(in srgb, dv.$dv-surface-container 80%, transparent);
+  background: color-mix(in srgb, dv.$dv-surface-container 75%, transparent);
 }
 
-.nav-sidebar--compact .nav-sidebar__link:hover {
-  border-color: color-mix(in srgb, dv.$dv-outline-variant 70%, dv.$dv-primary 30%);
+.nav-sidebar__link--topbar:hover {
+  border-color: color-mix(in srgb, dv.$dv-outline-variant 65%, dv.$dv-primary 35%);
+}
+
+.nav-sidebar--topbar .nav-sidebar__link--active {
+  border-color: color-mix(in srgb, dv.$dv-primary 45%, dv.$dv-outline-variant);
 }

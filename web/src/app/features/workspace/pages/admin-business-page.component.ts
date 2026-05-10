@@ -10,6 +10,10 @@ import {
 } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
 
+export type WindowDraft = { weekday: number; startMin: number; endMin: number };
+
+export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios';
+
 @Component({
   standalone: true,
   selector: 'app-admin-business-page',
@@ -20,22 +24,62 @@ import { apiErrorMessage } from '../../../core/utils/api-error-message';
 export class AdminBusinessPageComponent {
   private readonly api = inject(AdminApiService);
 
-  readonly weekdayLabels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+  readonly weekdayLabels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   readonly businesses = signal<AdminBusinessListItem[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  readonly notice = signal<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  /** Pestaña activa en la configuración del negocio (solo con `detail` cargado). */
+  readonly settingsTab = signal<BusinessSettingsTab>('datos');
 
   selectedBusinessId = '';
   detail: AdminBusinessDetail | null = null;
-
-  /** Copia editable de ventanas para PUT */
-  windowsDraft: { weekday: number; startMin: number; endMin: number; sortOrder: number }[] = [];
-
+  windowsDraft: WindowDraft[] = [];
   newService = { name: '', description: '', durationMin: 45, price: 0 };
+
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     void this.init();
+  }
+
+  get publicBookingPreview(): string {
+    const slug = this.detail?.slug?.trim();
+    return slug ? `/${slug}/book/service` : '';
+  }
+
+  minutesToTime(m: number): string {
+    const clamped = Math.max(0, Math.min(24 * 60, Math.round(m)));
+    const h = Math.floor(clamped / 60);
+    const min = clamped % 60;
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+  }
+
+  setStartFromTime(w: WindowDraft, time: string): void {
+    w.startMin = this.timeToMinutes(time);
+  }
+
+  setEndFromTime(w: WindowDraft, time: string): void {
+    w.endMin = this.timeToMinutes(time);
+  }
+
+  private timeToMinutes(time: string): number {
+    const [h, m] = time.split(':').map((x) => Number(x));
+    if (Number.isNaN(h)) return 0;
+    return Math.min(24 * 60, Math.max(0, h * 60 + (Number.isNaN(m) ? 0 : m)));
+  }
+
+  private flash(kind: 'ok' | 'err', text: string): void {
+    if (this.noticeTimer) {
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = null;
+    }
+    this.notice.set({ kind, text });
+    this.noticeTimer = setTimeout(() => {
+      this.notice.set(null);
+      this.noticeTimer = null;
+    }, 4500);
   }
 
   private async init(): Promise<void> {
@@ -56,7 +100,12 @@ export class AdminBusinessPageComponent {
   }
 
   async onBusinessChange(): Promise<void> {
+    this.settingsTab.set('datos');
     await this.loadDetail();
+  }
+
+  setSettingsTab(tab: BusinessSettingsTab): void {
+    this.settingsTab.set(tab);
   }
 
   async loadDetail(): Promise<void> {
@@ -78,7 +127,6 @@ export class AdminBusinessPageComponent {
         weekday: w.weekday,
         startMin: w.startMin,
         endMin: w.endMin,
-        sortOrder: w.sortOrder,
       }));
     } catch (e) {
       this.error.set(apiErrorMessage(e));
@@ -87,7 +135,7 @@ export class AdminBusinessPageComponent {
   }
 
   addWindowRow(): void {
-    this.windowsDraft.push({ weekday: 1, startMin: 9 * 60, endMin: 18 * 60, sortOrder: 0 });
+    this.windowsDraft.push({ weekday: 1, startMin: 9 * 60, endMin: 18 * 60 });
   }
 
   removeWindowRow(i: number): void {
@@ -102,7 +150,7 @@ export class AdminBusinessPageComponent {
       const d = await firstValueFrom(
         this.api.patchBusiness(this.detail.id, {
           name: this.detail.name,
-          slug: this.detail.slug,
+          slug: this.detail.slug || null,
           description: this.detail.description,
           address: this.detail.address,
           timezone: this.detail.timezone,
@@ -110,15 +158,18 @@ export class AdminBusinessPageComponent {
           status: this.detail.status,
         }),
       );
-      this.detail = d;
-      this.windowsDraft = d.openingWindows.map((w) => ({
-        weekday: w.weekday,
-        startMin: w.startMin,
-        endMin: w.endMin,
-        sortOrder: w.sortOrder,
-      }));
+      this.detail = {
+        ...d,
+        description: d.description ?? '',
+        slug: d.slug ?? '',
+        services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
+      };
+      this.syncWindowsFromDetail();
+      this.error.set(null);
+      this.flash('ok', 'Datos del negocio guardados.');
     } catch (e) {
       this.error.set(apiErrorMessage(e));
+      this.flash('err', apiErrorMessage(e));
     } finally {
       this.saving.set(false);
     }
@@ -128,20 +179,38 @@ export class AdminBusinessPageComponent {
     if (!this.detail) return;
     this.saving.set(true);
     this.error.set(null);
+    const windows = this.windowsDraft.map((w, i) => ({
+      weekday: w.weekday,
+      startMin: w.startMin,
+      endMin: w.endMin,
+      sortOrder: i,
+    }));
     try {
-      const d = await firstValueFrom(this.api.replaceOpeningWindows(this.detail.id, this.windowsDraft));
-      this.detail = d;
-      this.windowsDraft = d.openingWindows.map((w) => ({
-        weekday: w.weekday,
-        startMin: w.startMin,
-        endMin: w.endMin,
-        sortOrder: w.sortOrder,
-      }));
+      const d = await firstValueFrom(this.api.replaceOpeningWindows(this.detail.id, windows));
+      this.detail = {
+        ...d,
+        description: d.description ?? '',
+        slug: d.slug ?? '',
+        services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
+      };
+      this.syncWindowsFromDetail();
+      this.error.set(null);
+      this.flash('ok', 'Horarios actualizados.');
     } catch (e) {
       this.error.set(apiErrorMessage(e));
+      this.flash('err', apiErrorMessage(e));
     } finally {
       this.saving.set(false);
     }
+  }
+
+  private syncWindowsFromDetail(): void {
+    if (!this.detail) return;
+    this.windowsDraft = this.detail.openingWindows.map((w) => ({
+      weekday: w.weekday,
+      startMin: w.startMin,
+      endMin: w.endMin,
+    }));
   }
 
   async addService(): Promise<void> {
@@ -159,8 +228,11 @@ export class AdminBusinessPageComponent {
       );
       this.newService = { name: '', description: '', durationMin: 45, price: 0 };
       await this.loadDetail();
+      this.error.set(null);
+      this.flash('ok', 'Servicio creado.');
     } catch (e) {
       this.error.set(apiErrorMessage(e));
+      this.flash('err', apiErrorMessage(e));
     } finally {
       this.saving.set(false);
     }
@@ -188,8 +260,11 @@ export class AdminBusinessPageComponent {
         }),
       );
       await this.loadDetail();
+      this.error.set(null);
+      this.flash('ok', `Servicio «${s.name}» guardado.`);
     } catch (e) {
       this.error.set(apiErrorMessage(e));
+      this.flash('err', apiErrorMessage(e));
     } finally {
       this.saving.set(false);
     }
