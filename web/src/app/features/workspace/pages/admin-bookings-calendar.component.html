@@ -1,0 +1,77 @@
+<div class="booking-cal">
+  <div class="booking-cal__toolbar">
+    <div class="booking-cal__nav" role="group" aria-label="Cambiar mes del calendario">
+      <button type="button" class="booking-cal__nav-btn" (click)="prevMonth.emit()" aria-label="Mes anterior">
+        ‹
+      </button>
+      <span class="booking-cal__month" id="booking-cal-month-label" aria-live="polite">{{
+        monthLabel()
+      }}</span>
+      <button type="button" class="booking-cal__nav-btn" (click)="nextMonth.emit()" aria-label="Mes siguiente">
+        ›
+      </button>
+      <button type="button" class="booking-cal__today" (click)="goToday.emit()">Hoy</button>
+    </div>
+
+    <ul class="booking-cal__legend" aria-hidden="true">
+      <li><span class="booking-cal__dot booking-cal__dot--confirmed"></span> Confirmado</li>
+      <li><span class="booking-cal__dot booking-cal__dot--pending"></span> Pendiente</li>
+      <li><span class="booking-cal__dot booking-cal__dot--cancelled"></span> Cancelado</li>
+    </ul>
+  </div>
+
+  <div class="booking-cal__scroll" tabindex="0">
+    <div class="booking-cal__weekdays" aria-hidden="true">
+      <span>Lun</span>
+      <span>Mar</span>
+      <span>Mié</span>
+      <span>Jue</span>
+      <span>Vie</span>
+      <span>Sáb</span>
+      <span>Dom</span>
+    </div>
+
+    <div class="booking-cal__grid" role="grid" aria-labelledby="booking-cal-month-label">
+      @for (cell of cells(); track cell.trackKey) {
+        <div
+          class="booking-cal__cell"
+          [class.booking-cal__cell--muted]="!cell.inMonth"
+          [class.booking-cal__cell--today]="cell.isToday"
+          role="gridcell"
+          [attr.aria-label]="cellAriaLabel(cell)"
+        >
+          <span class="booking-cal__daynum">{{ cell.dayNum }}</span>
+          <div class="booking-cal__events">
+            @for (row of cell.bookings; track row.id) {
+              <button
+                type="button"
+                class="booking-cal__event"
+                [class.booking-cal__event--confirmed]="row.status !== 'pending' && row.status !== 'cancelled'"
+                [class.booking-cal__event--pending]="row.status === 'pending'"
+                [class.booking-cal__event--cancelled]="row.status === 'cancelled'"
+                [class.booking-cal__event--selected]="selectedBookingId() === row.id"
+                [attr.aria-label]="eventAriaLabel(row)"
+                (click)="onBookingClick(row)"
+              >
+                <span class="booking-cal__event-time">{{ formatTime(row.startsAt) }}</span>
+                <span class="booking-cal__event-title">{{ row.service.name }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <p class="booking-cal__hint booking-cal__hint--empty" *ngIf="totalBookings() === 0">
+    No hay turnos cargados todavía.
+  </p>
+  <p
+    class="booking-cal__hint"
+    *ngIf="totalBookings() > 0 && bookingsInVisibleMonth() === 0"
+    role="status"
+  >
+    No hay turnos en este mes. Tenés {{ totalBookings() }} en total — usá las flechas para ir al mes donde caen las
+    reservas.
+  </p>
+</div>

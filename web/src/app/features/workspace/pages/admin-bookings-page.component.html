@@ -4,7 +4,7 @@
     <p class="muted">Calendario de reservas de los negocios a los que tenés acceso.</p>
   </header>
 
-  <div class="toolbar toolbar--split">
+  <div class="toolbar">
     <label *ngIf="businesses().length > 1">
       <span>Negocio</span>
       <select [ngModel]="filterBusinessId()" (ngModelChange)="onFilterBusinessChange($event)">
@@ -13,66 +13,56 @@
       </select>
     </label>
 
-    <div class="cal-nav" *ngIf="!loading()">
-      <button type="button" class="cal-nav__btn" (click)="prevMonth()" aria-label="Mes anterior">‹</button>
-      <span class="cal-nav__label">{{ viewMonthLabel() }}</span>
-      <button type="button" class="cal-nav__btn" (click)="nextMonth()" aria-label="Mes siguiente">›</button>
-      <button type="button" class="cal-nav__today" (click)="goToday()">Hoy</button>
+    <div class="view-tabs" role="tablist" aria-label="Vista de turnos">
+      <button
+        type="button"
+        role="tab"
+        class="view-tabs__tab"
+        [class.view-tabs__tab--active]="viewMode() === 'calendar'"
+        [attr.aria-selected]="viewMode() === 'calendar'"
+        (click)="setViewMode('calendar')"
+      >
+        Calendario
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="view-tabs__tab"
+        [class.view-tabs__tab--active]="viewMode() === 'list'"
+        [attr.aria-selected]="viewMode() === 'list'"
+        (click)="setViewMode('list')"
+      >
+        Listado
+      </button>
     </div>
   </div>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
   <p class="muted" *ngIf="loading()">Cargando…</p>
 
-  <div class="cal-wrap" *ngIf="!loading()">
-    <div class="cal-weekdays" aria-hidden="true">
-      <span>Lun</span>
-      <span>Mar</span>
-      <span>Mié</span>
-      <span>Jue</span>
-      <span>Vie</span>
-      <span>Sáb</span>
-      <span>Dom</span>
-    </div>
-    <div class="cal-grid" role="grid" aria-label="Calendario de turnos">
-      @for (cell of flatCells(); track cell.trackKey) {
-        <div
-          class="cal-cell"
-          [class.cal-cell--muted]="!cell.inMonth"
-          [class.cal-cell--today]="cell.isToday"
-          role="gridcell"
-          [attr.aria-label]="cellAriaLabel(cell)"
-        >
-          <span class="cal-cell__num">{{ cell.dayNum }}</span>
-          <div class="cal-cell__events">
-            @for (row of cell.bookings; track row.id) {
-              <button
-                type="button"
-                class="cal-event"
-                [class.cal-event--pending]="row.status === 'pending'"
-                [class.cal-event--cancelled]="row.status === 'cancelled'"
-                [class.cal-event--selected]="selectedBooking()?.id === row.id"
-                (click)="selectBooking(row)"
-              >
-                <span class="cal-event__time">{{ formatBookingTime(row.startsAt) }}</span>
-                <span class="cal-event__title">{{ row.service?.name ?? 'Servicio' }}</span>
-              </button>
-            }
-          </div>
-        </div>
-      }
-    </div>
-    <p class="muted cal-hint" *ngIf="bookings().length === 0">No hay turnos cargados todavía.</p>
-    <p class="muted cal-hint" *ngIf="bookings().length > 0 && bookingsInVisibleMonth().length === 0">
-      No hay turnos en este mes. Tenés {{ bookings().length }} en total — usá las flechas para ir al mes donde caen las
-      reservas.
-    </p>
-  </div>
+  <app-admin-bookings-calendar
+    *ngIf="!loading() && viewMode() === 'calendar'"
+    [cells]="flatCells()"
+    [monthLabel]="viewMonthLabel()"
+    [timeZone]="calendarTimeZone()"
+    [selectedBookingId]="selectedBooking()?.id ?? null"
+    [totalBookings]="bookings().length"
+    [bookingsInVisibleMonth]="bookingsInVisibleMonth().length"
+    (prevMonth)="prevMonth()"
+    (nextMonth)="nextMonth()"
+    (goToday)="goToday()"
+    (bookingSelect)="selectBooking($event)"
+  />
 
-  <section class="bookings-list" *ngIf="!loading() && bookings().length > 0">
+  <section class="bookings-list" *ngIf="!loading() && viewMode() === 'list'">
     <h2 class="bookings-list__title">Todos los turnos (orden por fecha)</h2>
     <p class="muted bookings-list__tz">Horarios según zona del negocio ({{ calendarTimeZone() }}).</p>
-    <div class="bookings-list__wrap">
+
+    <p class="muted bookings-list__empty" *ngIf="bookings().length === 0">
+      No hay turnos cargados todavía.
+    </p>
+
+    <div class="bookings-list__wrap" *ngIf="bookings().length > 0">
       <table>
         <thead>
           <tr>
@@ -80,56 +70,67 @@
             <th>Servicio</th>
             <th>Cliente</th>
             <th>Estado</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of bookingsSorted()">
+          <tr
+            *ngFor="let row of bookingsSorted()"
+            class="bookings-list__row"
+            tabindex="0"
+            (click)="onListRowActivate(row, $event)"
+            (keydown.enter)="selectBooking(row)"
+            (keydown.space)="$event.preventDefault(); selectBooking(row)"
+          >
             <td>{{ formatBookingDateMedium(row.startsAt) }}</td>
-            <td>{{ row.service?.name ?? '—' }}</td>
+            <td>{{ row.service.name }}</td>
             <td>{{ row.customerFullName }}</td>
             <td>{{ row.status }}</td>
-            <td>
-              <button type="button" class="btn-link" (click)="selectBooking(row)">Ver / editar</button>
-            </td>
           </tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <article class="booking-detail" *ngIf="selectedBooking() as row">
-    <header class="booking-detail__head">
-      <h2>Editar turno</h2>
-      <p class="muted"><code>{{ row.code }}</code> · {{ row.business?.name ?? 'Negocio' }}</p>
-      <button type="button" class="booking-detail__close" (click)="clearSelection()">Cerrar</button>
-    </header>
-    <div class="booking-detail__grid">
-      <label>
-        <span>Cliente</span>
-        <input class="cell-input" [(ngModel)]="row.customerFullName" />
-      </label>
-      <label>
-        <span>Contacto</span>
-        <input class="cell-input" [(ngModel)]="row.customerContact" />
-      </label>
-      <label class="booking-detail__full">
-        <span>Inicio (ISO o fecha legible)</span>
-        <input class="cell-input cell-input--wide" [(ngModel)]="row.startsAt" />
-      </label>
-      <label>
-        <span>Estado</span>
-        <select [(ngModel)]="row.status">
-          <option value="pending">Pendiente</option>
-          <option value="confirmed">Confirmado</option>
-          <option value="cancelled">Cancelado</option>
-        </select>
-      </label>
-    </div>
-    <footer class="booking-detail__foot">
-      <button type="button" class="btn-save" [disabled]="savingId() === row.id" (click)="saveBooking(row)">
-        {{ savingId() === row.id ? 'Guardando…' : 'Guardar cambios' }}
-      </button>
-    </footer>
-  </article>
+  <div class="booking-modal-backdrop" *ngIf="selectedBooking() as row" (click)="clearSelection()">
+    <article
+      class="booking-detail booking-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="booking-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="booking-detail__head">
+        <h2 id="booking-modal-title">Editar turno</h2>
+        <p class="muted"><code>{{ row.code }}</code> · {{ row.business.name }}</p>
+        <button type="button" class="booking-detail__close" (click)="clearSelection()">Cerrar</button>
+      </header>
+      <div class="booking-detail__grid">
+        <label>
+          <span>Cliente</span>
+          <input class="cell-input" [(ngModel)]="row.customerFullName" />
+        </label>
+        <label>
+          <span>Contacto</span>
+          <input class="cell-input" [(ngModel)]="row.customerContact" />
+        </label>
+        <label class="booking-detail__full">
+          <span>Inicio (ISO o fecha legible)</span>
+          <input class="cell-input cell-input--wide" [(ngModel)]="row.startsAt" />
+        </label>
+        <label>
+          <span>Estado</span>
+          <select [(ngModel)]="row.status">
+            <option value="pending">Pendiente</option>
+            <option value="confirmed">Confirmado</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </label>
+      </div>
+      <footer class="booking-detail__foot">
+        <button type="button" class="btn-save" [disabled]="savingId() === row.id" (click)="saveBooking(row)">
+          {{ savingId() === row.id ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </footer>
+    </article>
+  </div>
 </section>

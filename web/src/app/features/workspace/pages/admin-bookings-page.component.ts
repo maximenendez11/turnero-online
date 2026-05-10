@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { AdminApiService, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
+import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
+import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
 import {
   buildCalendarWeeks,
   formatBookingDateMediumInZone,
-  formatBookingTimeInZone,
   formatDayKeyInTimeZone,
   isSameZonedCalendarDay,
   monthStart,
@@ -17,7 +18,7 @@ import {
 @Component({
   standalone: true,
   selector: 'app-admin-bookings-page',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminBookingsCalendarComponent],
   templateUrl: './admin-bookings-page.component.html',
   styleUrl: './admin-bookings-page.component.scss',
 })
@@ -32,6 +33,7 @@ export class AdminBookingsPageComponent {
 
   readonly viewAnchor = signal(monthStart(new Date()));
   readonly selectedBooking = signal<AdminBookingRow | null>(null);
+  readonly viewMode = signal<'calendar' | 'list'>('calendar');
 
   readonly viewMonthLabel = computed(() =>
     this.viewAnchor().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }),
@@ -60,14 +62,7 @@ export class AdminBookingsPageComponent {
     const weeks = buildCalendarWeeks(anchor.getFullYear(), anchor.getMonth());
     const rows = this.bookings();
     const today = new Date();
-    const out: {
-      date: Date;
-      dayNum: number;
-      inMonth: boolean;
-      isToday: boolean;
-      bookings: AdminBookingRow[];
-      trackKey: string;
-    }[] = [];
+    const out: AdminBookingCalendarCell[] = [];
     for (const week of weeks) {
       for (const cell of week) {
         const d = cell.date;
@@ -107,26 +102,8 @@ export class AdminBookingsPageComponent {
     void this.init();
   }
 
-  formatBookingTime(iso: string): string {
-    return formatBookingTimeInZone(iso, this.calendarTimeZone());
-  }
-
   formatBookingDateMedium(iso: string): string {
     return formatBookingDateMediumInZone(iso, this.calendarTimeZone());
-  }
-
-  /** Sin DatePipe en plantilla (evita errores que rompen el @for del calendario). */
-  cellAriaLabel(cell: { date: Date }): string {
-    try {
-      return cell.date.toLocaleDateString('es-AR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return '';
-    }
   }
 
   private normalizeBookingRows(res: unknown): AdminBookingRow[] {
@@ -156,6 +133,23 @@ export class AdminBookingsPageComponent {
 
   clearSelection(): void {
     this.selectedBooking.set(null);
+  }
+
+  setViewMode(mode: 'calendar' | 'list'): void {
+    this.viewMode.set(mode);
+  }
+
+  onListRowActivate(row: AdminBookingRow, ev: Event): void {
+    const t = ev.target as HTMLElement | null;
+    if (t?.closest('a, button, input, select, textarea')) return;
+    this.selectBooking(row);
+  }
+
+  @HostListener('document:keydown.escape')
+  onDocumentEscape(): void {
+    if (this.selectedBooking()) {
+      this.clearSelection();
+    }
   }
 
   private async init(): Promise<void> {

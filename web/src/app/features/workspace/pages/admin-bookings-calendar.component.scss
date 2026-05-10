@@ -1,0 +1,329 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+:host {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+/* Contenedor: scroll horizontal suave en móvil, cabecera de días sticky */
+.booking-cal {
+  border: 1px solid dv.$dv-outline-variant;
+  border-radius: dv.$dv-radius-xl;
+  overflow: hidden;
+  background: dv.$dv-surface-container-low;
+}
+
+.booking-cal__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid dv.$dv-outline-variant;
+  background: dv.$dv-surface-container-low;
+}
+
+.booking-cal__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  min-height: 2.75rem;
+}
+
+.booking-cal__month {
+  min-width: 9.5rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.88rem, 2.5vw, 0.98rem);
+  text-transform: capitalize;
+  color: dv.$dv-on-surface;
+}
+
+.booking-cal__nav-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid dv.$dv-outline-variant;
+  background: dv.$dv-surface-container-low;
+  color: dv.$dv-on-surface;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.booking-cal__nav-btn:hover,
+.booking-cal__today:hover {
+  background: dv.$dv-surface-container-high;
+}
+
+.booking-cal__nav-btn:focus-visible,
+.booking-cal__today:focus-visible,
+.booking-cal__event:focus-visible {
+  outline: 2px solid dv.$dv-primary;
+  outline-offset: 2px;
+}
+
+.booking-cal__today {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  margin-left: 0.25rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid dv.$dv-outline-variant;
+  background: transparent;
+  color: dv.$dv-primary;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.booking-cal__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  color: dv.$dv-on-surface-variant;
+}
+
+.booking-cal__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.booking-cal__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.booking-cal__dot--confirmed {
+  background: dv.$dv-primary;
+  box-shadow: 0 0 0 1px color-mix(in srgb, dv.$dv-primary 40%, transparent);
+}
+
+.booking-cal__dot--pending {
+  background: #d4a574;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #d4a574 45%, transparent);
+}
+
+.booking-cal__dot--cancelled {
+  background: #b87a86;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #cf6679 35%, transparent);
+}
+
+.booking-cal__scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  scrollbar-width: thin;
+  scrollbar-color: dv.$dv-outline-variant dv.$dv-surface-container-low;
+}
+
+.booking-cal__scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.booking-cal__scroll::-webkit-scrollbar-track {
+  background: dv.$dv-surface-container-low;
+  border-radius: 4px;
+}
+
+.booking-cal__scroll::-webkit-scrollbar-thumb {
+  background: dv.$dv-outline-variant;
+  border-radius: 4px;
+}
+
+.booking-cal__weekdays {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(2.5rem, 1fr));
+  gap: 1px;
+  background: dv.$dv-outline-variant;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: dv.$dv-outline;
+}
+
+.booking-cal__weekdays span {
+  padding: 0.5rem 0.2rem;
+  text-align: center;
+  background: dv.$dv-surface-container-low;
+}
+
+.booking-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(2.5rem, 1fr));
+  grid-template-rows: repeat(6, minmax(5.75rem, auto));
+  gap: 1px;
+  background: dv.$dv-outline-variant;
+  align-content: start;
+  min-height: calc(6 * 5.75rem + 5px);
+  min-width: min(100%, 22rem);
+}
+
+.booking-cal__cell {
+  background: dv.$dv-surface-container;
+  padding: 0.35rem;
+  min-height: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+.booking-cal__cell--muted {
+  opacity: 0.45;
+}
+
+.booking-cal__cell--today {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, dv.$dv-primary 55%, transparent);
+}
+
+.booking-cal__daynum {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: dv.$dv-on-surface;
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+.booking-cal__cell--today .booking-cal__daynum {
+  color: dv.$dv-primary;
+}
+
+/* Sin scroll interno: evita thumbs del sistema en cada celda; la fila del mes crece si hay muchos turnos. */
+.booking-cal__events {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  overflow: visible;
+  min-height: 0;
+}
+
+.booking-cal__event {
+  border: 0;
+  border-radius: dv.$dv-radius-sm;
+  border-left: 3px solid transparent;
+  padding: 0.28rem 0.4rem 0.28rem 0.35rem;
+  min-height: 2.25rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: dv.$dv-on-surface;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.booking-cal__event--confirmed {
+  background: color-mix(in srgb, dv.$dv-primary 26%, dv.$dv-surface-container-high);
+  border-left-color: dv.$dv-primary;
+}
+
+.booking-cal__event--pending {
+  background: color-mix(in srgb, #d4a574 32%, dv.$dv-surface-container-high);
+  border-left-color: #c4925c;
+}
+
+.booking-cal__event--cancelled {
+  background: color-mix(in srgb, #cf6679 18%, dv.$dv-surface-container-high);
+  border-left-color: color-mix(in srgb, #cf6679 75%, dv.$dv-surface-container-high);
+  opacity: 0.88;
+  text-decoration: line-through;
+  color: color-mix(in srgb, dv.$dv-on-surface 82%, #cf6679);
+}
+
+@media (hover: hover) {
+  .booking-cal__event:hover {
+    filter: brightness(1.09);
+  }
+}
+
+.booking-cal__event--selected {
+  outline: 2px solid dv.$dv-primary;
+  outline-offset: 1px;
+}
+
+.booking-cal__event-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.booking-cal__event-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-cal__hint {
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border-top: 1px solid dv.$dv-outline-variant;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: dv.$dv-on-surface-variant;
+}
+
+.booking-cal__hint--empty {
+  color: dv.$dv-on-surface-variant;
+}
+
+@media (max-width: 720px) {
+  .booking-cal__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-cal__nav {
+    justify-content: center;
+  }
+
+  .booking-cal__legend {
+    justify-content: center;
+  }
+
+  .booking-cal__grid {
+    grid-template-rows: repeat(6, minmax(4.5rem, auto));
+    min-height: calc(6 * 4.5rem + 5px);
+  }
+
+  .booking-cal__cell {
+    min-height: 4.5rem;
+    padding: 0.25rem;
+  }
+
+  .booking-cal__event {
+    font-size: 0.62rem;
+    min-height: 2rem;
+    padding: 0.2rem 0.28rem;
+  }
+
+  .booking-cal__event-title {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-cal__scroll {
+    scroll-behavior: auto;
+  }
+}
