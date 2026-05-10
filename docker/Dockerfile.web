@@ -20,6 +20,7 @@ COPY . .
 ARG NX_API_URL=http://localhost:3000/api
 ENV NX_API_URL=$NX_API_URL
 
+# NX_API_URL ya está en ENV; sync-build-api-url (dependsOn del build) regenera build-config.generated.ts
 RUN pnpm exec nx build web --configuration=production
 
 # Stage 2: Production with Nginx
