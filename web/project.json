@@ -6,8 +6,17 @@
   "sourceRoot": "web/src",
   "tags": [],
   "targets": {
+    "sync-build-api-url": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node scripts/write-build-api-url.mjs",
+        "cwd": "{workspaceRoot}"
+      },
+      "cache": false
+    },
     "build": {
       "executor": "@angular/build:application",
+      "dependsOn": ["sync-build-api-url"],
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/web",

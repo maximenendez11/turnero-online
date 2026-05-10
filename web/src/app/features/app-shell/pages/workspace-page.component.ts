@@ -22,7 +22,6 @@ type WorkspaceData = {
         <a routerLink="/app/calendar">Calendario</a>
         <a routerLink="/app/appointments">Turnos</a>
         <a routerLink="/app/services">Servicios</a>
-        <a routerLink="/app/staff">Staff</a>
         <a routerLink="/app/customers">Clientes</a>
         <a routerLink="/app/analytics">Analiticas</a>
         <a routerLink="/app/subscription">Suscripcion</a>

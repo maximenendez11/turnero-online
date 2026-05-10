@@ -1,7 +1,11 @@
-import { DepositMode, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+const DEMO_WEEKDAYS = [1, 2, 3, 4, 5, 6] as const;
+const DEMO_START_MIN = 9 * 60;
+const DEMO_END_MIN = 19 * 60;
 
 async function seedAdmin() {
   const adminEmail = 'admin@example.com';
@@ -20,6 +24,21 @@ async function seedAdmin() {
   }
 }
 
+async function seedOpeningWindows(businessId: string) {
+  await prisma.businessOpeningWindow.deleteMany({ where: { businessId } });
+  for (const weekday of DEMO_WEEKDAYS) {
+    await prisma.businessOpeningWindow.create({
+      data: {
+        businessId,
+        weekday,
+        startMin: DEMO_START_MIN,
+        endMin: DEMO_END_MIN,
+        sortOrder: 0,
+      },
+    });
+  }
+}
+
 async function seedDemoBusiness() {
   const slug = 'peluqueria-demo';
 
@@ -30,12 +49,7 @@ async function seedDemoBusiness() {
       description: 'Peluqueria premium para pruebas de reservas.',
       address: 'Sarmiento 581, Pellegrini',
       timezone: 'America/Argentina/Buenos_Aires',
-      currency: 'ARS',
-      openingHours: 'Lunes a Sabado 09:00 a 19:00',
       bookingIntervalMin: 30,
-      maxAppointmentsPerSlot: 1,
-      whatsapp: '+5491134567890',
-      instagram: '@peluqueriademo',
       status: 'active',
     },
     create: {
@@ -44,25 +58,20 @@ async function seedDemoBusiness() {
       description: 'Peluqueria premium para pruebas de reservas.',
       address: 'Sarmiento 581, Pellegrini',
       timezone: 'America/Argentina/Buenos_Aires',
-      currency: 'ARS',
-      openingHours: 'Lunes a Sabado 09:00 a 19:00',
       bookingIntervalMin: 30,
-      maxAppointmentsPerSlot: 1,
-      whatsapp: '+5491134567890',
-      instagram: '@peluqueriademo',
       status: 'active',
     },
   });
 
-  const service1 = await prisma.businessService.upsert({
+  await seedOpeningWindows(business.id);
+
+  await prisma.businessService.upsert({
     where: { id: `${business.id}-service-1` },
     update: {
       name: 'Corte Ejecutivo',
       description: 'Corte de precision con asesoramiento de estilo.',
       durationMin: 45,
       price: 45,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
     },
     create: {
@@ -72,21 +81,17 @@ async function seedDemoBusiness() {
       description: 'Corte de precision con asesoramiento de estilo.',
       durationMin: 45,
       price: 45,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
     },
   });
 
-  const service2 = await prisma.businessService.upsert({
+  await prisma.businessService.upsert({
     where: { id: `${business.id}-service-2` },
     update: {
       name: 'The Full Luxe',
       description: 'Corte premium + barba + mascarilla de carbon.',
       durationMin: 75,
       price: 65,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
     },
     create: {
@@ -96,21 +101,17 @@ async function seedDemoBusiness() {
       description: 'Corte premium + barba + mascarilla de carbon.',
       durationMin: 75,
       price: 65,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
     },
   });
 
-  const service3 = await prisma.businessService.upsert({
+  await prisma.businessService.upsert({
     where: { id: `${business.id}-service-3` },
     update: {
       name: 'Esculpido de Barba',
       description: 'Perfilado y diseno de barba con navaja clasica.',
       durationMin: 30,
       price: 30,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
     },
     create: {
@@ -120,67 +121,7 @@ async function seedDemoBusiness() {
       description: 'Perfilado y diseno de barba con navaja clasica.',
       durationMin: 30,
       price: 30,
-      depositMode: DepositMode.none,
-      depositValue: 0,
       isActive: true,
-    },
-  });
-
-  const staff = await prisma.staffMember.upsert({
-    where: { id: `${business.id}-staff-1` },
-    update: {
-      fullName: 'Lucas Gardon',
-      bio: 'Barbero senior especializado en fades y corte clasico.',
-      isActive: true,
-    },
-    create: {
-      id: `${business.id}-staff-1`,
-      businessId: business.id,
-      fullName: 'Lucas Gardon',
-      bio: 'Barbero senior especializado en fades y corte clasico.',
-      isActive: true,
-    },
-  });
-
-  await prisma.staffService.upsert({
-    where: {
-      staffId_serviceId: {
-        staffId: staff.id,
-        serviceId: service1.id,
-      },
-    },
-    update: {},
-    create: {
-      staffId: staff.id,
-      serviceId: service1.id,
-    },
-  });
-
-  await prisma.staffService.upsert({
-    where: {
-      staffId_serviceId: {
-        staffId: staff.id,
-        serviceId: service2.id,
-      },
-    },
-    update: {},
-    create: {
-      staffId: staff.id,
-      serviceId: service2.id,
-    },
-  });
-
-  await prisma.staffService.upsert({
-    where: {
-      staffId_serviceId: {
-        staffId: staff.id,
-        serviceId: service3.id,
-      },
-    },
-    update: {},
-    create: {
-      staffId: staff.id,
-      serviceId: service3.id,
     },
   });
 

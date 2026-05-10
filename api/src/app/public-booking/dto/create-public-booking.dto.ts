@@ -1,26 +1,17 @@
-import { IsEmail, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreatePublicBookingDto {
   @IsUUID()
   serviceId!: string;
 
-  @IsUUID()
-  staffId!: string;
-
   @IsString()
   startsAt!: string;
 
   @IsString()
-  customerName!: string;
+  @MinLength(2)
+  customerFullName!: string;
 
-  @IsEmail()
-  customerEmail!: string;
-
-  @IsOptional()
   @IsString()
-  customerPhone?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  @MinLength(3)
+  customerContact!: string;
 }
