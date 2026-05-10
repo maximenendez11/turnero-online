@@ -6,6 +6,8 @@ import { ConfigService } from './config.service';
 export type AuthResponse = {
   accessToken: string;
   email: string;
+  /** Mismo enum que en la API (`ADMIN` | `USER`). */
+  role: 'ADMIN' | 'USER';
 };
 
 @Injectable({ providedIn: 'root' })

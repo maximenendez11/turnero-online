@@ -3,6 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { AdminApiService } from '../../../core/services/admin-api.service';
 import { AuthApiService } from '../../../core/services/auth-api.service';
 import { OnboardingService } from '../../../core/services/onboarding.service';
 import { SessionService } from '../../../core/services/session.service';
@@ -29,6 +30,7 @@ export class AuthPageComponent {
   private readonly session = inject(SessionService);
   private readonly onboarding = inject(OnboardingService);
   private readonly authApi = inject(AuthApiService);
+  private readonly adminApi = inject(AdminApiService);
 
   readonly data = this.route.snapshot.data as AuthPageData;
   readonly errorMessage = signal<string | null>(null);
@@ -82,10 +84,22 @@ export class AuthPageComponent {
 
       const res = await firstValueFrom(this.authApi.login({ email: emailTrim, password: this.password }));
       this.session.signInWithToken(res.accessToken, res.email);
-      if (this.onboarding.isCompleted()) {
+      if (res.role === 'ADMIN') {
+        this.onboarding.markCompleted();
         await this.router.navigateByUrl('/app/appointments');
         return;
       }
+      try {
+        const businesses = await firstValueFrom(this.adminApi.getBusinesses());
+        if (businesses.length > 0) {
+          this.onboarding.markCompleted();
+          await this.router.navigateByUrl('/app/appointments');
+          return;
+        }
+      } catch {
+        /* sin sync: mejor forzar onboarding que dejar bandera local obsoleta */
+      }
+      this.onboarding.clearCompletedFlag();
       await this.router.navigateByUrl('/onboarding/business-profile');
     } catch (err) {
       this.errorMessage.set(apiErrorMessage(err));

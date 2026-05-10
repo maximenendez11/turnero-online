@@ -14,6 +14,16 @@ export class OnboardingService {
   constructor(private readonly prisma: PrismaService) {}
 
   async setup(dto: OnboardingSetupDto, ownerUserId: string) {
+    if (!ownerUserId?.trim()) {
+      throw new BadRequestException('Sesión inválida: no se pudo determinar el usuario');
+    }
+    const owner = await this.prisma.user.findFirst({
+      where: { id: ownerUserId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!owner) {
+      throw new BadRequestException('Usuario no encontrado');
+    }
     const baseSlug = this.slugify(dto.businessName);
     if (!baseSlug) {
       throw new BadRequestException('El nombre del negocio debe generar un slug válido');
@@ -30,7 +40,7 @@ export class OnboardingService {
           timezone: dto.timezone,
           bookingIntervalMin: dto.bookingIntervalMin,
           status: 'active',
-          ownerUserId,
+          owner: { connect: { id: owner.id } },
         },
         select: { id: true, slug: true },
       });

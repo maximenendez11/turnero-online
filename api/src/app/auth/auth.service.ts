@@ -44,6 +44,6 @@ export class AuthService {
 
   private issueTokens(userId: string, email: string, role: Role) {
     const accessToken = this.jwt.sign({ sub: userId, email, role });
-    return { accessToken, email };
+    return { accessToken, email, role };
   }
 }

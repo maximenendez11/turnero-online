@@ -51,6 +51,12 @@ export class OnboardingService {
     localStorage.setItem(ONBOARDING_KEY, '1');
   }
 
+  /** Solo quita “onboarding completado” (p. ej. otro usuario en el mismo navegador o DB distinta). */
+  clearCompletedFlag(): void {
+    this.completed.set(false);
+    localStorage.removeItem(ONBOARDING_KEY);
+  }
+
   reset(): void {
     this.completed.set(false);
     this.draft.set(DEFAULT_DRAFT);
