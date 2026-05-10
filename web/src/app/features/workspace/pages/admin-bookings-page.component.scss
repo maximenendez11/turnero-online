@@ -1,0 +1,93 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+.admin-page {
+  max-width: 1200px;
+}
+
+.admin-page__head h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+}
+
+.muted {
+  color: dv.$dv-on-surface-variant;
+  font-size: 0.92rem;
+}
+
+.error {
+  color: #ffb4ab;
+  margin: 0.5rem 0;
+}
+
+.toolbar {
+  margin: 0.75rem 0;
+}
+
+.toolbar label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: dv.$dv-on-surface-variant;
+}
+
+select,
+.cell-input {
+  background: dv.$dv-surface-container-low;
+  border: 1px solid dv.$dv-outline-variant;
+  border-radius: dv.$dv-radius-md;
+  color: dv.$dv-on-surface;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.85rem;
+}
+
+.cell-input--wide {
+  min-width: 11rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid dv.$dv-outline-variant;
+  border-radius: dv.$dv-radius-xl;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem 0.55rem;
+  border-bottom: 1px solid dv.$dv-outline-variant;
+  vertical-align: middle;
+}
+
+th {
+  color: dv.$dv-outline;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-save {
+  background: dv.$dv-primary;
+  color: dv.$dv-on-primary;
+  border: 0;
+  border-radius: dv.$dv-radius-md;
+  padding: 0.35rem 0.55rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty {
+  padding: 1rem;
+}

@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import type { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { LoginDto } from './dto/login.dto';
 import type { RegisterDto } from './dto/register.dto';
@@ -22,9 +23,9 @@ export class AuthService {
     const passwordHash = bcrypt.hashSync(dto.password, 10);
     const user = await this.prisma.user.create({
       data: { email: dto.email, password: passwordHash, role: 'USER' },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.email, user.role);
   }
 
   async login(dto: LoginDto) {
@@ -38,11 +39,11 @@ export class AuthService {
     if (!ok) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
-    return this.issueTokens(user.id, user.email);
+    return this.issueTokens(user.id, user.email, user.role);
   }
 
-  private issueTokens(userId: string, email: string) {
-    const accessToken = this.jwt.sign({ sub: userId, email });
+  private issueTokens(userId: string, email: string, role: Role) {
+    const accessToken = this.jwt.sign({ sub: userId, email, role });
     return { accessToken, email };
   }
 }

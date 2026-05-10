@@ -24,6 +24,8 @@ model User {
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
 
+  ownedBusinesses Business[] @relation("BusinessOwner")
+
   @@map("users")
 }
 
@@ -59,14 +61,17 @@ model Business {
   timezone             String          @default("America/Argentina/Buenos_Aires")
   bookingIntervalMin   Int             @default(30)
   status               BusinessStatus  @default(active)
+  ownerUserId          String?         @map("owner_user_id")
   createdAt            DateTime        @default(now())
   updatedAt            DateTime        @updatedAt
   deletedAt            DateTime?
 
+  owner          User?                   @relation("BusinessOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   openingWindows BusinessOpeningWindow[]
   services       BusinessService[]
   bookings       Booking[]
 
+  @@index([ownerUserId])
   @@map("businesses")
 }
 

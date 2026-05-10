@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { BusinessMemberModule } from './business-member/business-member.module';
 import { PublicBookingModule } from './public-booking/public-booking.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OnboardingModule } from './onboarding/onboarding.module';
     BusinessMemberModule,
     PublicBookingModule,
     OnboardingModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,0 +1,59 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+.workspace-layout {
+  min-height: 100vh;
+  background: dv.$dv-background;
+  color: dv.$dv-on-surface;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.workspace-layout__rail {
+  display: none;
+}
+
+.workspace-layout__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-layout__mobile-nav {
+  padding: dv.$dv-space-md dv.$dv-space-md 0;
+}
+
+.workspace-layout__top {
+  padding: 0 dv.$dv-space-md;
+}
+
+.workspace-layout__public-link {
+  display: inline-block;
+  margin: 0.35rem 0 0.5rem;
+  font-size: 14px;
+  color: dv.$dv-primary;
+  text-decoration: none;
+}
+
+.workspace-layout__public-link:hover {
+  text-decoration: underline;
+}
+
+.workspace-layout__outlet {
+  flex: 1;
+  padding: 0 dv.$dv-space-md dv.$dv-space-md;
+}
+
+@media (min-width: 920px) {
+  .workspace-layout {
+    grid-template-columns: dv.$dv-sidebar-rail-width 1fr;
+  }
+
+  .workspace-layout__rail {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .workspace-layout__mobile-nav {
+    display: none;
+  }
+}

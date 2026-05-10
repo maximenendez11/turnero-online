@@ -260,7 +260,7 @@ export class OnboardingStepComponent {
       return;
     }
     this.onboardingService.patchDraft(this.draft);
-    if (this.data.next === '/app/dashboard') {
+    if (this.data.next === '/app/appointments') {
       this.setupError.set(null);
       this.submitting.set(true);
       try {

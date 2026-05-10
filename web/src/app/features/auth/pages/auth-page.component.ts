@@ -83,7 +83,7 @@ export class AuthPageComponent {
       const res = await firstValueFrom(this.authApi.login({ email: emailTrim, password: this.password }));
       this.session.signInWithToken(res.accessToken, res.email);
       if (this.onboarding.isCompleted()) {
-        await this.router.navigateByUrl('/app/dashboard');
+        await this.router.navigateByUrl('/app/appointments');
         return;
       }
       await this.router.navigateByUrl('/onboarding/business-profile');

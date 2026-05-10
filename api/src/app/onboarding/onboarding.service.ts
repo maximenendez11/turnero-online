@@ -13,7 +13,7 @@ const DEFAULT_END_MIN = 18 * 60;
 export class OnboardingService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async setup(dto: OnboardingSetupDto) {
+  async setup(dto: OnboardingSetupDto, ownerUserId: string) {
     const baseSlug = this.slugify(dto.businessName);
     if (!baseSlug) {
       throw new BadRequestException('El nombre del negocio debe generar un slug válido');
@@ -30,6 +30,7 @@ export class OnboardingService {
           timezone: dto.timezone,
           bookingIntervalMin: dto.bookingIntervalMin,
           status: 'active',
+          ownerUserId,
         },
         select: { id: true, slug: true },
       });

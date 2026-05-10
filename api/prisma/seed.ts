@@ -7,21 +7,24 @@ const DEMO_WEEKDAYS = [1, 2, 3, 4, 5, 6] as const;
 const DEMO_START_MIN = 9 * 60;
 const DEMO_END_MIN = 19 * 60;
 
-async function seedAdmin() {
+async function seedAdmin(): Promise<string | null> {
   const adminEmail = 'admin@example.com';
   const adminPassword = 'Admin123!';
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {
     const passwordHash = bcrypt.hashSync(adminPassword, 10);
-    await prisma.user.create({
+    const created = await prisma.user.create({
       data: {
         email: adminEmail,
         password: passwordHash,
         role: 'ADMIN',
       },
+      select: { id: true },
     });
+    return created.id;
   }
+  return existingAdmin.id;
 }
 
 async function seedOpeningWindows(businessId: string) {
@@ -39,7 +42,7 @@ async function seedOpeningWindows(businessId: string) {
   }
 }
 
-async function seedDemoBusiness() {
+async function seedDemoBusiness(adminUserId: string | null) {
   const slug = 'peluqueria-demo';
 
   const business = await prisma.business.upsert({
@@ -51,6 +54,7 @@ async function seedDemoBusiness() {
       timezone: 'America/Argentina/Buenos_Aires',
       bookingIntervalMin: 30,
       status: 'active',
+      ...(adminUserId ? { ownerUserId: adminUserId } : {}),
     },
     create: {
       slug,
@@ -60,6 +64,7 @@ async function seedDemoBusiness() {
       timezone: 'America/Argentina/Buenos_Aires',
       bookingIntervalMin: 30,
       status: 'active',
+      ownerUserId: adminUserId,
     },
   });
 
@@ -129,8 +134,8 @@ async function seedDemoBusiness() {
 }
 
 async function main() {
-  await seedAdmin();
-  await seedDemoBusiness();
+  const adminId = await seedAdmin();
+  await seedDemoBusiness(adminId);
 }
 
 main()

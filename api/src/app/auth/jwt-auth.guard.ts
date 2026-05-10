@@ -1,7 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-
-type JwtPayload = { sub: string; email: string };
+import type { JwtPayload } from './jwt-payload.types';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -19,7 +18,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Token requerido');
     }
     try {
-      req.user = (await this.jwt.verifyAsync(token)) as JwtPayload;
+      const decoded = (await this.jwt.verifyAsync(token)) as Partial<JwtPayload> & { sub: string; email: string };
+      req.user = {
+        sub: decoded.sub,
+        email: decoded.email,
+        role: decoded.role ?? 'USER',
+      };
       return true;
     } catch {
       throw new UnauthorizedException('Token inválido o expirado');

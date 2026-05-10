@@ -1,0 +1,59 @@
+<section class="admin-page">
+  <header class="admin-page__head">
+    <h1>Turnos</h1>
+    <p class="muted">Listado de reservas de los negocios a los que tenés acceso.</p>
+  </header>
+
+  <div class="toolbar" *ngIf="businesses().length > 1">
+    <label>
+      <span>Negocio</span>
+      <select [(ngModel)]="filterBusinessId" (ngModelChange)="onFilterChange()">
+        <option value="">Todos</option>
+        <option *ngFor="let b of businesses()" [value]="b.id">{{ b.name }}</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="error" *ngIf="error()">{{ error() }}</p>
+  <p class="muted" *ngIf="loading()">Cargando…</p>
+
+  <div class="table-wrap" *ngIf="!loading()">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Negocio</th>
+          <th>Servicio</th>
+          <th>Cliente</th>
+          <th>Contacto</th>
+          <th>Inicio</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of bookings()">
+          <td><code>{{ row.code }}</code></td>
+          <td>{{ row.business.name }}</td>
+          <td>{{ row.service.name }}</td>
+          <td><input class="cell-input" [(ngModel)]="row.customerFullName" /></td>
+          <td><input class="cell-input" [(ngModel)]="row.customerContact" /></td>
+          <td><input class="cell-input cell-input--wide" [(ngModel)]="row.startsAt" /></td>
+          <td>
+            <select [(ngModel)]="row.status">
+              <option value="pending">Pendiente</option>
+              <option value="confirmed">Confirmado</option>
+              <option value="cancelled">Cancelado</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="btn-save" [disabled]="savingId() === row.id" (click)="saveBooking(row)">
+              {{ savingId() === row.id ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="muted empty" *ngIf="bookings().length === 0">No hay turnos para mostrar.</p>
+  </div>
+</section>

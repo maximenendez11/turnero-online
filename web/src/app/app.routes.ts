@@ -98,96 +98,29 @@ export const appRoutes: Route[] = [
       description: 'Valida tu configuracion antes de activar el negocio.',
       fields: ['Resumen', 'Publicacion'],
       prev: '/onboarding/schedule',
-      next: '/app/dashboard',
+      next: '/app/appointments',
     },
   },
   {
-    path: 'app/dashboard',
+    path: 'app',
     canActivate: [authGuard, onboardingCompleteGuard],
     loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Dashboard',
-      description: 'Vision general de turnos, ingresos y ocupacion.',
-      highlights: ['Turnos del dia', 'Ingresos', 'Retencion'],
-    },
-  },
-  {
-    path: 'app/calendar',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Calendario Maestro',
-      description: 'Gestiona agenda, conflictos y disponibilidad.',
-      highlights: ['Vista diaria', 'Bloques ocupados', 'Arrastrar y soltar'],
-    },
-  },
-  {
-    path: 'app/appointments',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Turnos',
-      description: 'Listado de reservas con filtros y estados.',
-      highlights: ['Confirmados', 'Pendientes', 'Cancelados'],
-    },
-  },
-  {
-    path: 'app/services',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Servicios',
-      description: 'Administra catalogo, duraciones y precios.',
-      highlights: ['Catalogo', 'Duraciones', 'Precios'],
-    },
-  },
-  {
-    path: 'app/customers',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Clientes',
-      description: 'Base de clientes, historial y no-shows.',
-      highlights: ['Historial', 'Etiquetas', 'Reincidencia'],
-    },
-  },
-  {
-    path: 'app/analytics',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Analiticas',
-      description: 'Rendimiento de agenda, ingresos y retencion.',
-      highlights: ['Ocupacion', 'Revenue', 'Cancellations'],
-    },
-  },
-  {
-    path: 'app/subscription',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Suscripcion',
-      description: 'Planes, facturas y estado de trial.',
-      highlights: ['Plan actual', 'Facturacion', 'Proxima renovacion'],
-    },
-  },
-  {
-    path: 'app/settings/business',
-    canActivate: [authGuard, onboardingCompleteGuard],
-    loadComponent: () =>
-      import('./features/app-shell/pages/workspace-page.component').then((m) => m.WorkspacePageComponent),
-    data: {
-      title: 'Configuracion del Negocio',
-      description: 'Datos legales, contacto, direccion y marca.',
-      highlights: ['Identidad', 'Contacto', 'Moneda y zona horaria'],
-    },
+      import('./features/workspace/layout/workspace-layout.component').then((m) => m.WorkspaceLayoutComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'appointments' },
+      { path: 'dashboard', pathMatch: 'full', redirectTo: 'appointments' },
+      { path: 'settings/business', pathMatch: 'full', redirectTo: 'business' },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./features/workspace/pages/admin-bookings-page.component').then((m) => m.AdminBookingsPageComponent),
+      },
+      {
+        path: 'business',
+        loadComponent: () =>
+          import('./features/workspace/pages/admin-business-page.component').then((m) => m.AdminBusinessPageComponent),
+      },
+    ],
   },
   {
     path: 'c/auth/login',
