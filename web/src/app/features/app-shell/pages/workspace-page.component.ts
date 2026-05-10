@@ -17,7 +17,7 @@ type WorkspaceData = {
   template: `
     <main class="workspace-shell">
       <aside>
-        <h2>Zenith</h2>
+        <h2>Tu turno digital</h2>
         <a routerLink="/app/dashboard">Dashboard</a>
         <a routerLink="/app/calendar">Calendario</a>
         <a routerLink="/app/appointments">Turnos</a>
