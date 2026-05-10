@@ -1,7 +1,7 @@
 # Business Context
 
 ## Product Vision
-Zenith Booking is a multi-tenant SaaS for service businesses (barbershops, salons, clinics, studios) that need a modern booking experience and an operational backoffice.
+Tu turno digital is a multi-tenant SaaS for service businesses (barbershops, salons, clinics, studios) that need a modern booking experience and an operational backoffice.
 
 The product must solve two connected problems:
 - Public booking for end customers (fast, mobile-first, low friction).
