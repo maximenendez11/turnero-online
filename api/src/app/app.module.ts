@@ -9,6 +9,7 @@ import { TenancyModule } from './tenancy/tenancy.module';
 import { AuthModule } from './auth/auth.module';
 import { BusinessMemberModule } from './business-member/business-member.module';
 import { PublicBookingModule } from './public-booking/public-booking.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { PublicBookingModule } from './public-booking/public-booking.module';
     AuthModule,
     BusinessMemberModule,
     PublicBookingModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

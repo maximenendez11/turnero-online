@@ -1,4 +1,5 @@
 import { DepositMode, PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -8,10 +9,11 @@ async function seedAdmin() {
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
 
   if (!existingAdmin) {
+    const passwordHash = bcrypt.hashSync(adminPassword, 10);
     await prisma.user.create({
       data: {
         email: adminEmail,
-        password: adminPassword,
+        password: passwordHash,
         role: 'ADMIN',
       },
     });

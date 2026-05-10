@@ -3,16 +3,18 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-# Solo dependencias primero → se cachea mientras no cambien package*.json ni schema
-COPY package*.json ./
-COPY api/prisma ./api/prisma
-RUN npm install
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
-# Código fuente; esta capa invalida la caché en cada cambio de código, pero npm ya está instalado
+COPY package.json pnpm-lock.yaml ./
+COPY api/prisma ./api/prisma
+
+ENV NX_DAEMON=false
+RUN NODE_ENV=development pnpm install --frozen-lockfile
+
 COPY . .
 
 ENV NODE_OPTIONS="--max-old-space-size=1024"
-RUN npx nx build api
+RUN pnpm exec nx build api
 
 # Stage 2: Production
 FROM node:20-bookworm-slim
@@ -23,7 +25,7 @@ RUN apt-get update -y && \
 
 WORKDIR /app
 
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
 # Sin npm prune: en Coolify (Pi) el paso falla con RuntimeException; la imagen queda algo más grande
 COPY --from=builder /app/node_modules ./node_modules
 

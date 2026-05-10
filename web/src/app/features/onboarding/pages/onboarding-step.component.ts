@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { OnboardingApiService } from '../../../core/services/onboarding-api.service';
 import { OnboardingDraft, OnboardingService } from '../../../core/services/onboarding.service';
+import { apiErrorMessage } from '../../../core/utils/api-error-message';
 
 type OnboardingData = {
   step: number;
@@ -123,9 +126,18 @@ type OnboardingData = {
           </ng-container>
         </form>
       </section>
+      <p class="setup-error" *ngIf="setupError()">{{ setupError() }}</p>
       <footer>
         <a *ngIf="data.prev" [routerLink]="data.prev">Anterior</a>
-        <button class="primary" *ngIf="data.next" type="button" (click)="continue()">Continuar</button>
+        <button
+          class="primary"
+          *ngIf="data.next"
+          type="button"
+          [disabled]="submitting()"
+          (click)="continue()"
+        >
+          {{ submitting() ? 'Guardando…' : 'Continuar' }}
+        </button>
       </footer>
     </main>
   `,
@@ -217,6 +229,16 @@ type OnboardingData = {
         border: 1px solid #424754;
         color: #adc6ff;
       }
+      .setup-error {
+        width: min(680px, 100%);
+        margin: 0.75rem auto 0;
+        padding: 0.65rem 0.85rem;
+        border-radius: 0.6rem;
+        border: 1px solid #5c2a2a;
+        background: #2a1717;
+        color: #ffb4a9;
+        font-size: 0.9rem;
+      }
       footer {
         display: flex;
         justify-content: space-between;
@@ -235,6 +257,10 @@ type OnboardingData = {
         font-weight: 700;
         cursor: pointer;
       }
+      .primary:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
     `,
   ],
 })
@@ -242,8 +268,11 @@ export class OnboardingStepComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly onboardingService = inject(OnboardingService);
+  private readonly onboardingApi = inject(OnboardingApiService);
   readonly data = this.route.snapshot.data as OnboardingData;
   readonly stepId = this.route.snapshot.routeConfig?.path?.split('/').pop() ?? 'business-profile';
+  readonly setupError = signal<string | null>(null);
+  readonly submitting = signal(false);
   draft: OnboardingDraft = { ...this.onboardingService.getDraft() };
 
   get bookingLink(): string | null {
@@ -256,7 +285,17 @@ export class OnboardingStepComponent {
     }
     this.onboardingService.patchDraft(this.draft);
     if (this.data.next === '/app/dashboard') {
-      this.onboardingService.markCompleted();
+      this.setupError.set(null);
+      this.submitting.set(true);
+      try {
+        await firstValueFrom(this.onboardingApi.setup(this.draft));
+        this.onboardingService.markCompleted();
+      } catch (err) {
+        this.setupError.set(apiErrorMessage(err));
+        this.submitting.set(false);
+        return;
+      }
+      this.submitting.set(false);
     }
     await this.router.navigateByUrl(this.data.next);
   }

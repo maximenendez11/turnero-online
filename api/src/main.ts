@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -7,11 +7,19 @@ import helmet from 'helmet';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   // CORS: en producción debe ser la URL del front (ej. en Coolify: CORS_ORIGIN=https://pixel-tv.overclocksolutions.xyz)
   const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
   Logger.log(`CORS allow-origin: ${corsOrigin}`);
   app.enableCors({
-    origin: corsOrigin,
+    origin: "*",
     credentials: true,
   });
 

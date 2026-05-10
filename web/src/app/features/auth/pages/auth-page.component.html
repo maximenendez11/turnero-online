@@ -1,0 +1,39 @@
+<main class="auth-shell">
+  <section class="auth-card">
+    <h1>{{ data.title }}</h1>
+    <p>{{ data.subtitle }}</p>
+    <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+    <form (submit)="$event.preventDefault(); submit()">
+      <label>
+        <span>Email</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          placeholder="tu@email.com"
+          [(ngModel)]="email"
+          [disabled]="loading()"
+          required
+        />
+      </label>
+      <label *ngIf="showPassword">
+        <span>Contraseña</span>
+        <input
+          type="password"
+          name="password"
+          [attr.autocomplete]="isRegister ? 'new-password' : 'current-password'"
+          placeholder="••••••••"
+          [(ngModel)]="password"
+          [disabled]="loading()"
+          [required]="showPassword"
+        />
+      </label>
+      <button type="submit" [disabled]="loading()">
+        {{ loading() ? 'Conectando…' : data.submitLabel }}
+      </button>
+    </form>
+    <a *ngIf="data.secondaryLabel && data.secondaryHref" [routerLink]="data.secondaryHref">
+      {{ data.secondaryLabel }}
+    </a>
+  </section>
+</main>
