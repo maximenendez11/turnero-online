@@ -84,6 +84,14 @@ export class AdminService {
     if (dto.timezone !== undefined) data.timezone = dto.timezone.trim();
     if (dto.bookingIntervalMin !== undefined) data.bookingIntervalMin = dto.bookingIntervalMin;
     if (dto.status !== undefined) data.status = dto.status;
+    if (dto.themeBackgroundHex !== undefined) {
+      const t = dto.themeBackgroundHex.trim();
+      data.themeBackgroundHex = t === '' ? null : t.toLowerCase();
+    }
+    if (dto.themePrimaryHex !== undefined) {
+      const t = dto.themePrimaryHex.trim();
+      data.themePrimaryHex = t === '' ? null : t.toLowerCase();
+    }
     if (Object.keys(data).length === 0) {
       return this.getBusinessDetail(user, businessId);
     }

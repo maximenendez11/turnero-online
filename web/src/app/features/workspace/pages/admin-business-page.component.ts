@@ -9,10 +9,14 @@ import {
   type AdminServiceRow,
 } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
+import {
+  DEFAULT_BOOKING_PAGE_BG,
+  DEFAULT_BOOKING_PRIMARY,
+} from '../../booking/utils/booking-theme.utils';
 
 export type WindowDraft = { weekday: number; startMin: number; endMin: number };
 
-export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios';
+export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'apariencia';
 
 @Component({
   standalone: true,
@@ -117,12 +121,7 @@ export class AdminBusinessPageComponent {
     this.error.set(null);
     try {
       const d = await firstValueFrom(this.api.getBusiness(this.selectedBusinessId));
-      this.detail = {
-        ...d,
-        description: d.description ?? '',
-        slug: d.slug ?? '',
-        services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
-      };
+      this.detail = this.mapDetailForForm(d);
       this.windowsDraft = d.openingWindows.map((w) => ({
         weekday: w.weekday,
         startMin: w.startMin,
@@ -158,12 +157,7 @@ export class AdminBusinessPageComponent {
           status: this.detail.status,
         }),
       );
-      this.detail = {
-        ...d,
-        description: d.description ?? '',
-        slug: d.slug ?? '',
-        services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
-      };
+      this.detail = this.mapDetailForForm(d);
       this.syncWindowsFromDetail();
       this.error.set(null);
       this.flash('ok', 'Datos del negocio guardados.');
@@ -187,12 +181,7 @@ export class AdminBusinessPageComponent {
     }));
     try {
       const d = await firstValueFrom(this.api.replaceOpeningWindows(this.detail.id, windows));
-      this.detail = {
-        ...d,
-        description: d.description ?? '',
-        slug: d.slug ?? '',
-        services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
-      };
+      this.detail = this.mapDetailForForm(d);
       this.syncWindowsFromDetail();
       this.error.set(null);
       this.flash('ok', 'Horarios actualizados.');
@@ -202,6 +191,65 @@ export class AdminBusinessPageComponent {
     } finally {
       this.saving.set(false);
     }
+  }
+
+  async saveTheme(): Promise<void> {
+    if (!this.detail) return;
+    this.saving.set(true);
+    this.error.set(null);
+    try {
+      const d = await firstValueFrom(
+        this.api.patchBusiness(this.detail.id, {
+          themeBackgroundHex: (this.detail.themeBackgroundHex ?? '').trim(),
+          themePrimaryHex: (this.detail.themePrimaryHex ?? '').trim(),
+        }),
+      );
+      this.detail = this.mapDetailForForm(d);
+      this.error.set(null);
+      this.flash('ok', 'Colores de la reserva pública guardados.');
+    } catch (e) {
+      this.error.set(apiErrorMessage(e));
+      this.flash('err', apiErrorMessage(e));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  resetThemeToDefaults(): void {
+    if (!this.detail) return;
+    this.detail.themeBackgroundHex = '';
+    this.detail.themePrimaryHex = '';
+  }
+
+  themeBgPickerValue(): string {
+    const v = this.detail?.themeBackgroundHex?.trim() ?? '';
+    return /^#[0-9A-Fa-f]{6}$/.test(v) ? v : DEFAULT_BOOKING_PAGE_BG;
+  }
+
+  themePrimaryPickerValue(): string {
+    const v = this.detail?.themePrimaryHex?.trim() ?? '';
+    return /^#[0-9A-Fa-f]{6}$/.test(v) ? v : DEFAULT_BOOKING_PRIMARY;
+  }
+
+  setThemeBgFromPicker(ev: Event): void {
+    if (!this.detail) return;
+    this.detail.themeBackgroundHex = (ev.target as HTMLInputElement).value;
+  }
+
+  setThemePrimaryFromPicker(ev: Event): void {
+    if (!this.detail) return;
+    this.detail.themePrimaryHex = (ev.target as HTMLInputElement).value;
+  }
+
+  private mapDetailForForm(d: AdminBusinessDetail): AdminBusinessDetail {
+    return {
+      ...d,
+      description: d.description ?? '',
+      slug: d.slug ?? '',
+      themeBackgroundHex: d.themeBackgroundHex ?? '',
+      themePrimaryHex: d.themePrimaryHex ?? '',
+      services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
+    };
   }
 
   private syncWindowsFromDetail(): void {

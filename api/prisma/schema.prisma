@@ -60,6 +60,10 @@ model Business {
   address              String
   timezone             String          @default("America/Argentina/Buenos_Aires")
   bookingIntervalMin   Int             @default(30)
+  /// Color de fondo de la página pública de reserva (#RRGGBB), null = tema por defecto.
+  themeBackgroundHex   String?         @map("theme_background_hex") @db.VarChar(7)
+  /// Color primario / acento (#RRGGBB), null = tema por defecto.
+  themePrimaryHex      String?         @map("theme_primary_hex") @db.VarChar(7)
   status               BusinessStatus  @default(active)
   ownerUserId          String?         @map("owner_user_id")
   createdAt            DateTime        @default(now())

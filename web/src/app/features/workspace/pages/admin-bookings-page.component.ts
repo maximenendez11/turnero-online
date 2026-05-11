@@ -8,12 +8,24 @@ import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.compon
 import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
 import {
   buildCalendarWeeks,
+  formatBookingDateCompactInZone,
   formatBookingDateMediumInZone,
+  formatBookingDayGroupTitleInZone,
+  formatBookingTimeInZone,
   formatDayKeyInTimeZone,
+  formatIsoToDatetimeLocalInZone,
   isSameZonedCalendarDay,
   monthStart,
+  parseDatetimeLocalInZoneToIso,
   safeIanaTimeZone,
 } from './admin-bookings-calendar.utils';
+
+type AdminBookingListDayGroup = {
+  trackKey: string;
+  dayTitle: string;
+  isToday: boolean;
+  rows: AdminBookingRow[];
+};
 
 @Component({
   standalone: true,
@@ -92,11 +104,58 @@ export class AdminBookingsPageComponent {
     });
   });
 
-  readonly bookingsSorted = computed(() =>
-    [...this.bookings()].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()),
-  );
-
   readonly filterBusinessId = signal('');
+  readonly listSearchQuery = signal('');
+  readonly listStatusFilter = signal<'all' | 'pending' | 'confirmed' | 'cancelled'>('all');
+
+  /** Turnos del listado tras búsqueda y filtro de estado (orden cronológico). */
+  readonly listFilteredRows = computed(() => {
+    const q = this.listSearchQuery().trim().toLowerCase();
+    const st = this.listStatusFilter();
+    let rows = [...this.bookings()].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    if (st !== 'all') {
+      rows = rows.filter((r) => r.status === st);
+    }
+    if (q) {
+      rows = rows.filter((r) => this.rowMatchesListSearch(r, q));
+    }
+    return rows;
+  });
+
+  /** Agrupa por día civil según la zona de cada negocio (listado tipo timeline). */
+  readonly listDayGroups = computed((): AdminBookingListDayGroup[] => {
+    const rows = this.listFilteredRows();
+    const buckets = new Map<string, { tz: string; dayKey: string; rows: AdminBookingRow[] }>();
+    for (const r of rows) {
+      const tz = this.timeZoneForBooking(r);
+      const dayKey = formatDayKeyInTimeZone(new Date(r.startsAt), tz);
+      const key = `${tz}|${dayKey}`;
+      let g = buckets.get(key);
+      if (!g) {
+        g = { tz, dayKey, rows: [] };
+        buckets.set(key, g);
+      }
+      g.rows.push(r);
+    }
+    const sorted = [...buckets.values()].sort(
+      (a, b) => new Date(a.rows[0].startsAt).getTime() - new Date(b.rows[0].startsAt).getTime(),
+    );
+    return sorted.map((g) => {
+      const ordered = [...g.rows].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+      const first = ordered[0];
+      const tz = g.tz;
+      return {
+        trackKey: `${tz}|${g.dayKey}`,
+        dayTitle: formatBookingDayGroupTitleInZone(first.startsAt, tz),
+        isToday: formatDayKeyInTimeZone(new Date(), tz) === g.dayKey,
+        rows: ordered,
+      };
+    });
+  });
+
+  readonly listEmptyAfterFilter = computed(
+    () => this.bookings().length > 0 && this.listFilteredRows().length === 0,
+  );
 
   constructor() {
     void this.init();
@@ -104,6 +163,59 @@ export class AdminBookingsPageComponent {
 
   formatBookingDateMedium(iso: string): string {
     return formatBookingDateMediumInZone(iso, this.calendarTimeZone());
+  }
+
+  formatListRowDate(row: AdminBookingRow): string {
+    return formatBookingDateCompactInZone(row.startsAt, this.timeZoneForBooking(row));
+  }
+
+  formatListRowTime(row: AdminBookingRow): string {
+    return formatBookingTimeInZone(row.startsAt, this.timeZoneForBooking(row));
+  }
+
+  private rowMatchesListSearch(r: AdminBookingRow, q: string): boolean {
+    const blob = [
+      r.customerFullName,
+      r.customerContact ?? '',
+      r.service.name,
+      r.code,
+      r.business.name,
+      this.bookingStatusLabel(r.status),
+    ]
+      .join('\n')
+      .toLowerCase();
+    return blob.includes(q);
+  }
+
+  /** Etiqueta en español para la UI (la API usa enums en inglés). */
+  bookingStatusLabel(status: string): string {
+    switch (status) {
+      case 'pending':
+        return 'Pendiente';
+      case 'confirmed':
+        return 'Confirmado';
+      case 'cancelled':
+        return 'Cancelado';
+      default:
+        return status;
+    }
+  }
+
+  /** Zona del negocio del turno (alinear edición con la misma región que la API). */
+  timeZoneForBooking(row: AdminBookingRow): string {
+    const raw = this.businesses().find((b) => b.id === row.business.id)?.timezone;
+    return safeIanaTimeZone(raw);
+  }
+
+  /** Valor para `datetime-local`: reloj local del negocio, no ISO en crudo. */
+  startsAtInputValue(row: AdminBookingRow): string {
+    return formatIsoToDatetimeLocalInZone(row.startsAt, this.timeZoneForBooking(row));
+  }
+
+  onStartsAtInputChange(row: AdminBookingRow, value: string): void {
+    if (!value.trim()) return;
+    const iso = parseDatetimeLocalInZoneToIso(value, this.timeZoneForBooking(row));
+    if (iso) row.startsAt = iso;
   }
 
   private normalizeBookingRows(res: unknown): AdminBookingRow[] {
@@ -198,8 +310,6 @@ export class AdminBookingsPageComponent {
       const updated = await firstValueFrom(
         this.api.patchBooking(row.id, {
           status: row.status,
-          customerFullName: row.customerFullName,
-          customerContact: row.customerContact,
           startsAt: row.startsAt,
         }),
       );

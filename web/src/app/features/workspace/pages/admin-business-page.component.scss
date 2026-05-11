@@ -235,6 +235,28 @@
   word-break: break-all;
 }
 
+.theme-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.theme-color-native {
+  flex-shrink: 0;
+  width: 2.85rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 1px solid dv.$dv-outline-variant;
+  border-radius: dv.$dv-radius-md;
+  cursor: pointer;
+  background: dv.$dv-surface-container-low;
+}
+
+.theme-color-row .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .field-grid {
   border: 0;
   margin: 0;

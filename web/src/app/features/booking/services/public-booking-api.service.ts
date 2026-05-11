@@ -10,6 +10,10 @@ export type PublicBusiness = {
   name: string;
   description: string | null;
   address: string;
+  timezone?: string | null;
+  bookingIntervalMin?: number;
+  themeBackgroundHex?: string | null;
+  themePrimaryHex?: string | null;
 };
 
 export type PublicService = {

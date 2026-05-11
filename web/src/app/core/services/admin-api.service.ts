@@ -35,6 +35,8 @@ export type AdminBusinessDetail = AdminBusinessListItem & {
   description: string | null;
   openingWindows: AdminOpeningWindow[];
   services: AdminServiceRow[];
+  themeBackgroundHex?: string | null;
+  themePrimaryHex?: string | null;
 };
 
 export type AdminBookingRow = {

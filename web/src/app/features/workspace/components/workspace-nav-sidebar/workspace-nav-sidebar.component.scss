@@ -89,6 +89,7 @@
 .nav-sidebar--rail {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 100vh;
   width: dv.$dv-sidebar-rail-width;
   padding: dv.$dv-space-md;

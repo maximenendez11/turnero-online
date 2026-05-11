@@ -72,6 +72,18 @@
           >
             Servicios
           </button>
+          <button
+            type="button"
+            class="settings-tabs__tab"
+            role="tab"
+            id="tab-apariencia"
+            [class.settings-tabs__tab--active]="settingsTab() === 'apariencia'"
+            [attr.aria-selected]="settingsTab() === 'apariencia'"
+            [attr.tabindex]="settingsTab() === 'apariencia' ? 0 : -1"
+            (click)="setSettingsTab('apariencia')"
+          >
+            Apariencia
+          </button>
         </div>
 
         <div class="settings-tabs__panels">
@@ -260,6 +272,75 @@
                   Añadir servicio
                 </button>
               </div>
+            </article>
+          </div>
+
+          <div
+            class="settings-tabs__panel"
+            role="tabpanel"
+            id="panel-apariencia"
+            aria-labelledby="tab-apariencia"
+            [hidden]="settingsTab() !== 'apariencia'"
+          >
+            <article class="card" aria-labelledby="sec-apariencia">
+              <div class="card__head">
+                <h2 id="sec-apariencia">Reserva pública</h2>
+                <p class="card__hint">
+                  Color de fondo y color primario de la página donde el cliente elige servicio, día y hora (formato
+                  #RRGGBB). Si los dejás vacíos y guardás, se usa el tema por defecto de la app.
+                </p>
+              </div>
+              <fieldset class="field-grid theme-fields" [disabled]="saving()">
+                <legend class="sr-only">Colores del flujo de reserva</legend>
+                <label>
+                  <span class="label-caps">Fondo de la página</span>
+                  <div class="theme-color-row">
+                    <input
+                      class="theme-color-native"
+                      type="color"
+                      [value]="themeBgPickerValue()"
+                      (input)="setThemeBgFromPicker($event)"
+                      [attr.aria-label]="'Selector de color de fondo'"
+                    />
+                    <input
+                      class="input"
+                      [(ngModel)]="d.themeBackgroundHex"
+                      placeholder="#131313"
+                      maxlength="7"
+                      spellcheck="false"
+                      autocapitalize="off"
+                    />
+                  </div>
+                  <span class="micro-hint">Predeterminado app: <code>#131313</code></span>
+                </label>
+                <label>
+                  <span class="label-caps">Color primario (acento)</span>
+                  <div class="theme-color-row">
+                    <input
+                      class="theme-color-native"
+                      type="color"
+                      [value]="themePrimaryPickerValue()"
+                      (input)="setThemePrimaryFromPicker($event)"
+                      [attr.aria-label]="'Selector de color primario'"
+                    />
+                    <input
+                      class="input"
+                      [(ngModel)]="d.themePrimaryHex"
+                      placeholder="#adc6ff"
+                      maxlength="7"
+                      spellcheck="false"
+                      autocapitalize="off"
+                    />
+                  </div>
+                  <span class="micro-hint">Botones, pasos activos y selección. Predeterminado: <code>#adc6ff</code></span>
+                </label>
+              </fieldset>
+              <footer class="card__footer card__footer--split">
+                <button type="button" class="btn btn--ghost" (click)="resetThemeToDefaults()">Vaciar (tema por defecto)</button>
+                <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="saveTheme()">
+                  {{ saving() ? 'Guardando…' : 'Guardar colores' }}
+                </button>
+              </footer>
             </article>
           </div>
         </div>

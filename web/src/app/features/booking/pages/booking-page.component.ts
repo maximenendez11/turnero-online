@@ -6,6 +6,8 @@ import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { rememberBooking } from '../../customer/recent-bookings.storage';
 import { BookingFlowService } from '../services/booking-flow.service';
 import { PublicBookingApiService, PublicService } from '../services/public-booking-api.service';
+import { hydrateBookingShellSnapshot, persistBookingShellSnapshot } from '../utils/booking-theme-shell.cache';
+import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
 
 type ConfirmedBooking = {
   code: string;
@@ -35,6 +37,11 @@ export class BookingPageComponent {
   businessName = '';
   /** IANA tz from API; used to show confirmed bookings aligned to the business calendar. */
   businessTimezone: string | null = null;
+  /** Tema desde API (#RRGGBB); null = usar valores por defecto del cliente. */
+  themeBackgroundHex: string | null = null;
+  themePrimaryHex: string | null = null;
+  /** Tema/nombre restaurados desde caché antes del primer paint (evita parpadeo entre pasos). */
+  private shellHydratedFromCache = false;
   step = 1;
   stepTitle = 'Elegir servicio';
   stepSubtitle = 'Selecciona el servicio que quieres reservar.';
@@ -52,6 +59,13 @@ export class BookingPageComponent {
   successBookingLoading = false;
 
   constructor() {
+    const snap = hydrateBookingShellSnapshot(this.tenantSlug, this.flow);
+    if (snap) {
+      this.shellHydratedFromCache = true;
+      this.themeBackgroundHex = snap.themeBackgroundHex;
+      this.themePrimaryHex = snap.themePrimaryHex;
+      this.businessName = snap.businessName;
+    }
     const dataStep = this.route.snapshot.data['step'];
     if (typeof dataStep === 'number' && dataStep >= 1) {
       this.step = dataStep;
@@ -72,13 +86,33 @@ export class BookingPageComponent {
       ),
     ).then((business) => {
       if (business && typeof business === 'object' && 'name' in business) {
-        const b = business as { name: string; timezone?: string | null };
+        const b = business as {
+          name: string;
+          timezone?: string | null;
+          themeBackgroundHex?: string | null;
+          themePrimaryHex?: string | null;
+        };
         this.businessName = String(b.name);
         this.businessTimezone =
           typeof b.timezone === 'string' && b.timezone.trim().length > 0 ? b.timezone.trim() : null;
+        const bg = b.themeBackgroundHex?.trim();
+        const pr = b.themePrimaryHex?.trim();
+        this.themeBackgroundHex = bg && /^#[0-9A-Fa-f]{6}$/.test(bg) ? bg : null;
+        this.themePrimaryHex = pr && /^#[0-9A-Fa-f]{6}$/.test(pr) ? pr : null;
+        persistBookingShellSnapshot(this.tenantSlug, this.flow, {
+          themeBackgroundHex: this.themeBackgroundHex,
+          themePrimaryHex: this.themePrimaryHex,
+          businessName: this.businessName,
+        });
       } else {
-        this.businessName = this.tenantSlug.replace(/-/g, ' ');
+        if (!this.businessName.trim()) {
+          this.businessName = this.tenantSlug.replace(/-/g, ' ');
+        }
         this.businessTimezone = null;
+        if (!this.shellHydratedFromCache) {
+          this.themeBackgroundHex = null;
+          this.themePrimaryHex = null;
+        }
       }
       this.cdr.markForCheck();
     });
@@ -375,6 +409,11 @@ export class BookingPageComponent {
   private parseLocalDay(isoDate: string): Date {
     const [y, m, d] = isoDate.split('-').map((x) => Number.parseInt(x, 10));
     return new Date(y, (m || 1) - 1, d || 1);
+  }
+
+  /** Variables CSS: fondo, primario, superficies, textos y stepper según tema del negocio. */
+  bookingShellStyles(): Record<string, string> {
+    return buildBookingShellCssVars(this.themeBackgroundHex, this.themePrimaryHex);
   }
 
   private capitalize(s: string): string {

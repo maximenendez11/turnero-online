@@ -55,38 +55,117 @@
   />
 
   <section class="bookings-list" *ngIf="!loading() && viewMode() === 'list'">
-    <h2 class="bookings-list__title">Todos los turnos (orden por fecha)</h2>
-    <p class="muted bookings-list__tz">Horarios según zona del negocio ({{ calendarTimeZone() }}).</p>
+    <h2 class="bookings-list__title">Listado de turnos</h2>
+    <p class="muted bookings-list__intro">
+      Agrupados por día según la zona de cada negocio. Zona de referencia del filtro superior:
+      {{ calendarTimeZone() }}.
+    </p>
+
+    <div class="bookings-list__controls">
+      <label class="bookings-list__search">
+        <span class="bookings-list__control-label">Buscar</span>
+        <input
+          type="search"
+          class="cell-input bookings-list__search-input"
+          placeholder="Cliente, servicio, código, contacto…"
+          [ngModel]="listSearchQuery()"
+          (ngModelChange)="listSearchQuery.set($event)"
+          autocomplete="off"
+        />
+      </label>
+      <div class="bookings-list__status-wrap" role="group" aria-label="Filtrar por estado">
+        <span class="bookings-list__control-label">Estado</span>
+        <div class="bookings-list__chips">
+          <button
+            type="button"
+            class="bookings-list__chip"
+            [class.bookings-list__chip--active]="listStatusFilter() === 'all'"
+            (click)="listStatusFilter.set('all')"
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            class="bookings-list__chip bookings-list__chip--tone-confirmed"
+            [class.bookings-list__chip--active]="listStatusFilter() === 'confirmed'"
+            (click)="listStatusFilter.set('confirmed')"
+          >
+            Confirmado
+          </button>
+          <button
+            type="button"
+            class="bookings-list__chip bookings-list__chip--tone-pending"
+            [class.bookings-list__chip--active]="listStatusFilter() === 'pending'"
+            (click)="listStatusFilter.set('pending')"
+          >
+            Pendiente
+          </button>
+          <button
+            type="button"
+            class="bookings-list__chip bookings-list__chip--tone-cancelled"
+            [class.bookings-list__chip--active]="listStatusFilter() === 'cancelled'"
+            (click)="listStatusFilter.set('cancelled')"
+          >
+            Cancelado
+          </button>
+        </div>
+      </div>
+    </div>
 
     <p class="muted bookings-list__empty" *ngIf="bookings().length === 0">
       No hay turnos cargados todavía.
     </p>
 
-    <div class="bookings-list__wrap" *ngIf="bookings().length > 0">
-      <table>
+    <p class="muted bookings-list__empty" *ngIf="listEmptyAfterFilter()">
+      No hay turnos que coincidan con la búsqueda o el filtro de estado.
+    </p>
+
+    <div class="bookings-list__wrap" *ngIf="listFilteredRows().length > 0">
+      <table class="bookings-list__table">
         <thead>
           <tr>
-            <th>Fecha y hora</th>
+            <th>Fecha</th>
+            <th>Hora</th>
             <th>Servicio</th>
             <th>Cliente</th>
             <th>Estado</th>
           </tr>
         </thead>
-        <tbody>
-          <tr
-            *ngFor="let row of bookingsSorted()"
-            class="bookings-list__row"
-            tabindex="0"
-            (click)="onListRowActivate(row, $event)"
-            (keydown.enter)="selectBooking(row)"
-            (keydown.space)="$event.preventDefault(); selectBooking(row)"
-          >
-            <td>{{ formatBookingDateMedium(row.startsAt) }}</td>
-            <td>{{ row.service.name }}</td>
-            <td>{{ row.customerFullName }}</td>
-            <td>{{ row.status }}</td>
-          </tr>
-        </tbody>
+        @for (group of listDayGroups(); track group.trackKey) {
+          <tbody class="bookings-list__tbody-day">
+            <tr class="bookings-list__day-separator">
+              <td colspan="5">
+                <div class="bookings-list__day-banner">
+                  <div class="bookings-list__day-main">
+                    <span class="bookings-list__day-title">{{ group.dayTitle }}</span>
+                    <span class="bookings-list__today-badge" *ngIf="group.isToday">Hoy</span>
+                  </div>
+                  <span class="bookings-list__day-count muted">
+                    {{ group.rows.length }} {{ group.rows.length === 1 ? 'turno' : 'turnos' }}
+                  </span>
+                </div>
+              </td>
+            </tr>
+            @for (row of group.rows; track row.id) {
+              <tr
+                class="bookings-list__row"
+                [class.bookings-list__row--confirmed]="row.status !== 'pending' && row.status !== 'cancelled'"
+                [class.bookings-list__row--pending]="row.status === 'pending'"
+                [class.bookings-list__row--cancelled]="row.status === 'cancelled'"
+                tabindex="0"
+                (click)="onListRowActivate(row, $event)"
+                (keydown.enter)="selectBooking(row)"
+                (keydown.space)="$event.preventDefault(); selectBooking(row)"
+              >
+                <td class="bookings-list__cell-date">{{ formatListRowDate(row) }}</td>
+                <td class="bookings-list__cell-time">{{ formatListRowTime(row) }}</td>
+                <td>{{ row.service.name }}</td>
+                <td>{{ row.customerFullName }}</td>
+                <td class="bookings-list__status">{{ bookingStatusLabel(row.status) }}</td>
+              </tr>
+            }
+          </tbody>
+        }
       </table>
     </div>
   </section>
@@ -94,6 +173,9 @@
   <div class="booking-modal-backdrop" *ngIf="selectedBooking() as row" (click)="clearSelection()">
     <article
       class="booking-detail booking-modal"
+      [class.booking-modal--confirmed]="row.status !== 'pending' && row.status !== 'cancelled'"
+      [class.booking-modal--pending]="row.status === 'pending'"
+      [class.booking-modal--cancelled]="row.status === 'cancelled'"
       role="dialog"
       aria-modal="true"
       aria-labelledby="booking-modal-title"
@@ -105,17 +187,24 @@
         <button type="button" class="booking-detail__close" (click)="clearSelection()">Cerrar</button>
       </header>
       <div class="booking-detail__grid">
-        <label>
-          <span>Cliente</span>
-          <input class="cell-input" [(ngModel)]="row.customerFullName" />
-        </label>
-        <label>
-          <span>Contacto</span>
-          <input class="cell-input" [(ngModel)]="row.customerContact" />
-        </label>
+        <div class="booking-detail__field">
+          <span class="booking-detail__label">Cliente</span>
+          <p class="booking-detail__readonly">{{ row.customerFullName || '—' }}</p>
+        </div>
+        <div class="booking-detail__field">
+          <span class="booking-detail__label">Contacto</span>
+          <p class="booking-detail__readonly">{{ row.customerContact || '—' }}</p>
+        </div>
         <label class="booking-detail__full">
-          <span>Inicio (ISO o fecha legible)</span>
-          <input class="cell-input cell-input--wide" [(ngModel)]="row.startsAt" />
+          <span>Fecha y hora de inicio</span>
+          <input
+            type="datetime-local"
+            step="60"
+            class="cell-input cell-input--wide"
+            [ngModel]="startsAtInputValue(row)"
+            (ngModelChange)="onStartsAtInputChange(row, $event)"
+          />
+          <span class="booking-detail__hint muted">Horario del negocio: {{ timeZoneForBooking(row) }}.</span>
         </label>
         <label>
           <span>Estado</span>

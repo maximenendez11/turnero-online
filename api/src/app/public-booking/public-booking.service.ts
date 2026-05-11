@@ -47,6 +47,8 @@ export class PublicBookingService {
         address: true,
         timezone: true,
         bookingIntervalMin: true,
+        themeBackgroundHex: true,
+        themePrimaryHex: true,
       },
     });
     if (!business) throw new NotFoundException('Business not found');

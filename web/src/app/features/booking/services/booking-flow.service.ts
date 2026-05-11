@@ -6,6 +6,13 @@ type BookingFlowState = {
   startsAt: string | null;
 };
 
+/** Caché en memoria del tema del booking (las rutas por paso destruyen el componente). */
+export type BookingShellCache = {
+  themeBackgroundHex: string | null;
+  themePrimaryHex: string | null;
+  businessName: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class BookingFlowService {
   private readonly state = signal<BookingFlowState>({
@@ -13,8 +20,18 @@ export class BookingFlowService {
     startsAt: null,
   });
 
+  private readonly shellBySlug = new Map<string, BookingShellCache>();
+
   get value(): BookingFlowState {
     return this.state();
+  }
+
+  peekBookingShell(slug: string): BookingShellCache | null {
+    return this.shellBySlug.get(slug) ?? null;
+  }
+
+  rememberBookingShell(slug: string, snap: BookingShellCache): void {
+    this.shellBySlug.set(slug, { ...snap });
   }
 
   selectService(service: PublicService): void {
