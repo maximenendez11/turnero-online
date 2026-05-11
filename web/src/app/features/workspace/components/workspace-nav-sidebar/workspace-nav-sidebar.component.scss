@@ -89,7 +89,7 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 35%, transparent);
 }
 
-/* Variante rail: columna fija, tono “elevado” + borde fantasma (DESIGN.md) */
+/* Variante rail: columna fija (desktop) */
 .nav-sidebar--rail {
   display: flex;
   flex-direction: column;
@@ -107,70 +107,48 @@
   flex: 1;
 }
 
-/* Barra superior en móvil (el rail va en aside oculto < breakpoint) */
-.nav-sidebar--topbar {
+.nav-sidebar__eyebrow--topbar {
+  margin-bottom: 0;
+  font-size: 10px;
+}
+
+/* ——— Móvil: barra + hamburguesa + cajón desde la izquierda ——— */
+.nav-mobile {
   width: 100%;
+}
+
+.nav-mobile__bar {
+  display: flex;
+  align-items: center;
+  gap: dv.$dv-space-sm;
+  padding: 0.6rem dv.$dv-space-md;
   border-bottom: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
   background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container-low}) 94%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
-.nav-sidebar__topbar-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: dv.$dv-space-sm;
-  padding: 0.6rem dv.$dv-space-md;
-  max-width: 100%;
-}
-
-.nav-sidebar__topbar-brand {
+.nav-mobile__hamburger {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.nav-sidebar__eyebrow--topbar {
-  margin-bottom: 0;
-  font-size: 10px;
-}
-
-.nav-sidebar__topbar-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--booking-text, #{dv.$dv-on-surface});
-  line-height: 1.25;
-}
-
-.nav-sidebar__topbar-list {
-  list-style: none;
-  margin: 0;
+  justify-content: center;
+  gap: 5px;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.nav-sidebar__topbar-item {
   margin: 0;
-}
-
-.nav-sidebar__link--topbar {
-  white-space: nowrap;
-  padding: 0.42rem 0.8rem;
-  font-size: 0.86rem;
-  font-weight: 500;
-  border-radius: dv.$dv-radius-lg;
   border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-  background: color-mix(in srgb, var(--booking-surface-2, #{dv.$dv-surface-container}) 75%, transparent);
+  border-radius: dv.$dv-radius-md;
+  background: color-mix(in srgb, var(--booking-surface-2, #{dv.$dv-surface-container}) 80%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
-.nav-sidebar__link--topbar:hover {
+.nav-mobile__hamburger:hover {
   border-color: color-mix(
     in srgb,
     var(--booking-border, #{dv.$dv-outline-variant}) 65%,
@@ -178,10 +156,156 @@
   );
 }
 
-.nav-sidebar--topbar .nav-sidebar__link--active {
-  border-color: color-mix(
-    in srgb,
-    var(--booking-primary, #{dv.$dv-primary}) 45%,
-    var(--booking-border, #{dv.$dv-outline-variant})
-  );
+.nav-mobile__hamburger:focus-visible {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 2px;
+}
+
+.nav-mobile__hamburger-line {
+  display: block;
+  width: 1.1rem;
+  height: 2px;
+  margin: 0 auto;
+  border-radius: 1px;
+  background: var(--booking-text, #{dv.$dv-on-surface});
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease;
+}
+
+.nav-mobile__bar--menu-open .nav-mobile__hamburger-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-mobile__bar--menu-open .nav-mobile__hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.nav-mobile__bar--menu-open .nav-mobile__hamburger-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.nav-mobile__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.nav-mobile__title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-mobile__drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  visibility: hidden;
+  transition: visibility 0.32s linear;
+}
+
+.nav-mobile__drawer--open {
+  pointer-events: auto;
+  visibility: visible;
+}
+
+.nav-mobile__backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: color-mix(in srgb, #000 48%, transparent);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.nav-mobile__drawer--open .nav-mobile__backdrop {
+  opacity: 1;
+}
+
+.nav-mobile__panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(dv.$dv-sidebar-rail-width, 92vw);
+  max-width: 20rem;
+  display: flex;
+  flex-direction: column;
+  padding: dv.$dv-space-md;
+  background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container-low}) 96%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-right: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  box-shadow: 8px 0 32px color-mix(in srgb, #000 35%, transparent);
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav-mobile__drawer--open .nav-mobile__panel {
+  transform: translateX(0);
+}
+
+.nav-mobile__panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: dv.$dv-space-sm;
+  padding-bottom: dv.$dv-space-md;
+  margin-bottom: dv.$dv-space-sm;
+  border-bottom: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+}
+
+.nav-mobile__panel-brand {
+  min-width: 0;
+}
+
+.nav-mobile__panel-title {
+  font-size: 1rem;
+}
+
+.nav-mobile__close {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-mobile__close:hover {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container});
+}
+
+.nav-mobile__close:focus-visible {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 2px;
+}
+
+.nav-mobile__panel .nav-sidebar__list {
+  flex: 1;
 }

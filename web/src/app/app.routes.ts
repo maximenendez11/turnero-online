@@ -98,7 +98,7 @@ export const appRoutes: Route[] = [
       description: 'Valida tu configuracion antes de activar el negocio.',
       fields: ['Resumen', 'Publicacion'],
       prev: '/onboarding/schedule',
-      next: '/app/appointments',
+      next: '/app/dashboard',
     },
   },
   {
@@ -107,9 +107,15 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('./features/workspace/layout/workspace-layout.component').then((m) => m.WorkspaceLayoutComponent),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'appointments' },
-      { path: 'dashboard', pathMatch: 'full', redirectTo: 'appointments' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'settings/business', pathMatch: 'full', redirectTo: 'business' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/workspace/pages/admin-dashboard-page.component').then(
+            (m) => m.AdminDashboardPageComponent,
+          ),
+      },
       {
         path: 'appointments',
         loadComponent: () =>

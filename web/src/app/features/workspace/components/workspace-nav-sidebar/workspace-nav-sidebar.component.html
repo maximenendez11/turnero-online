@@ -25,24 +25,75 @@
     </ul>
   </nav>
 
-  <nav *ngSwitchCase="'topbar'" class="nav-sidebar nav-sidebar--topbar" aria-label="Navegación del workspace">
-    <div class="nav-sidebar__topbar-inner">
-      <div class="nav-sidebar__topbar-brand">
+  <div *ngSwitchCase="'topbar'" class="nav-mobile">
+    <nav
+      class="nav-mobile__bar"
+      [class.nav-mobile__bar--menu-open]="menuOpen()"
+      aria-label="Barra superior del workspace"
+    >
+      <button
+        type="button"
+        class="nav-mobile__hamburger"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="workspace-mobile-menu"
+        [attr.aria-label]="menuOpen() ? 'Cerrar menú' : 'Abrir menú'"
+      >
+        <span class="nav-mobile__hamburger-line" aria-hidden="true"></span>
+        <span class="nav-mobile__hamburger-line" aria-hidden="true"></span>
+        <span class="nav-mobile__hamburger-line" aria-hidden="true"></span>
+      </button>
+      <div class="nav-mobile__brand">
         <span class="nav-sidebar__eyebrow nav-sidebar__eyebrow--topbar">{{ eyebrow }}</span>
-        <span class="nav-sidebar__topbar-title">{{ title }}</span>
+        <span class="nav-mobile__title">{{ title }}</span>
       </div>
-      <ul class="nav-sidebar__topbar-list">
-        <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__topbar-item">
-          <a
-            class="nav-sidebar__link nav-sidebar__link--topbar"
-            [routerLink]="link.path"
-            routerLinkActive="nav-sidebar__link--active"
-            [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
+    </nav>
+
+    <div class="nav-mobile__drawer" [class.nav-mobile__drawer--open]="menuOpen()">
+      <button
+        type="button"
+        class="nav-mobile__backdrop"
+        (click)="closeMenu()"
+        tabindex="-1"
+        aria-label="Cerrar menú"
+      ></button>
+      <div
+        id="workspace-mobile-menu"
+        class="nav-mobile__panel"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-hidden]="!menuOpen()"
+        aria-label="Menú de navegación"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="nav-mobile__panel-head">
+          <div class="nav-mobile__panel-brand">
+            <span class="nav-sidebar__eyebrow">{{ eyebrow }}</span>
+            <h2 class="nav-sidebar__title nav-mobile__panel-title">{{ title }}</h2>
+          </div>
+          <button
+            type="button"
+            class="nav-mobile__close"
+            (click)="closeMenu()"
+            aria-label="Cerrar menú"
           >
-            {{ link.label }}
-          </a>
-        </li>
-      </ul>
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <p class="nav-sidebar__section-label">Menú</p>
+        <ul class="nav-sidebar__list">
+          <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__item">
+            <a
+              class="nav-sidebar__link"
+              [routerLink]="link.path"
+              routerLinkActive="nav-sidebar__link--active"
+              [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
+            >
+              <span class="nav-sidebar__link-text">{{ link.label }}</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
-  </nav>
+  </div>
 </ng-container>

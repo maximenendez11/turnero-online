@@ -86,14 +86,14 @@ export class AuthPageComponent {
       this.session.signInWithTokens(res.accessToken, res.refreshToken, res.email);
       if (res.role === 'ADMIN') {
         this.onboarding.markCompleted();
-        await this.router.navigateByUrl('/app/appointments');
+        await this.router.navigateByUrl('/app/dashboard');
         return;
       }
       try {
         const businesses = await firstValueFrom(this.adminApi.getBusinesses());
         if (businesses.length > 0) {
           this.onboarding.markCompleted();
-          await this.router.navigateByUrl('/app/appointments');
+          await this.router.navigateByUrl('/app/dashboard');
           return;
         }
       } catch {

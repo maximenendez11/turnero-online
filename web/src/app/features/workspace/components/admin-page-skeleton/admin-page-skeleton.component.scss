@@ -301,3 +301,78 @@
     grid-column: auto;
   }
 }
+
+/* Panel (dashboard) */
+.admin-skel-dash__metrics {
+  margin: 0 auto dv.$dv-space-md;
+  max-width: 14rem;
+}
+
+.admin-skel-dash__metric {
+  min-height: 3.75rem;
+  border-radius: dv.$dv-radius-lg;
+}
+
+.admin-skel-dash__metric--hero {
+  min-height: 4.25rem;
+}
+
+.admin-skel-dash__hours {
+  margin-bottom: dv.$dv-space-lg;
+  padding: dv.$dv-space-md;
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 75%, transparent);
+}
+
+.admin-skel-dash__title {
+  width: 12rem;
+  height: 1rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-skel-dash__hint {
+  width: min(100%, 22rem);
+  height: 0.72rem;
+  margin-bottom: dv.$dv-space-md;
+}
+
+.admin-skel-dash__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: dv.$dv-space-sm;
+}
+
+.admin-skel-dash__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.admin-skel-dash__name {
+  width: 8rem;
+  height: 0.85rem;
+}
+
+.admin-skel-dash__badge {
+  width: 6.5rem;
+  height: 1.85rem;
+  border-radius: dv.$dv-radius-md;
+}
+
+.admin-skel-dash__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: dv.$dv-space-md;
+  margin-bottom: dv.$dv-space-lg;
+}
+
+.admin-skel-dash__card {
+  min-height: 4.5rem;
+  border-radius: dv.$dv-radius-xl;
+}

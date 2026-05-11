@@ -1,0 +1,119 @@
+<section class="admin-page" [attr.aria-busy]="loading()">
+  <header class="admin-page__head">
+    <h1>Bienvenido</h1>
+    <p class="lead">Resumen del workspace y accesos rápidos a la administración.</p>
+  </header>
+
+  <p class="error" *ngIf="error()">{{ error() }}</p>
+
+  <app-admin-page-skeleton *ngIf="loading()" variant="dashboard" />
+
+  <p class="dash-metrics__warn muted" *ngIf="!loading() && metricsError()">{{ metricsError() }}</p>
+
+  <div class="dash-metrics" *ngIf="!loading() && metrics() as m" aria-live="polite">
+    <h2 class="dash-metrics__title">Turnos confirmados para hoy</h2>
+
+    <div class="dash-metrics__hero">
+      <span class="dash-metrics__value">{{ m.todayConfirmed }}</span>
+      <span class="dash-metrics__label" *ngIf="m.todayConfirmed === 1">Turno</span>
+      <span class="dash-metrics__label" *ngIf="m.todayConfirmed > 1">Turnos</span>
+    </div>
+
+    <div class="dash-metrics__by-biz" *ngIf="m.byBusiness.length > 1">
+      <h3 class="dash-metrics__by-title">Por negocio</h3>
+      <ul class="dash-metrics__by-list">
+        <li *ngFor="let row of m.byBusiness" class="dash-metrics__by-row">
+          <span class="dash-metrics__by-name">{{ row.businessName }}</span>
+          <span class="dash-metrics__by-count">{{ row.todayConfirmed }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="hours-status" *ngIf="!loading() && statusRows().length > 0" aria-live="polite">
+    <h2 class="hours-status__title">Estado de tu negocio</h2>
+
+    <ul class="hours-status__list">
+      <li *ngFor="let row of statusRows()" class="hours-status__row">
+        <span class="hours-status__name">{{ row.name }}</span>
+        <span
+          class="hours-status__badge"
+          [class.hours-status__badge--open]="row.hasSchedule && row.isOpen"
+          [class.hours-status__badge--closed]="row.hasSchedule && !row.isOpen"
+          [class.hours-status__badge--na]="!row.hasSchedule"
+        >
+          <ng-container *ngIf="row.hasSchedule && row.isOpen">Abierto ahora</ng-container>
+          <ng-container *ngIf="row.hasSchedule && !row.isOpen">Cerrado ahora</ng-container>
+          <ng-container *ngIf="!row.hasSchedule">Sin horarios</ng-container>
+        </span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="share-booking" *ngIf="!loading() && shareRows().length > 0">
+    <div class="share-booking__intro">
+      <h2 class="share-booking__title">Enlace de reserva</h2>
+      <p class="share-booking__lead muted">
+        Compartí esta dirección por WhatsApp, redes o mail. Tus clientes entran y eligen servicio, día y hora.
+      </p>
+    </div>
+
+    <p class="share-booking__toast" *ngIf="copyHint()" role="status">{{ copyHint() }}</p>
+
+    <ul class="share-booking__list">
+      <li *ngFor="let row of shareRows()" class="share-booking__item">
+        <div class="share-booking__item-head" *ngIf="shareRows().length > 1">
+          <span class="share-booking__biz-name">{{ row.name }}</span>
+        </div>
+
+        <ng-container *ngIf="row.bookingPath; else noSlug">
+          <div class="share-booking__url-wrap">
+            <code class="share-booking__url" [title]="bookingPublicUrl(row)">{{ bookingPublicUrl(row) }}</code>
+          </div>
+          <div class="share-booking__actions">
+            <button
+              type="button"
+              class="share-booking__btn share-booking__btn--primary"
+              (click)="copyBookingLink(row)"
+            >
+              Copiar enlace
+            </button>
+            <button
+              *ngIf="canNativeShare()"
+              type="button"
+              class="share-booking__btn share-booking__btn--ghost"
+              (click)="nativeShare(row)"
+            >
+              Compartir…
+            </button>
+            <a
+              class="share-booking__btn share-booking__btn--link"
+              [routerLink]="row.bookingPath"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Abrir vista pública
+            </a>
+          </div>
+        </ng-container>
+        <ng-template #noSlug>
+          <p class="share-booking__missing muted">
+            Todavía no hay <strong>slug público</strong> para este negocio. Definilo en
+            <a routerLink="/app/business">Mi negocio</a> para generar el enlace de reservas.
+          </p>
+        </ng-template>
+      </li>
+    </ul>
+  </div>
+<!-- 
+  <div class="dash-grid" *ngIf="!loading()">
+    <a class="dash-card" routerLink="/app/appointments">
+      <span class="dash-card__label">Turnos</span>
+      <span class="dash-card__desc">Calendario y listado de reservas</span>
+    </a>
+    <a class="dash-card" routerLink="/app/business">
+      <span class="dash-card__label">Mi negocio</span>
+      <span class="dash-card__desc">Datos, horarios, servicios y apariencia</span>
+    </a>
+  </div> -->
+</section>

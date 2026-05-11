@@ -13,6 +13,11 @@ import { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
 export class AdminController {
   constructor(private readonly admin: AdminService) {}
 
+  @Get('dashboard/metrics')
+  dashboardMetrics(@CurrentUser() user: JwtPayload) {
+    return this.admin.getDashboardMetrics(user);
+  }
+
   @Get('businesses')
   listBusinesses(@CurrentUser() user: JwtPayload) {
     return this.admin.listBusinesses(user);

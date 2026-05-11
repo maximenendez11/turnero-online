@@ -6,12 +6,28 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { DateTime } from 'luxon';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from '../auth/jwt-payload.types';
 import type { PatchBusinessAdminDto } from './dto/patch-business-admin.dto';
 import type { ReplaceOpeningWindowsDto } from './dto/replace-opening-windows.dto';
 import type { CreateServiceAdminDto, PatchServiceAdminDto } from './dto/patch-service-admin.dto';
 import type { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
+
+export type AdminDashboardMetricsByBusiness = {
+  businessId: string;
+  businessName: string;
+  timeZone: string;
+  /** Turnos con estado `confirmed` cuyo `startsAt` cae en el día civil actual del negocio. */
+  todayConfirmed: number;
+};
+
+export type AdminDashboardMetrics = {
+  generatedAt: string;
+  /** Suma de confirmados hoy en todos los negocios accesibles. */
+  todayConfirmed: number;
+  byBusiness: AdminDashboardMetricsByBusiness[];
+};
 
 @Injectable()
 export class AdminService {
@@ -150,6 +166,66 @@ export class AdminService {
     if (dto.price !== undefined) data.price = new Prisma.Decimal(dto.price);
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     return this.prisma.businessService.update({ where: { id: serviceId }, data });
+  }
+
+  /**
+   * Confirmados hoy por negocio: "hoy" = día civil en la zona del negocio; filtro `status === confirmed`.
+   */
+  async getDashboardMetrics(user: JwtPayload): Promise<AdminDashboardMetrics> {
+    const ids = await this.accessibleBusinessIds(user);
+    const empty: AdminDashboardMetrics = {
+      generatedAt: new Date().toISOString(),
+      todayConfirmed: 0,
+      byBusiness: [],
+    };
+    if (ids.length === 0) return empty;
+
+    const businesses = await this.prisma.business.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: { id: true, name: true, timezone: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const byBusiness = await Promise.all(
+      businesses.map((b) => this.todayConfirmedForBusiness(b.id, b.name, b.timezone)),
+    );
+
+    const todayConfirmed = byBusiness.reduce((a, x) => a + x.todayConfirmed, 0);
+
+    return { generatedAt: new Date().toISOString(), todayConfirmed, byBusiness };
+  }
+
+  private async todayConfirmedForBusiness(
+    businessId: string,
+    businessName: string,
+    timezone: string | null,
+  ): Promise<AdminDashboardMetricsByBusiness> {
+    const rawTz = timezone?.trim() || 'America/Argentina/Buenos_Aires';
+    let zonedNow: DateTime;
+    try {
+      zonedNow = DateTime.now().setZone(rawTz);
+      if (!zonedNow.isValid) throw new Error('invalid tz');
+    } catch {
+      zonedNow = DateTime.now().setZone('America/Argentina/Buenos_Aires');
+    }
+
+    const dayStartUtc = zonedNow.startOf('day').toUTC();
+    const dayEndUtc = dayStartUtc.plus({ days: 1 });
+
+    const todayConfirmed = await this.prisma.booking.count({
+      where: {
+        businessId,
+        status: 'confirmed',
+        startsAt: { gte: dayStartUtc.toJSDate(), lt: dayEndUtc.toJSDate() },
+      },
+    });
+
+    return {
+      businessId,
+      businessName,
+      timeZone: zonedNow.zoneName || rawTz,
+      todayConfirmed,
+    };
   }
 
   async listBookings(user: JwtPayload, businessId?: string) {

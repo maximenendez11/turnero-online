@@ -4,7 +4,11 @@
   aria-live="polite"
   aria-busy="true"
   [attr.aria-label]="
-    variant() === 'bookings' ? 'Cargando turnos y calendario' : 'Cargando datos del negocio'
+    variant() === 'bookings'
+      ? 'Cargando turnos y calendario'
+      : variant() === 'dashboard'
+        ? 'Cargando panel'
+        : 'Cargando datos del negocio'
   "
 >
   <span class="admin-skel__sr-only">Cargando…</span>
@@ -52,9 +56,29 @@
       </div>
     }
 
+    @case ('dashboard') {
+      <div class="admin-skel-dash__metrics">
+        <div class="admin-skel__pulse admin-skel-dash__metric admin-skel-dash__metric--hero"></div>
+      </div>
+      <div class="admin-skel-dash__hours">
+        <div class="admin-skel__pulse admin-skel-dash__title"></div>
+        <div class="admin-skel__pulse admin-skel-dash__hint"></div>
+        <ul class="admin-skel-dash__rows">
+          @for (r of dashStatusRows; track r) {
+            <li class="admin-skel-dash__row">
+              <div class="admin-skel__pulse admin-skel-dash__name"></div>
+              <div class="admin-skel__pulse admin-skel-dash__badge"></div>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="admin-skel-dash__grid">
+        <div class="admin-skel__pulse admin-skel-dash__card"></div>
+        <div class="admin-skel__pulse admin-skel-dash__card"></div>
+      </div>
+    }
+
     @case ('business') {
-
-
       <div class="admin-skel-biz__settings">
         <div class="admin-skel-biz__tablist">
           @for (_ of businessTabs; track $index) {

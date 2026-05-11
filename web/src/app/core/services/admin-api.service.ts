@@ -51,6 +51,19 @@ export type AdminBookingRow = {
   business: { id: string; name: string; slug: string | null };
 };
 
+export type AdminDashboardMetricsByBusiness = {
+  businessId: string;
+  businessName: string;
+  timeZone: string;
+  todayConfirmed: number;
+};
+
+export type AdminDashboardMetrics = {
+  generatedAt: string;
+  todayConfirmed: number;
+  byBusiness: AdminDashboardMetricsByBusiness[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
   private readonly http = inject(HttpClient);
@@ -83,6 +96,13 @@ export class AdminApiService {
 
   getBusinesses(): Observable<AdminBusinessListItem[]> {
     return this.http.get<AdminBusinessListItem[]>(this.url('/businesses'), {
+      params: this.cacheBustParams(),
+      headers: this.jsonNoCacheHeaders(),
+    });
+  }
+
+  getDashboardMetrics(): Observable<AdminDashboardMetrics> {
+    return this.http.get<AdminDashboardMetrics>(this.url('/dashboard/metrics'), {
       params: this.cacheBustParams(),
       headers: this.jsonNoCacheHeaders(),
     });
