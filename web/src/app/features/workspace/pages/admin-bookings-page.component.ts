@@ -322,6 +322,7 @@ export class AdminBookingsPageComponent {
         /^#[0-9A-Fa-f]{6}$/.test(bg) ? bg : null,
         /^#[0-9A-Fa-f]{6}$/.test(pr) ? pr : null,
       );
+      this.workspaceTheme.setNavBusinessName(d.name);
     } catch {
       this.workspaceTheme.resetToDefault();
     }

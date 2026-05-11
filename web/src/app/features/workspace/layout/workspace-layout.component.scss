@@ -43,7 +43,7 @@
 
 .workspace-layout__outlet {
   flex: 1;
-  padding: 0 dv.$dv-space-md dv.$dv-space-md;
+  padding: dv.$dv-space-md dv.$dv-space-md dv.$dv-space-md;
 }
 
 @media (min-width: 920px) {

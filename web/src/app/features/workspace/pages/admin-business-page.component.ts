@@ -156,6 +156,7 @@ export class AdminBusinessPageComponent {
       this.normalizeThemeHex(this.detail.themeBackgroundHex),
       this.normalizeThemeHex(this.detail.themePrimaryHex),
     );
+    this.workspaceTheme.setNavBusinessName(this.detail.name);
   }
 
   addWindowRow(): void {
@@ -184,6 +185,7 @@ export class AdminBusinessPageComponent {
       );
       this.detail = this.mapDetailForForm(d);
       this.syncWindowsFromDetail();
+      this.syncWorkspaceShellTheme();
       this.error.set(null);
       this.flash('ok', 'Datos del negocio guardados.');
     } catch (e) {
