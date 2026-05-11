@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { AdminApiService, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
+import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
 import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
 import {
@@ -36,6 +37,7 @@ type AdminBookingListDayGroup = {
 })
 export class AdminBookingsPageComponent {
   private readonly api = inject(AdminApiService);
+  private readonly workspaceTheme = inject(WorkspaceThemeService);
 
   readonly businesses = signal<AdminBusinessListItem[]>([]);
   readonly bookings = signal<AdminBookingRow[]>([]);
@@ -274,6 +276,7 @@ export class AdminBookingsPageComponent {
         this.filterBusinessId.set(list[0].id);
       }
       await this.reloadBookings();
+      await this.syncWorkspaceShellThemeFromFilter();
     } catch (e) {
       this.error.set(apiErrorMessage(e));
     } finally {
@@ -301,6 +304,27 @@ export class AdminBookingsPageComponent {
   async onFilterBusinessChange(id: string): Promise<void> {
     this.filterBusinessId.set(id);
     await this.reloadBookings();
+    await this.syncWorkspaceShellThemeFromFilter();
+  }
+
+  /** Mismo tema que la reserva pública según el negocio filtrado. */
+  private async syncWorkspaceShellThemeFromFilter(): Promise<void> {
+    const id = this.filterBusinessId().trim();
+    if (!id) {
+      this.workspaceTheme.resetToDefault();
+      return;
+    }
+    try {
+      const d = await firstValueFrom(this.api.getBusiness(id));
+      const bg = (d.themeBackgroundHex ?? '').trim();
+      const pr = (d.themePrimaryHex ?? '').trim();
+      this.workspaceTheme.applyBusinessTheme(
+        /^#[0-9A-Fa-f]{6}$/.test(bg) ? bg : null,
+        /^#[0-9A-Fa-f]{6}$/.test(pr) ? pr : null,
+      );
+    } catch {
+      this.workspaceTheme.resetToDefault();
+    }
   }
 
   async saveBooking(row: AdminBookingRow): Promise<void> {

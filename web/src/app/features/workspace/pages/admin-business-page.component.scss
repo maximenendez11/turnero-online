@@ -4,7 +4,7 @@
   max-width: 52rem;
   margin: 0 auto;
   font-family: dv.$dv-font-family;
-  color: dv.$dv-on-surface;
+  color: inherit;
 }
 
 .admin-page__head {
@@ -16,13 +16,14 @@
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--booking-text, #{dv.$dv-on-surface});
 }
 
 .lead {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.55;
-  color: dv.$dv-on-surface-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
   max-width: 40rem;
 }
 
@@ -34,14 +35,14 @@
 }
 
 .notice--ok {
-  background: color-mix(in srgb, #4edea3 18%, dv.$dv-surface-container-low);
-  border: 1px solid color-mix(in srgb, #4edea3 45%, dv.$dv-outline-variant);
+  background: color-mix(in srgb, #4edea3 18%, var(--booking-surface-2, #{dv.$dv-surface-container-low}));
+  border: 1px solid color-mix(in srgb, #4edea3 45%, var(--booking-border, #{dv.$dv-outline-variant}));
   color: #b8f5d9;
 }
 
 .notice--err {
-  background: color-mix(in srgb, #ffb4ab 12%, dv.$dv-surface-container-low);
-  border: 1px solid color-mix(in srgb, #ffb4ab 35%, dv.$dv-outline-variant);
+  background: color-mix(in srgb, #ffb4ab 12%, var(--booking-surface-2, #{dv.$dv-surface-container-low}));
+  border: 1px solid color-mix(in srgb, #ffb4ab 35%, var(--booking-border, #{dv.$dv-outline-variant}));
   color: #ffb4ab;
 }
 
@@ -58,7 +59,7 @@
 .skeleton__line {
   height: 0.75rem;
   border-radius: dv.$dv-radius-sm;
-  background: dv.$dv-surface-container-high;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
   margin-bottom: 0.5rem;
   animation: pulse 1.2s ease-in-out infinite;
 }
@@ -79,7 +80,7 @@
 
 .empty-state {
   padding: dv.$dv-space-lg;
-  border: 1px dashed dv.$dv-outline-variant;
+  border: 1px dashed var(--booking-border, #{dv.$dv-outline-variant});
   border-radius: dv.$dv-radius-xl;
   text-align: center;
 }
@@ -118,8 +119,8 @@
   margin: 0;
   list-style: none;
   border-radius: dv.$dv-radius-lg;
-  background: dv.$dv-surface-container-lowest;
-  border: 1px solid dv.$dv-outline-variant;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
 }
 
 .settings-tabs__tab {
@@ -130,7 +131,7 @@
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
-  color: dv.$dv-on-surface-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
   background: transparent;
   border: 0;
   border-radius: dv.$dv-radius-md;
@@ -142,25 +143,25 @@
 }
 
 .settings-tabs__tab:hover:not(.settings-tabs__tab--active) {
-  color: dv.$dv-on-surface;
-  background: color-mix(in srgb, dv.$dv-surface-container-high 60%, transparent);
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  background: color-mix(in srgb, var(--booking-surface-2, #{dv.$dv-surface-container-high}) 60%, transparent);
 }
 
 .settings-tabs__tab--active {
-  color: dv.$dv-on-primary;
-  background: dv.$dv-primary;
-  box-shadow: 0 1px 0 color-mix(in srgb, dv.$dv-primary 40%, #000);
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
+  background: var(--booking-primary, #{dv.$dv-primary});
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 40%, #000);
 }
 
 .settings-tabs__tab:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px dv.$dv-primary-glow;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 35%, transparent);
 }
 
 .settings-tabs__tab--active:focus-visible {
   box-shadow:
-    0 0 0 2px dv.$dv-surface-container-lowest,
-    0 0 0 4px dv.$dv-primary-glow;
+    0 0 0 2px var(--booking-surface-2, #{dv.$dv-surface-container-lowest}),
+    0 0 0 4px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 45%, transparent);
 }
 
 .settings-tabs__panels {
@@ -172,9 +173,9 @@
 }
 
 .card {
-  background: color-mix(in srgb, dv.$dv-surface-container 82%, transparent);
+  background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 82%, transparent);
   backdrop-filter: blur(10px);
-  border: 1px solid dv.$dv-outline-variant;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
   border-radius: dv.$dv-radius-xl;
   padding: dv.$dv-space-md;
 }
@@ -187,19 +188,20 @@
   margin: 0 0 0.35rem;
   font-size: 1.1rem;
   font-weight: 600;
+  color: var(--booking-text, #{dv.$dv-on-surface});
 }
 
 .card__hint {
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.45;
-  color: dv.$dv-outline;
+  color: var(--booking-text-hint, #{dv.$dv-outline});
 }
 
 .card__footer {
   margin-top: dv.$dv-space-md;
   padding-top: dv.$dv-space-md;
-  border-top: 1px solid dv.$dv-outline-variant;
+  border-top: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
   display: flex;
   justify-content: flex-end;
 }
@@ -217,7 +219,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: dv.$dv-on-surface-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
   margin-bottom: 0.28rem;
 }
 
@@ -225,13 +227,13 @@
   display: block;
   margin-top: 0.35rem;
   font-size: 0.75rem;
-  color: dv.$dv-outline;
+  color: var(--booking-text-hint, #{dv.$dv-outline});
   line-height: 1.35;
 }
 
 .micro-hint code {
   font-size: 0.78rem;
-  color: dv.$dv-primary;
+  color: var(--booking-primary, #{dv.$dv-primary});
   word-break: break-all;
 }
 
@@ -246,10 +248,10 @@
   width: 2.85rem;
   height: 2.35rem;
   padding: 0;
-  border: 1px solid dv.$dv-outline-variant;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
   border-radius: dv.$dv-radius-md;
   cursor: pointer;
-  background: dv.$dv-surface-container-low;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
 }
 
 .theme-color-row .input {
@@ -278,10 +280,10 @@
 .input {
   width: 100%;
   min-height: 2.5rem;
-  background: dv.$dv-surface-container-low;
-  border: 1px solid dv.$dv-outline-variant;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
   border-radius: dv.$dv-radius-md;
-  color: dv.$dv-on-surface;
+  color: var(--booking-text, #{dv.$dv-on-surface});
   padding: 0.5rem 0.65rem;
   font-size: 0.9rem;
   transition:
@@ -300,13 +302,17 @@
 }
 
 .input:hover {
-  border-color: color-mix(in srgb, dv.$dv-outline-variant 70%, dv.$dv-primary 30%);
+  border-color: color-mix(
+    in srgb,
+    var(--booking-border, #{dv.$dv-outline-variant}) 70%,
+    var(--booking-primary, #{dv.$dv-primary}) 30%
+  );
 }
 
 .input:focus-visible {
   outline: none;
-  border-color: dv.$dv-primary;
-  box-shadow: 0 0 0 2px dv.$dv-primary-glow;
+  border-color: var(--booking-primary, #{dv.$dv-primary});
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 45%, transparent);
 }
 
 .btn {
@@ -328,8 +334,8 @@
 }
 
 .btn--primary {
-  background: dv.$dv-primary;
-  color: dv.$dv-on-primary;
+  background: var(--booking-primary, #{dv.$dv-primary});
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
 }
 
 .btn--primary:hover:not(:disabled) {
@@ -339,7 +345,7 @@
 .btn--secondary {
   background: transparent;
   color: #4edea3;
-  border-color: color-mix(in srgb, #4edea3 55%, dv.$dv-outline-variant);
+  border-color: color-mix(in srgb, #4edea3 55%, var(--booking-border, #{dv.$dv-outline-variant}));
 }
 
 .btn--secondary:hover:not(:disabled) {
@@ -348,13 +354,13 @@
 
 .btn--ghost {
   background: transparent;
-  color: dv.$dv-on-surface-variant;
-  border-color: dv.$dv-outline-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  border-color: var(--booking-border, #{dv.$dv-outline-variant});
 }
 
 .btn--ghost:hover:not(:disabled) {
-  background: dv.$dv-surface-container-high;
-  color: dv.$dv-on-surface;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  color: var(--booking-text, #{dv.$dv-on-surface});
 }
 
 .btn--sm {
@@ -363,7 +369,7 @@
 }
 
 .muted {
-  color: dv.$dv-on-surface-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
 }
 
 .tiny {
@@ -384,8 +390,8 @@
   align-items: end;
   padding: dv.$dv-space-sm;
   border-radius: dv.$dv-radius-lg;
-  background: dv.$dv-surface-container-lowest;
-  border: 1px solid dv.$dv-outline-variant;
+  background: var(--booking-surface, #{dv.$dv-surface-container-lowest});
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
 }
 
 .hours-row__day,
@@ -408,8 +414,8 @@
 .service-card {
   padding: dv.$dv-space-md;
   border-radius: dv.$dv-radius-lg;
-  border: 1px solid dv.$dv-outline-variant;
-  background: dv.$dv-surface-container-lowest;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface, #{dv.$dv-surface-container-lowest});
   display: flex;
   flex-direction: column;
   gap: dv.$dv-space-sm;
@@ -432,14 +438,14 @@
   align-items: center;
   gap: 0.45rem;
   font-size: 0.85rem;
-  color: dv.$dv-on-surface-variant;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
   white-space: nowrap;
 }
 
 .service-card__active input {
   width: 1rem;
   height: 1rem;
-  accent-color: dv.$dv-primary;
+  accent-color: var(--booking-primary, #{dv.$dv-primary});
 }
 
 .service-card__nums {
@@ -457,7 +463,7 @@
 .new-service {
   margin-top: dv.$dv-space-lg;
   padding-top: dv.$dv-space-md;
-  border-top: 1px solid dv.$dv-outline-variant;
+  border-top: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
 }
 
 .new-service__title {

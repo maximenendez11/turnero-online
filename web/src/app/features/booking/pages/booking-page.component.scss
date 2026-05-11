@@ -256,11 +256,27 @@ h2 {
   text-transform: capitalize;
 }
 
-.slots-grid {
+.slots-grid,
+.slots-skeleton {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   margin-top: 0.35rem;
+  max-width: 100%;
+}
+
+@media (min-width: 380px) {
+  .slots-grid,
+  .slots-skeleton {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 520px) {
+  .slots-grid,
+  .slots-skeleton {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .slot-chip {
@@ -279,25 +295,19 @@ h2 {
     box-shadow 0.2s ease;
 }
 
-.slots-skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(5.25rem, 1fr));
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-}
-
 .slot-skel {
-  height: 2.65rem;
+  box-sizing: border-box;
+  min-height: 2.85rem;
   border-radius: 0.65rem;
   border: 1px solid var(--booking-border, #2d2d30);
   background: linear-gradient(
-    90deg,
-    var(--booking-surface-2, #1c1b1b) 25%,
-    var(--booking-surface, #2a2a2a) 37%,
-    var(--booking-surface-2, #1c1b1b) 63%
+    110deg,
+    var(--booking-surface-2, #1c1b1b) 0%,
+    var(--booking-surface, #2a2a2a) 45%,
+    var(--booking-surface-2, #1c1b1b) 90%
   );
-  background-size: 400% 100%;
-  animation: shimmer 1.1s ease-in-out infinite;
+  background-size: 220% 100%;
+  animation: booking-shimmer 1.15s ease-in-out infinite;
 }
 
 .slots-empty {
@@ -503,27 +513,37 @@ h2 {
 .skeleton-list {
   display: grid;
   gap: 0.6rem;
+  margin-top: 0;
 }
 
 .skeleton-card {
-  height: 56px;
+  box-sizing: border-box;
+  min-height: 3.35rem;
   border-radius: 0.7rem;
   border: 1px solid var(--booking-border, #2d2d30);
   background: linear-gradient(
-    90deg,
-    var(--booking-surface-2, #1c1b1b) 25%,
-    var(--booking-surface, #2a2a2a) 37%,
-    var(--booking-surface-2, #1c1b1b) 63%
+    110deg,
+    var(--booking-surface-2, #1c1b1b) 0%,
+    var(--booking-surface, #2a2a2a) 45%,
+    var(--booking-surface-2, #1c1b1b) 90%
   );
-  background-size: 400% 100%;
-  animation: shimmer 1.1s ease-in-out infinite;
+  background-size: 220% 100%;
+  animation: booking-shimmer 1.15s ease-in-out infinite;
 }
 
-@keyframes shimmer {
+@keyframes booking-shimmer {
   0% {
     background-position: 100% 0;
   }
   100% {
     background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slot-skel,
+  .skeleton-card {
+    animation: none;
+    background: var(--booking-surface-2, #1c1b1b);
   }
 }

@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { OnboardingService } from '../../../core/services/onboarding.service';
 import { WorkspaceNavSidebarComponent } from '../components/workspace-nav-sidebar/workspace-nav-sidebar.component';
+import { WorkspaceThemeService } from '../services/workspace-theme.service';
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { WorkspaceNavSidebarComponent } from '../components/workspace-nav-sideba
 })
 export class WorkspaceLayoutComponent {
   private readonly onboardingService = inject(OnboardingService);
+  readonly workspaceTheme = inject(WorkspaceThemeService);
 
   get publicBookingPath(): string | null {
     return this.onboardingService.getPublicBookingPath();

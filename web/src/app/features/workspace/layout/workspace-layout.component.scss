@@ -2,8 +2,8 @@
 
 .workspace-layout {
   min-height: 100vh;
-  background: dv.$dv-background;
-  color: dv.$dv-on-surface;
+  background: var(--booking-page-bg, #{dv.$dv-background});
+  color: var(--booking-text, #{dv.$dv-on-surface});
   display: grid;
   grid-template-columns: 1fr;
 }
@@ -33,7 +33,7 @@
   display: inline-block;
   margin: 0.35rem 0 0.5rem;
   font-size: 14px;
-  color: dv.$dv-primary;
+  color: var(--booking-primary, #{dv.$dv-primary});
   text-decoration: none;
 }
 

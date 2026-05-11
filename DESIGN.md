@@ -1,5 +1,7 @@
 ---
 name: Deep Velocity
+# Paleta y tokens estáticos de REFERENCIA (fallback del producto).
+# Los colores “de marca” en flujo reserva + workspace admin son DINÁMICOS: ver sección “Runtime theme”.
 colors:
   surface: '#131313'
   surface-dim: '#131313'
@@ -102,49 +104,90 @@ spacing:
 
 This design system is engineered for high-performance multi-tenant booking environments, blending the systematic rigor of Linear with the polished aesthetics of Stripe. The brand personality is authoritative yet approachable, prioritizing speed and clarity above all else.
 
-The visual style is **Minimalist with Glassmorphism accents**. It utilizes a sophisticated dark-mode architecture where depth is established through tonal layering and subtle translucency rather than heavy shadows. The primary objective is to reduce cognitive load for users managing complex schedules, using generous whitespace and precise mathematical alignment to create a sense of calm and control.
+The visual style is **Minimalist with Glassmorphism accents**. Depth comes from tonal layering and subtle translucency rather than heavy shadows. The primary objective is to reduce cognitive load for users managing complex schedules, using generous whitespace and precise alignment.
 
-## Colors
+## Runtime theme (multi-tenant)
 
-The palette is anchored in a "True Dark" philosophy. The base background is a deep charcoal (#121212), which provides a stable foundation for high-contrast elements. 
+Each business can persist **two hex colors** (background + primary). At runtime the app injects a derived set of **CSS custom properties** so booking surfaces and the admin workspace stay on-brand without hard-coding that tenant’s palette.
 
-- **Primary Accent:** Electric Blue (#3B82F6) is used for active states, primary CTAs, and the 'completado' status.
-- **Success/Secondary:** Emerald Green (#10B981) is reserved for success confirmations and the 'confirmado' status.
-- **Surface Tiers:** Higher elevation surfaces move toward Zinc/Slate tones to create a clear visual hierarchy.
-- **Status Indicators:** Each booking state is mapped to a high-chroma color to ensure instant recognition even at small scale on mobile devices.
+| Concern | Source of truth |
+|--------|------------------|
+| Default hex fallbacks + generation rules | `web/src/app/features/booking/utils/booking-theme.utils.ts` |
+| SCSS fallbacks aligned with this doc | `web/src/app/shared/styles/_design-tokens.scss` (`@use … as dv`) |
+| Where vars are applied (shell) | Booking page + `WorkspaceThemeService` (same `buildBookingShellCssVars`) |
+
+### CSS variables agents MUST use for themed UI
+
+Use these for **reservation flow and workspace** screens that participate in the business theme. Always provide a fallback to design tokens so offline/default still renders.
+
+| Token | Role |
+|-------|------|
+| `--booking-page-bg` | Page floor |
+| `--booking-primary` | Primary accent, CTAs, key highlights |
+| `--booking-on-primary` | Text/icons on primary (contrast is computed) |
+| `--booking-text` | Main body text |
+| `--booking-text-muted` | Secondary text |
+| `--booking-text-hint` | Tertiary / hints |
+| `--booking-surface` / `--booking-surface-2` | Raised surfaces |
+| `--booking-border` | Hairline borders |
+| `--booking-stepper-*` | Stepper track, todo fill, borders |
+
+**SCSS pattern:** `var(--booking-primary, #{dv.$dv-primary})` (and the same idea for other tokens).
+
+**Do not** assume a fixed blue such as Tailwind’s default blue for primary in these surfaces; derive from `--booking-primary` or mix with `color-mix(in srgb, var(--booking-primary, …) …)` as existing components do.
+
+Surfaces and text colors adapt to **light vs dark** inferred from the chosen background luminance (see `relativeLuminance` in `booking-theme.utils.ts`).
+
+### Static marketing / legacy notes
+
+Some routes (e.g. landing) may still use local variables such as `--primary` for a fixed campaign look. That is **not** the same layer as `--booking-*`; when touching global marketing, confirm which stack applies.
+
+## Colors (reference defaults)
+
+The YAML frontmatter documents the **Deep Velocity** reference palette used when no tenant theme is applied and as SCSS fallbacks. It is **not** a guarantee of pixel-perfect hex at runtime for every business.
+
+- **Primary accent:** Tenant-configurable; default reference is the blue-violet pair `primary` / `on-primary` in the YAML.
+- **Success / secondary:** Semantic greens from the YAML apply to success and positive states where not overridden by product logic.
+- **Surface tiers:** Neutral stacks above; elevated surfaces mix toward white/black depending on background luminance when using `--booking-*`.
+- **Status indicators:** Booking states keep distinct hues for recognition on small screens; implement with semantic classes/chips, not a single brand primary.
 
 ## Typography
 
-This design system utilizes **Inter** for its exceptional readability on low-light displays. The hierarchy is strictly enforced through weight and letter-spacing adjustments rather than just size.
+**Inter** for readability on low-light displays. Hierarchy uses weight and letter-spacing, not only size.
 
-Display headings feature tight tracking and bold weights to ground the page. Body text uses a slightly increased line height (1.6) to ensure long booking lists remain legible. "Label-caps" are used for secondary metadata and table headers to provide a structural contrast to the primary content.
+Display headings use tight tracking and bold weights. Body uses line height ~1.6 for long lists. **Label-caps** (see frontmatter) for metadata and table headers.
 
 ## Layout & Spacing
 
-A **mobile-first fluid grid** approach is used. The system follows a 4px baseline grid to ensure mathematical consistency across all components.
+**Mobile-first** layout; **4px** baseline grid (see `spacing` in frontmatter).
 
-On mobile devices, the layout uses a single-column fluid structure with 16px side margins. On tablet and desktop, it transitions to a 12-column grid. Generous whitespace (the "xl" unit) is used between major sections to emphasize the minimalist aesthetic and prevent the interface from feeling "crowded" during high-volume booking periods.
+Mobile: single column with **16px** side margins. Larger breakpoints: 12-column mental model; use **xl** spacing between major sections.
 
 ## Elevation & Depth
 
-Depth is communicated through **Tonal Layers** and **Glassmorphism**. 
+Depth is **tonal** and **glass**, not heavy drop shadows.
 
-1. **Floor:** The #121212 background.
-2. **Cards:** Elevated to #1E1E1E with a 1px solid border of #2D2D30. Shadows are avoided in favor of these "ghost borders" to maintain a crisp, flat look.
-3. **Overlays/Modals:** Utilize a backdrop-filter (blur: 12px) with a semi-transparent surface (#1E1E1E at 80% opacity). This creates a sense of spatial awareness, keeping the user contextually grounded in the booking flow.
-4. **Active Elements:** Interactive components use a subtle glow effect (box-shadow: 0 0 15px rgba(59, 130, 246, 0.2)) when focused or active.
+1. **Floor:** `--booking-page-bg` (or default `#131313`-class charcoal when vars unset).
+2. **Cards / panels:** `--booking-surface` / `--booking-surface-2` with **1px** `--booking-border` “ghost” edges.
+3. **Overlays / modals:** Backdrop blur (~12px) and semi-transparent surfaces; keep context visible.
+4. **Active / focus:** Prefer a subtle glow using **`color-mix`** from `--booking-primary` (see sidebar / bookings SCSS), not a hard-coded rgba blue.
 
 ## Shapes
 
-The shape language is **Soft** and precise. A standard border-radius of 0.25rem (4px) is applied to most small components (inputs, buttons) to maintain a professional, architectural feel. 
-
-Larger containers like cards or modals use a 0.5rem (8px) radius to soften the overall appearance of the dashboard. This subtle rounding mimics the hardware of modern smartphones and laptops, reinforcing the premium SaaS aesthetic.
+Soft, precise radii: **0.25rem** on small controls; **0.5rem** on cards/modals (see `rounded` in frontmatter).
 
 ## Components
 
-- **Buttons:** Primary buttons are high-contrast, using the Electric Blue background with white text. Ghost buttons use the Zinc border and are reserved for secondary actions.
-- **Status Chips:** Small, pill-shaped indicators. For example, 'Pendiente' uses a 10% opacity amber background with a solid amber dot and text.
-- **Booking Cards:** Feature a vertical accent bar on the left edge corresponding to the status color. They include a subtle hover state that lightens the background by 2%.
-- **Input Fields:** Darker than the surface (#121212), with a 1px border that illuminates to Electric Blue on focus. Labels are always positioned above the field for mobile clarity.
-- **Glass Overlays:** Used for mobile navigation drawers and desktop dropdowns, providing a sophisticated transition effect.
-- **Empty States:** Use monochromatic line-art illustrations and centered typography to guide the user toward their first booking action.
+- **Buttons:** Primary actions sit on `--booking-primary` with `--booking-on-primary` text. Secondary actions use neutral borders/surfaces from booking tokens.
+- **Status chips:** Compact pills; map states to consistent semantic colors (amber/green/red etc.) independent of tenant primary where clarity requires it.
+- **Booking cards:** Optional vertical accent using primary or status color; hover slightly lifts tone (existing patterns use mixes, not arbitrary hex).
+- **Inputs:** Darker than surrounding surface; focus ring tied to `--booking-primary` where themed.
+- **Glass overlays:** Drawers and dropdowns use blur + translucency.
+- **Empty states:** Monochrome illustration + centered copy toward the next action.
+
+## Agent / contributor checklist
+
+1. **Themed screens:** style with `--booking-*` + SCSS fallback from `_design-tokens.scss`, not raw hex for primary/surface/text.
+2. **Changing defaults:** update `booking-theme.utils.ts` **and** `_design-tokens.scss` **and** this YAML so the three stay aligned.
+3. **Contrasts:** `pickOnPrimaryForHex` already picks light/dark text on primary; do not hardcode “white on primary” globally.
+4. **New UI:** prefer `color-mix(in srgb, var(--booking-primary, …), …)` for hover/focus tints consistent with existing workspace components.

@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  jsWeekdayInBusinessZone,
+  parseIsoDateOnly,
+  utcInstantForZonedMinutes,
+  zonedBusinessDayRange,
+} from './availability-calendar.utils';
 import { CreatePublicBookingDto } from './dto/create-public-booking.dto';
 
 @Injectable()
@@ -78,18 +84,17 @@ export class PublicBookingService {
     });
     if (!service) throw new NotFoundException('Service not found');
 
-    const day = new Date(dateIso);
-    if (Number.isNaN(day.getTime())) throw new BadRequestException('Invalid date');
+    const cal = parseIsoDateOnly(dateIso);
+    if (!cal) throw new BadRequestException('Invalid date');
 
-    const weekday = day.getDay();
+    /** Misma convención que la UI/admin: 0=dom … 6=sáb, pero usando el calendario del negocio (no `Date('YYYY-MM-DD')` en UTC). */
+    const weekday = jsWeekdayInBusinessZone(cal.y, cal.m, cal.d, business.timezone);
     const windows = await this.prisma.businessOpeningWindow.findMany({
       where: { businessId: business.id, weekday },
       orderBy: [{ sortOrder: 'asc' }, { startMin: 'asc' }],
     });
 
-    const startOfDay = this.startOfLocalDay(day);
-    const endOfDay = new Date(startOfDay);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { start: startOfDay, end: endOfDay } = zonedBusinessDayRange(cal.y, cal.m, cal.d, business.timezone);
 
     const bookings = await this.prisma.booking.findMany({
       where: {
@@ -105,7 +110,7 @@ export class PublicBookingService {
 
     for (const w of windows) {
       for (let cursorMin = w.startMin; cursorMin + service.durationMin <= w.endMin; cursorMin += interval) {
-        const slotStart = this.atMinutesOnLocalDay(day, cursorMin);
+        const slotStart = utcInstantForZonedMinutes(cal.y, cal.m, cal.d, cursorMin, business.timezone);
         const slotEnd = new Date(slotStart.getTime() + service.durationMin * 60_000);
         const overlaps = bookings.some((booking) => {
           const bookedStart = new Date(booking.startsAt);
@@ -167,15 +172,4 @@ export class PublicBookingService {
     return booking;
   }
 
-  private startOfLocalDay(d: Date): Date {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
-  }
-
-  /** Minutos desde 00:00 del mismo día calendario local que `d`. */
-  private atMinutesOnLocalDay(d: Date, minutesFromMidnight: number): Date {
-    const base = this.startOfLocalDay(d);
-    const out = new Date(base);
-    out.setMinutes(out.getMinutes() + minutesFromMidnight);
-    return out;
-  }
 }

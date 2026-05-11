@@ -13,6 +13,7 @@ import {
   DEFAULT_BOOKING_PAGE_BG,
   DEFAULT_BOOKING_PRIMARY,
 } from '../../booking/utils/booking-theme.utils';
+import { WorkspaceThemeService } from '../services/workspace-theme.service';
 
 export type WindowDraft = { weekday: number; startMin: number; endMin: number };
 
@@ -27,6 +28,7 @@ export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'aparienc
 })
 export class AdminBusinessPageComponent {
   private readonly api = inject(AdminApiService);
+  private readonly workspaceTheme = inject(WorkspaceThemeService);
 
   readonly weekdayLabels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   readonly businesses = signal<AdminBusinessListItem[]>([]);
@@ -95,6 +97,9 @@ export class AdminBusinessPageComponent {
       if (list.length > 0) {
         this.selectedBusinessId = list[0].id;
         await this.loadDetail();
+      } else {
+        this.selectedBusinessId = '';
+        this.workspaceTheme.resetToDefault();
       }
     } catch (e) {
       this.error.set(apiErrorMessage(e));
@@ -116,6 +121,7 @@ export class AdminBusinessPageComponent {
     if (!this.selectedBusinessId) {
       this.detail = null;
       this.windowsDraft = [];
+      this.workspaceTheme.resetToDefault();
       return;
     }
     this.error.set(null);
@@ -127,10 +133,29 @@ export class AdminBusinessPageComponent {
         startMin: w.startMin,
         endMin: w.endMin,
       }));
+      this.syncWorkspaceShellTheme();
     } catch (e) {
       this.error.set(apiErrorMessage(e));
       this.detail = null;
+      this.workspaceTheme.resetToDefault();
     }
+  }
+
+  private normalizeThemeHex(v: string | null | undefined): string | null {
+    const s = (v ?? '').trim();
+    return /^#[0-9A-Fa-f]{6}$/.test(s) ? s : null;
+  }
+
+  /** Alinea el shell del admin con los colores guardados del negocio (misma paleta que la reserva pública). */
+  private syncWorkspaceShellTheme(): void {
+    if (!this.detail) {
+      this.workspaceTheme.resetToDefault();
+      return;
+    }
+    this.workspaceTheme.applyBusinessTheme(
+      this.normalizeThemeHex(this.detail.themeBackgroundHex),
+      this.normalizeThemeHex(this.detail.themePrimaryHex),
+    );
   }
 
   addWindowRow(): void {
@@ -205,6 +230,7 @@ export class AdminBusinessPageComponent {
         }),
       );
       this.detail = this.mapDetailForForm(d);
+      this.syncWorkspaceShellTheme();
       this.error.set(null);
       this.flash('ok', 'Colores de la reserva pública guardados.');
     } catch (e) {
