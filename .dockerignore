@@ -1,0 +1,28 @@
+# Contexto de build (Coolify/CI): menos datos al daemon = builds más rápidos y capas más predecibles.
+# Debe vivir en la raíz del mismo directorio que el Build Context de Docker.
+
+node_modules
+dist
+.nx
+coverage
+tmp
+.git
+**/.DS_Store
+*.log
+
+# Caché Angular / tooling en el host (no van a la imagen)
+.angular
+**/.angular
+
+# IDE (no afectan compile)
+.idea
+.vscode
+
+# E2E / reportes locales si existen
+playwright-report
+test-results
+
+# Secretos locales: la imagen usa ARG/ENV de Coolify, no estos archivos
+.env
+.env.*
+!.env.example

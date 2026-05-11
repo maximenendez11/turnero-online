@@ -1,23 +1,24 @@
-# Stage 1: Build
+# Igual que Dockerfile.api pero con límite de memoria para builds en runners pequeños (QA/CI).
 FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
-COPY package.json pnpm-lock.yaml ./
-COPY api/prisma ./api/prisma
+COPY package.json pnpm-lock.yaml nx.json tsconfig.base.json ./
 
 ENV NX_DAEMON=false
-RUN NODE_ENV=development pnpm install --frozen-lockfile
+RUN NODE_ENV=development pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 
 ENV NODE_OPTIONS="--max-old-space-size=1024"
-RUN pnpm exec nx build api
+RUN pnpm run prisma:generate && pnpm exec nx build api
 
-# Stage 2: Production
-FROM node:20-bookworm-slim
+FROM node:20-bookworm-slim AS runner
 
 RUN apt-get update -y && \
     apt-get install -y openssl ca-certificates && \
@@ -25,8 +26,10 @@ RUN apt-get update -y && \
 
 WORKDIR /app
 
+ENV NODE_ENV=production \
+    PORT=3000
+
 COPY --from=builder /app/package.json /app/pnpm-lock.yaml ./
-# Sin npm prune: en Coolify (Pi) el paso falla con RuntimeException; la imagen queda algo más grande
 COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/dist/api ./dist/api

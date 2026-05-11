@@ -1,29 +1,27 @@
-# Stage 1: Build
+# Static web (Angular) servido con Nginx. Build con pnpm + Nx.
+# Mejor cache: manifests + nx/tsconfig antes del código; libc6-compat evita fallos con bins nativos en Alpine.
 FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# El monorepo usa pnpm; Nx (@nx/js) lee pnpm-lock.yaml y exige node_modules/.modules.yaml
+RUN apk add --no-cache libc6-compat
+
 RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml nx.json tsconfig.base.json ./
 
 # devDependencies (Nx, Angular CLI, TypeScript) hacen falta para el build.
 # Si la plataforma inyecta NODE_ENV=production en build, igual instalamos devDeps en esta capa.
 ENV NX_DAEMON=false
 RUN NODE_ENV=development pnpm install --frozen-lockfile --ignore-scripts
 
-# Código (postinstall prisma/patch queda omitido con --ignore-scripts; el front no lo necesita para compilar)
 COPY . .
 
-# API URL en build (Coolify: --build-arg NX_API_URL=https://tu-dominio.com/api)
 ARG NX_API_URL=http://localhost:3000/api
 ENV NX_API_URL=$NX_API_URL
 
-# NX_API_URL ya está en ENV; sync-build-api-url (dependsOn del build) regenera build-config.generated.ts
 RUN pnpm exec nx build web --configuration=production
 
-# Stage 2: Production with Nginx
 FROM nginx:alpine AS production
 
 COPY --from=builder /app/dist/web/browser /usr/share/nginx/html
