@@ -5,6 +5,7 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 import { AdminApiService, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
+import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
 import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
 import {
@@ -31,7 +32,7 @@ type AdminBookingListDayGroup = {
 @Component({
   standalone: true,
   selector: 'app-admin-bookings-page',
-  imports: [CommonModule, FormsModule, AdminBookingsCalendarComponent],
+  imports: [CommonModule, FormsModule, AdminBookingsCalendarComponent, AdminPageSkeletonComponent],
   templateUrl: './admin-bookings-page.component.html',
   styleUrl: './admin-bookings-page.component.scss',
 })

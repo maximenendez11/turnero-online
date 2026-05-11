@@ -1,0 +1,41 @@
+<section class="btp" aria-label="Vista previa del flujo de reserva pública">
+  <div class="btp__viewport" [ngStyle]="shellStyles()">
+    <div class="btp__shell">
+      <header class="btp__header">
+        <h3 class="btp__title">{{ businessName() || 'Tu negocio' }}</h3>
+        <p class="btp__subtitle">Elegir servicio</p>
+        <div class="btp__stepper" aria-hidden="true">
+          <div class="btp__step-wrap">
+            <div class="btp__node btp__node--done">✓</div>
+            <span class="btp__cap">Servicio</span>
+          </div>
+          <div class="btp__conn btp__conn--done"></div>
+          <div class="btp__step-wrap">
+            <div class="btp__node btp__node--current">2</div>
+            <span class="btp__cap btp__cap--accent">Fecha</span>
+          </div>
+          <div class="btp__conn"></div>
+          <div class="btp__step-wrap">
+            <div class="btp__node btp__node--todo">3</div>
+            <span class="btp__cap">Datos</span>
+          </div>
+          <div class="btp__conn"></div>
+          <div class="btp__step-wrap">
+            <div class="btp__node btp__node--todo">4</div>
+            <span class="btp__cap">Listo</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="btp__card">
+        <h4 class="btp__card-h">Elegir servicio</h4>
+        <p class="btp__card-muted">Seleccioná un servicio para continuar.</p>
+        <div class="btp__chips">
+          <span class="btp__chip btp__chip--on">Corte</span>
+          <span class="btp__chip">Tintura</span>
+        </div>
+        <button type="button" class="btp__btn" disabled>Continuar</button>
+      </div>
+    </div>
+  </div>
+</section>

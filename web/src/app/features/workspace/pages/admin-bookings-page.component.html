@@ -1,10 +1,10 @@
-<section class="admin-page">
+<section class="admin-page" [attr.aria-busy]="loading()">
   <header class="admin-page__head">
     <h1>Turnos</h1>
     <p class="muted">Calendario de reservas de los negocios a los que tenés acceso.</p>
   </header>
 
-  <div class="toolbar">
+  <div class="toolbar" *ngIf="!loading()">
     <label *ngIf="businesses().length > 1">
       <span>Negocio</span>
       <select [ngModel]="filterBusinessId()" (ngModelChange)="onFilterBusinessChange($event)">
@@ -38,7 +38,8 @@
   </div>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
-  <p class="muted" *ngIf="loading()">Cargando…</p>
+
+  <app-admin-page-skeleton *ngIf="loading()" variant="bookings" />
 
   <app-admin-bookings-calendar
     *ngIf="!loading() && viewMode() === 'calendar'"
@@ -124,7 +125,6 @@
       <table class="bookings-list__table">
         <thead>
           <tr>
-            <th>Fecha</th>
             <th>Hora</th>
             <th>Servicio</th>
             <th>Cliente</th>
@@ -157,7 +157,7 @@
                 (keydown.enter)="selectBooking(row)"
                 (keydown.space)="$event.preventDefault(); selectBooking(row)"
               >
-                <td class="bookings-list__cell-date">{{ formatListRowDate(row) }}</td>
+           
                 <td class="bookings-list__cell-time">{{ formatListRowTime(row) }}</td>
                 <td>{{ row.service.name }}</td>
                 <td>{{ row.customerFullName }}</td>

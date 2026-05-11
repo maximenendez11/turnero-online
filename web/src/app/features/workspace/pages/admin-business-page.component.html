@@ -1,4 +1,4 @@
-<section class="admin-page" [attr.aria-busy]="saving()">
+<section class="admin-page" [attr.aria-busy]="loading() || saving()">
   <header class="admin-page__head">
     <h1>Mi negocio</h1>
     <p class="lead">Editá la ficha pública, los horarios en los que aceptás reservas y el catálogo de servicios.</p>
@@ -8,10 +8,7 @@
   <div class="notice notice--err" *ngIf="notice()?.kind === 'err'" role="alert">{{ notice()!.text }}</div>
   <p class="error" *ngIf="error() && !notice()">{{ error() }}</p>
 
-  <div class="skeleton" *ngIf="loading()">
-    <div class="skeleton__line"></div>
-    <div class="skeleton__line skeleton__line--short"></div>
-  </div>
+  <app-admin-page-skeleton *ngIf="loading()" variant="business" />
 
   <div *ngIf="!loading() && businesses().length === 0" class="empty-state">
     <p>No hay ningún negocio vinculado a tu cuenta.</p>
@@ -284,12 +281,18 @@
           >
             <article class="card" aria-labelledby="sec-apariencia">
               <div class="card__head">
-                <h2 id="sec-apariencia">Reserva pública</h2>
+                <h2 id="sec-apariencia">Vista previa</h2>
                 <p class="card__hint">
-                  Color de fondo y color primario de la página donde el cliente elige servicio, día y hora (formato
-                  #RRGGBB). Si los dejás vacíos y guardás, se usa el tema por defecto de la app.
+                  Ajusta los colores de tu negocio.
                 </p>
               </div>
+
+              <app-booking-theme-preview
+                [businessName]="d.name"
+                [themeBackgroundHex]="d.themeBackgroundHex"
+                [themePrimaryHex]="d.themePrimaryHex"
+              />
+
               <fieldset class="field-grid theme-fields" [disabled]="saving()">
                 <legend class="sr-only">Colores del flujo de reserva</legend>
                 <label>
@@ -336,7 +339,7 @@
                 </label>
               </fieldset>
               <footer class="card__footer card__footer--split">
-                <button type="button" class="btn btn--ghost" (click)="resetThemeToDefaults()">Vaciar (tema por defecto)</button>
+                <button type="button" class="btn btn--ghost" (click)="resetThemeToDefaults()">Valores por defecto</button>
                 <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="saveTheme()">
                   {{ saving() ? 'Guardando…' : 'Guardar colores' }}
                 </button>

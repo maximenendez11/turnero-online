@@ -1,0 +1,88 @@
+<div
+  class="admin-skel"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  [attr.aria-label]="
+    variant() === 'bookings' ? 'Cargando turnos y calendario' : 'Cargando datos del negocio'
+  "
+>
+  <span class="admin-skel__sr-only">Cargando…</span>
+
+  @switch (variant()) {
+    @case ('bookings') {
+      <div class="admin-skel-bk__toolbar">
+        <label class="admin-skel-bk__filter">
+          <div class="admin-skel__pulse admin-skel-bk__select"></div>
+        </label>
+        <div class="admin-skel-bk__viewtabs">
+          <div class="admin-skel__pulse admin-skel-bk__viewtab"></div>
+          <div class="admin-skel__pulse admin-skel-bk__viewtab"></div>
+        </div>
+      </div>
+
+      <div class="admin-skel-cal">
+        <div class="admin-skel-cal__toolbar">
+          <div class="admin-skel-cal__nav">
+            <div class="admin-skel__pulse admin-skel-cal__nav-btn"></div>
+            <div class="admin-skel-cal__month-spacer" aria-hidden="true"></div>
+            <div class="admin-skel__pulse admin-skel-cal__nav-btn"></div>
+            <div class="admin-skel__pulse admin-skel-cal__today"></div>
+          </div>
+        </div>
+
+        <div class="admin-skel-cal__scroll">
+          <div class="admin-skel-cal__weekdays">
+            @for (_ of weekDays; track $index) {
+              <span class="admin-skel-cal__weekday-cell"></span>
+            }
+          </div>
+
+          <div class="admin-skel-cal__grid">
+            @for (c of calCells; track c) {
+              <div class="admin-skel-cal__cell">
+                <div class="admin-skel-cal__events">
+                  <div class="admin-skel__pulse admin-skel-cal__event"></div>
+                  <div class="admin-skel__pulse admin-skel-cal__event admin-skel-cal__event--short"></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    @case ('business') {
+
+
+      <div class="admin-skel-biz__settings">
+        <div class="admin-skel-biz__tablist">
+          @for (_ of businessTabs; track $index) {
+            <div class="admin-skel__pulse admin-skel-biz__tab"></div>
+          }
+        </div>
+
+        <article class="admin-skel-biz__card">
+          <div class="admin-skel-biz__field-grid">
+            <div class="admin-skel-biz__span2">
+              <div class="admin-skel__pulse admin-skel-biz__input"></div>
+            </div>
+            <div class="admin-skel-biz__cell">
+              <div class="admin-skel__pulse admin-skel-biz__input"></div>
+            </div>
+            <div class="admin-skel-biz__cell">
+              <div class="admin-skel__pulse admin-skel-biz__input"></div>
+            </div>
+            <div class="admin-skel-biz__span2">
+              <div class="admin-skel__pulse admin-skel-biz__textarea"></div>
+            </div>
+          </div>
+
+          <footer class="admin-skel-biz__card-footer">
+            <div class="admin-skel__pulse admin-skel-biz__btn-primary"></div>
+          </footer>
+        </article>
+      </div>
+    }
+  }
+</div>

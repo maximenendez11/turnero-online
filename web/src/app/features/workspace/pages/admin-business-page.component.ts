@@ -14,6 +14,8 @@ import {
   DEFAULT_BOOKING_PRIMARY,
 } from '../../booking/utils/booking-theme.utils';
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
+import { BookingThemePreviewComponent } from '../components/booking-theme-preview/booking-theme-preview.component';
+import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 
 export type WindowDraft = { weekday: number; startMin: number; endMin: number };
 
@@ -22,7 +24,7 @@ export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'aparienc
 @Component({
   standalone: true,
   selector: 'app-admin-business-page',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent],
   templateUrl: './admin-business-page.component.html',
   styleUrl: './admin-business-page.component.scss',
 })
