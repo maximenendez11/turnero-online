@@ -16,6 +16,7 @@ import {
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { BookingThemePreviewComponent } from '../components/booking-theme-preview/booking-theme-preview.component';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
+import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
 
 export type WindowDraft = { weekday: number; startMin: number; endMin: number };
 
@@ -24,7 +25,7 @@ export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'aparienc
 @Component({
   standalone: true,
   selector: 'app-admin-business-page',
-  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent],
+  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent, SegmentedControlComponent],
   templateUrl: './admin-business-page.component.html',
   styleUrl: './admin-business-page.component.scss',
 })
@@ -40,6 +41,12 @@ export class AdminBusinessPageComponent {
   readonly notice = signal<{ kind: 'ok' | 'err'; text: string } | null>(null);
   /** Pestaña activa en la configuración del negocio (solo con `detail` cargado). */
   readonly settingsTab = signal<BusinessSettingsTab>('datos');
+  readonly settingsTabItems = [
+    { id: 'datos', label: 'Datos' },
+    { id: 'horarios', label: 'Horarios' },
+    { id: 'servicios', label: 'Servicios' },
+    { id: 'apariencia', label: 'Apariencia' },
+  ] as const;
 
   selectedBusinessId = '';
   detail: AdminBusinessDetail | null = null;
@@ -115,8 +122,10 @@ export class AdminBusinessPageComponent {
     await this.loadDetail();
   }
 
-  setSettingsTab(tab: BusinessSettingsTab): void {
-    this.settingsTab.set(tab);
+  setSettingsTab(tab: string): void {
+    if (tab === 'datos' || tab === 'horarios' || tab === 'servicios' || tab === 'apariencia') {
+      this.settingsTab.set(tab);
+    }
   }
 
   async loadDetail(): Promise<void> {

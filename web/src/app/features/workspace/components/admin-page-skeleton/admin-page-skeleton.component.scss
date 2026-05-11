@@ -53,41 +53,38 @@
   border-radius: dv.$dv-radius-md;
 }
 
-.admin-skel-bk__viewtabs {
-  display: inline-flex;
-  margin-left: auto;
-  border-radius: dv.$dv-radius-md;
+/* Skeleton de segmented control (mismo layout que app-segmented-control) */
+.admin-skel-seg {
+  border-radius: dv.$dv-radius-lg;
   border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-  overflow: hidden;
   background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
+  padding: 0.2rem;
 }
 
-.admin-skel-bk__viewtab {
+.admin-skel-seg__list {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.admin-skel-seg__tab {
   flex: 1 1 auto;
-  min-width: 5rem;
-  max-width: 8rem;
+  min-width: 7.5rem;
   min-height: 2.5rem;
-  border-radius: 0;
-  border-right: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
 }
 
-.admin-skel-bk__viewtab:first-child {
-  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 55%, transparent);
-}
-
-.admin-skel-bk__viewtab:last-child {
-  border-right: 0;
+.admin-skel-bk__seg {
+  margin-left: auto;
 }
 
 @media (max-width: 32rem) {
-  .admin-skel-bk__viewtabs {
+  .admin-skel-bk__seg {
     width: 100%;
     margin-left: 0;
   }
 
-  .admin-skel-bk__viewtab {
-    flex: 1;
-    width: auto;
+  .admin-skel-seg__tab {
+    min-width: 0;
   }
 }
 
@@ -222,23 +219,8 @@
   gap: dv.$dv-space-md;
 }
 
-.admin-skel-biz__tablist {
-  display: flex;
+.admin-skel-biz__seg .admin-skel-seg__list {
   flex-wrap: wrap;
-  gap: 0.15rem;
-  padding: 0.2rem;
-  margin: 0;
-  border-radius: dv.$dv-radius-lg;
-  background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
-  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-}
-
-.admin-skel-biz__tab {
-  flex: 1 1 auto;
-  min-width: 7.5rem;
-  margin: 0;
-  min-height: 2.45rem;
-  border-radius: dv.$dv-radius-md;
 }
 
 .admin-skel-biz__card {
@@ -304,8 +286,17 @@
 
 /* Panel (dashboard) */
 .admin-skel-dash__metrics {
-  margin: 0 auto dv.$dv-space-md;
-  max-width: 14rem;
+  margin: 0 0 dv.$dv-space-lg;
+}
+
+.admin-skel-dash__metrics-card {
+  padding: dv.$dv-space-md;
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .admin-skel-dash__metric {
@@ -315,6 +306,11 @@
 
 .admin-skel-dash__metric--hero {
   min-height: 4.25rem;
+  width: min(100%, 14rem);
+  margin-inline: auto;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  box-sizing: border-box;
 }
 
 .admin-skel-dash__hours {
@@ -322,7 +318,7 @@
   padding: dv.$dv-space-md;
   border-radius: dv.$dv-radius-xl;
   border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-  background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 75%, transparent);
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
 }
 
 .admin-skel-dash__title {
@@ -331,10 +327,52 @@
   margin-bottom: 0.35rem;
 }
 
-.admin-skel-dash__hint {
-  width: min(100%, 22rem);
-  height: 0.72rem;
-  margin-bottom: dv.$dv-space-md;
+.admin-skel-dash__title--center {
+  margin-inline: auto;
+}
+
+.admin-skel-dash__subtitle {
+  width: 8rem;
+  height: 0.85rem;
+  margin: 0 0 dv.$dv-space-sm;
+  align-self: flex-start;
+}
+
+.admin-skel-dash__divider {
+  width: 100%;
+  height: 1px;
+  background: var(--booking-border, #{dv.$dv-outline-variant});
+  margin: dv.$dv-space-md 0;
+  align-self: stretch;
+}
+
+.admin-skel-dash__biz-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  align-self: stretch;
+  width: 100%;
+}
+
+.admin-skel-dash__biz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+}
+
+.admin-skel-dash__biz-name {
+  width: 9.5rem;
+  height: 0.85rem;
+}
+
+.admin-skel-dash__biz-count {
+  width: 2.5rem;
+  height: 0.95rem;
 }
 
 .admin-skel-dash__rows {
@@ -365,14 +403,89 @@
   border-radius: dv.$dv-radius-md;
 }
 
-.admin-skel-dash__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  gap: dv.$dv-space-md;
+.admin-skel-dash__share {
   margin-bottom: dv.$dv-space-lg;
+  padding: dv.$dv-space-md dv.$dv-space-lg;
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
 }
 
-.admin-skel-dash__card {
-  min-height: 4.5rem;
-  border-radius: dv.$dv-radius-xl;
+.admin-skel-dash__share-title {
+  width: 10.5rem;
+  height: 1.05rem;
+  margin-bottom: 0.55rem;
+}
+
+.admin-skel-dash__share-lead {
+  width: min(100%, 34rem);
+  height: 0.72rem;
+  margin-bottom: 0.45rem;
+}
+
+.admin-skel-dash__share-lead--short {
+  width: min(100%, 26rem);
+  margin-bottom: dv.$dv-space-md;
+}
+
+.admin-skel-dash__share-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: dv.$dv-space-md;
+}
+
+.admin-skel-dash__share-item {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-skel-dash__share-url {
+  width: 100%;
+  height: 2.1rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  box-sizing: border-box;
+  margin-bottom: dv.$dv-space-sm;
+}
+
+.admin-skel-dash__share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-skel-dash__share-btn {
+  height: 2.4rem;
+  width: 7.25rem;
+  border-radius: dv.$dv-radius-md;
+}
+
+.admin-skel-dash__share-btn--primary {
+  width: 8.25rem;
+  border: 1px solid transparent;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+}
+
+.admin-skel-dash__share-btn--link {
+  width: 10rem;
+}
+
+.admin-skel-dash__share-btn--link {
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+}
+
+@media (max-width: 36rem) {
+  .admin-skel-dash__share {
+    padding: dv.$dv-space-md;
+  }
+
+  .admin-skel-dash__share-btn {
+    width: 100%;
+  }
 }

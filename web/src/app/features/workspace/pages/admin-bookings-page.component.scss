@@ -29,58 +29,15 @@
   gap: 1rem;
 }
 
-.view-tabs {
-  display: inline-flex;
-  border-radius: dv.$dv-radius-md;
-  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-  overflow: hidden;
-  margin-left: auto;
-}
-
-.view-tabs__tab {
-  appearance: none;
-  margin: 0;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  border: 0;
-  border-right: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-  background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
-  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
-  min-height: 2.5rem;
-}
-
-.view-tabs__tab:last-child {
-  border-right: 0;
-}
-
-.view-tabs__tab:hover {
-  color: var(--booking-text, #{dv.$dv-on-surface});
-  background: var(--booking-surface, #{dv.$dv-surface-container});
-}
-
-.view-tabs__tab--active {
-  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
-  color: var(--booking-text, #{dv.$dv-on-surface});
-  box-shadow: inset 0 -2px 0 var(--booking-primary, #{dv.$dv-primary});
-}
-
-.view-tabs__tab:focus-visible {
-  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
-  outline-offset: 2px;
-  z-index: 1;
-}
-
 @media (max-width: 32rem) {
-  .view-tabs {
+  .view-mode {
     width: 100%;
-    margin-left: 0;
   }
+}
 
-  .view-tabs__tab {
-    flex: 1;
-    text-align: center;
+@media (min-width: 32.001rem) {
+  .view-mode {
+    margin-left: auto;
   }
 }
 
@@ -173,14 +130,28 @@ select,
   position: absolute;
   top: 0;
   right: 0;
-  border: 0;
-  background: transparent;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
   color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
-  font-size: 0.85rem;
   cursor: pointer;
-  text-decoration: underline;
-  min-height: 2.75rem;
-  padding: 0 0.25rem;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.booking-detail__close:hover {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container});
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.booking-detail__close:focus-visible {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 2px;
 }
 
 .booking-detail__grid {

@@ -13,28 +13,13 @@
       </select>
     </label>
 
-    <div class="view-tabs" role="tablist" aria-label="Vista de turnos">
-      <button
-        type="button"
-        role="tab"
-        class="view-tabs__tab"
-        [class.view-tabs__tab--active]="viewMode() === 'calendar'"
-        [attr.aria-selected]="viewMode() === 'calendar'"
-        (click)="setViewMode('calendar')"
-      >
-        Calendario
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="view-tabs__tab"
-        [class.view-tabs__tab--active]="viewMode() === 'list'"
-        [attr.aria-selected]="viewMode() === 'list'"
-        (click)="setViewMode('list')"
-      >
-        Listado
-      </button>
-    </div>
+    <app-segmented-control
+      class="view-mode"
+      ariaLabel="Vista de turnos"
+      [items]="viewModeItems"
+      [activeId]="viewMode()"
+      (change)="setViewMode($event)"
+    />
   </div>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
@@ -184,7 +169,9 @@
       <header class="booking-detail__head">
         <h2 id="booking-modal-title">Editar turno</h2>
         <p class="muted"><code>{{ row.code }}</code> · {{ row.business.name }}</p>
-        <button type="button" class="booking-detail__close" (click)="clearSelection()">Cerrar</button>
+        <button type="button" class="booking-detail__close" (click)="clearSelection()" aria-label="Cerrar">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
       </header>
       <div class="booking-detail__grid">
         <div class="booking-detail__field">

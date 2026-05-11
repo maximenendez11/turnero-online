@@ -8,6 +8,7 @@ import { BookingFlowService } from '../services/booking-flow.service';
 import { PublicBookingApiService, PublicService } from '../services/public-booking-api.service';
 import { hydrateBookingShellSnapshot, persistBookingShellSnapshot } from '../utils/booking-theme-shell.cache';
 import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
+import { AppSplashService } from '../../../core/services/app-splash.service';
 
 type ConfirmedBooking = {
   code: string;
@@ -30,6 +31,7 @@ export class BookingPageComponent {
   private readonly router = inject(Router);
   private readonly api = inject(PublicBookingApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly splash = inject(AppSplashService);
   readonly flow = inject(BookingFlowService);
 
   readonly tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? 'peluqueria-demo';
@@ -115,6 +117,8 @@ export class BookingPageComponent {
         }
       }
       this.cdr.markForCheck();
+      // Evita flash de estilos "default" hasta tener el tema resuelto (API o caché).
+      this.splash.hide();
     });
 
     if (this.step === 1) {

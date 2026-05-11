@@ -32,56 +32,12 @@
 
     <ng-container *ngIf="detail as d">
       <div class="settings-tabs">
-        <div class="settings-tabs__list" role="tablist" aria-label="Secciones de configuración del negocio">
-          <button
-            type="button"
-            class="settings-tabs__tab"
-            role="tab"
-            id="tab-datos"
-            [class.settings-tabs__tab--active]="settingsTab() === 'datos'"
-            [attr.aria-selected]="settingsTab() === 'datos'"
-            [attr.tabindex]="settingsTab() === 'datos' ? 0 : -1"
-            (click)="setSettingsTab('datos')"
-          >
-            Datos
-          </button>
-          <button
-            type="button"
-            class="settings-tabs__tab"
-            role="tab"
-            id="tab-horarios"
-            [class.settings-tabs__tab--active]="settingsTab() === 'horarios'"
-            [attr.aria-selected]="settingsTab() === 'horarios'"
-            [attr.tabindex]="settingsTab() === 'horarios' ? 0 : -1"
-            (click)="setSettingsTab('horarios')"
-          >
-            Horarios
-          </button>
-          <button
-            type="button"
-            class="settings-tabs__tab"
-            role="tab"
-            id="tab-servicios"
-            [class.settings-tabs__tab--active]="settingsTab() === 'servicios'"
-            [attr.aria-selected]="settingsTab() === 'servicios'"
-            [attr.tabindex]="settingsTab() === 'servicios' ? 0 : -1"
-            (click)="setSettingsTab('servicios')"
-          >
-            Servicios
-          </button>
-          <button
-            type="button"
-            class="settings-tabs__tab"
-            role="tab"
-            id="tab-apariencia"
-            [class.settings-tabs__tab--active]="settingsTab() === 'apariencia'"
-            [attr.aria-selected]="settingsTab() === 'apariencia'"
-            [attr.tabindex]="settingsTab() === 'apariencia' ? 0 : -1"
-            (click)="setSettingsTab('apariencia')"
-          >
-            Apariencia
-          </button>
-        </div>
+        <app-segmented-control
+          ariaLabel="Secciones de configuración del negocio"
+          [items]="settingsTabItems"
+          [activeId]="settingsTab()"
+          (change)="setSettingsTab($event)"
+        />
 
         <div class="settings-tabs__panels">
           <div

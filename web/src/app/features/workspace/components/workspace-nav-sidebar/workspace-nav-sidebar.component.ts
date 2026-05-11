@@ -1,9 +1,11 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import {
   Component,
+  EventEmitter,
   HostListener,
   Input,
   OnDestroy,
+  Output,
   PLATFORM_ID,
   inject,
   signal,
@@ -35,6 +37,12 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
   protected readonly linkActiveSubset = { exact: false };
 
   @Input() variant: WorkspaceNavSidebarVariant = 'rail';
+
+  /** Solo variante `rail`: si está colapsado a modo compacto. */
+  @Input() collapsed = false;
+
+  /** Solo variante `rail`: notifica toggle (controlado por el layout). */
+  @Output() readonly collapsedChange = new EventEmitter<boolean>();
 
   /** Marca de sección / producto. */
   @Input() title = 'Tu turno digital';
@@ -74,15 +82,40 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
     return link.path;
   }
 
+  linkIconName(link: WorkspaceNavLink): string {
+    if (typeof link.icon === 'string' && link.icon.trim().length > 0) return link.icon.trim();
+    const p = (link.path ?? '').toLowerCase();
+    if (p.includes('dashboard')) return 'dashboard';
+    if (p.includes('appointment') || p.includes('booking') || p.includes('turno')) return 'event';
+    if (p.includes('business') || p.includes('negocio')) return 'store';
+    return 'circle';
+  }
+
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);
     this.syncBodyScroll();
+  }
+
+  toggleCollapsed(): void {
+    if (this.variant !== 'rail') return;
+    this.collapsedChange.emit(!this.collapsed);
   }
 
   closeMenu(): void {
     if (!this.menuOpen()) return;
     this.menuOpen.set(false);
     this.syncBodyScroll();
+  }
+
+  get titleInitials(): string {
+    const value = (this.title ?? '').trim();
+    if (!value) return 'TT';
+    const words = value.split(/\s+/g).filter(Boolean);
+    const letters =
+      words.length >= 2
+        ? (words[0]?.[0] ?? '') + (words[1]?.[0] ?? '')
+        : (words[0]?.slice(0, 2) ?? '');
+    return letters.toUpperCase();
   }
 
   @HostListener('document:keydown.escape')

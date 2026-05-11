@@ -19,9 +19,11 @@
         <label class="admin-skel-bk__filter">
           <div class="admin-skel__pulse admin-skel-bk__select"></div>
         </label>
-        <div class="admin-skel-bk__viewtabs">
-          <div class="admin-skel__pulse admin-skel-bk__viewtab"></div>
-          <div class="admin-skel__pulse admin-skel-bk__viewtab"></div>
+        <div class="admin-skel-seg admin-skel-bk__seg" aria-hidden="true">
+          <div class="admin-skel-seg__list">
+            <div class="admin-skel__pulse admin-skel-seg__tab"></div>
+            <div class="admin-skel__pulse admin-skel-seg__tab"></div>
+          </div>
         </div>
       </div>
 
@@ -58,11 +60,22 @@
 
     @case ('dashboard') {
       <div class="admin-skel-dash__metrics">
-        <div class="admin-skel__pulse admin-skel-dash__metric admin-skel-dash__metric--hero"></div>
+        <div class="admin-skel-dash__metrics-card" aria-hidden="true">
+          <div class="admin-skel__pulse admin-skel-dash__title admin-skel-dash__title--center"></div>
+          <div class="admin-skel__pulse admin-skel-dash__metric admin-skel-dash__metric--hero"></div>
+          <div class="admin-skel-dash__divider"></div>
+          <div class="admin-skel__pulse admin-skel-dash__subtitle"></div>
+          <ul class="admin-skel-dash__biz-rows">
+            @for (r of dashMetricsBizRows; track r) {
+              <li class="admin-skel-dash__biz-row">
+                <div class="admin-skel__pulse admin-skel-dash__biz-name"></div>
+                <div class="admin-skel__pulse admin-skel-dash__biz-count"></div>
+              </li>
+            }
+          </ul>
+        </div>
       </div>
       <div class="admin-skel-dash__hours">
-        <div class="admin-skel__pulse admin-skel-dash__title"></div>
-        <div class="admin-skel__pulse admin-skel-dash__hint"></div>
         <ul class="admin-skel-dash__rows">
           @for (r of dashStatusRows; track r) {
             <li class="admin-skel-dash__row">
@@ -72,18 +85,33 @@
           }
         </ul>
       </div>
-      <div class="admin-skel-dash__grid">
-        <div class="admin-skel__pulse admin-skel-dash__card"></div>
-        <div class="admin-skel__pulse admin-skel-dash__card"></div>
+      <div class="admin-skel-dash__share">
+        <div class="admin-skel__pulse admin-skel-dash__share-title"></div>
+        <div class="admin-skel__pulse admin-skel-dash__share-lead"></div>
+        <div class="admin-skel__pulse admin-skel-dash__share-lead admin-skel-dash__share-lead--short"></div>
+        <ul class="admin-skel-dash__share-list">
+          @for (r of dashShareRows; track r) {
+            <li class="admin-skel-dash__share-item">
+              <div class="admin-skel__pulse admin-skel-dash__share-url"></div>
+              <div class="admin-skel-dash__share-actions">
+                <div class="admin-skel__pulse admin-skel-dash__share-btn admin-skel-dash__share-btn--primary"></div>
+                <div class="admin-skel__pulse admin-skel-dash__share-btn"></div>
+                <div class="admin-skel__pulse admin-skel-dash__share-btn admin-skel-dash__share-btn--link"></div>
+              </div>
+            </li>
+          }
+        </ul>
       </div>
     }
 
     @case ('business') {
       <div class="admin-skel-biz__settings">
-        <div class="admin-skel-biz__tablist">
-          @for (_ of businessTabs; track $index) {
-            <div class="admin-skel__pulse admin-skel-biz__tab"></div>
-          }
+        <div class="admin-skel-seg admin-skel-biz__seg" aria-hidden="true">
+          <div class="admin-skel-seg__list">
+            @for (_ of businessTabs; track $index) {
+              <div class="admin-skel__pulse admin-skel-seg__tab"></div>
+            }
+          </div>
         </div>
 
         <article class="admin-skel-biz__card">

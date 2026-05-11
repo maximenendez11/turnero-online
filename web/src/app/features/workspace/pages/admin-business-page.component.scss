@@ -85,67 +85,6 @@
   gap: dv.$dv-space-md;
 }
 
-.settings-tabs__list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem;
-  padding: 0.2rem;
-  margin: 0;
-  list-style: none;
-  border-radius: dv.$dv-radius-lg;
-  background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
-  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-}
-
-.settings-tabs__tab {
-  flex: 1 1 auto;
-  min-width: 7.5rem;
-  margin: 0;
-  padding: 0.55rem 0.75rem;
-  font: inherit;
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
-  background: transparent;
-  border: 0;
-  border-radius: dv.$dv-radius-md;
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease,
-    box-shadow 0.15s ease;
-}
-
-.settings-tabs__tab:hover:not(.settings-tabs__tab--active) {
-  color: var(--booking-text, #{dv.$dv-on-surface});
-  background: color-mix(in srgb, var(--booking-surface-2, #{dv.$dv-surface-container-high}) 60%, transparent);
-}
-
-.settings-tabs__tab--active {
-  color: var(--booking-on-primary, #{dv.$dv-on-primary});
-  background: var(--booking-primary, #{dv.$dv-primary});
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 40%, #000);
-}
-
-.settings-tabs__tab:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 35%, transparent);
-}
-
-.settings-tabs__tab--active:focus-visible {
-  box-shadow:
-    0 0 0 2px var(--booking-surface-2, #{dv.$dv-surface-container-lowest}),
-    0 0 0 4px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 45%, transparent);
-}
-
-.settings-tabs__panels {
-  min-height: 12rem;
-}
-
-.settings-tabs__panel[hidden] {
-  display: none !important;
-}
-
 .card {
   background: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 82%, transparent);
   backdrop-filter: blur(10px);

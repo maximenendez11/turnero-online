@@ -48,13 +48,18 @@
 
 @media (min-width: 920px) {
   .workspace-layout {
-    grid-template-columns: dv.$dv-sidebar-rail-width 1fr;
+    --workspace-rail-width: #{dv.$dv-sidebar-rail-width};
+    grid-template-columns: var(--workspace-rail-width) 1fr;
   }
 
   .workspace-layout__rail {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+  }
+
+  .workspace-layout--rail-collapsed {
+    --workspace-rail-width: 72px;
   }
 
   .workspace-layout__mobile-topnav {

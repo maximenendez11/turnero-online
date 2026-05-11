@@ -15,4 +15,6 @@ export class AdminPageSkeletonComponent {
   protected readonly weekDays = Array.from({ length: 7 }, (_, i) => i);
   protected readonly businessTabs = Array.from({ length: 4 }, (_, i) => i);
   protected readonly dashStatusRows = [0, 1];
+  protected readonly dashMetricsBizRows = [0, 1];
+  protected readonly dashShareRows = [0];
 }

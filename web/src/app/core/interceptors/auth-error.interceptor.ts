@@ -38,13 +38,20 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       return from(coordinator.ensureFreshSession()).pipe(
-        switchMap(() =>
-          next(
+        switchMap(() => {
+          const fresh = session.getAccessToken();
+          if (!fresh) {
+            session.signOut();
+            void router.navigateByUrl('/auth/login', { replaceUrl: true });
+            return throwError(() => err);
+          }
+          return next(
             req.clone({
               context: req.context.set(AUTH_SECOND_ATTEMPT, true),
+              setHeaders: { Authorization: `Bearer ${fresh}` },
             }),
-          ),
-        ),
+          );
+        }),
         catchError(() => {
           session.signOut();
           void router.navigateByUrl('/auth/login', { replaceUrl: true });

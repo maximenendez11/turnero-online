@@ -7,6 +7,7 @@ import { apiErrorMessage } from '../../../core/utils/api-error-message';
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
+import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
 import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
 import {
   buildCalendarWeeks,
@@ -32,7 +33,13 @@ type AdminBookingListDayGroup = {
 @Component({
   standalone: true,
   selector: 'app-admin-bookings-page',
-  imports: [CommonModule, FormsModule, AdminBookingsCalendarComponent, AdminPageSkeletonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AdminBookingsCalendarComponent,
+    AdminPageSkeletonComponent,
+    SegmentedControlComponent,
+  ],
   templateUrl: './admin-bookings-page.component.html',
   styleUrl: './admin-bookings-page.component.scss',
 })
@@ -49,6 +56,10 @@ export class AdminBookingsPageComponent {
   readonly viewAnchor = signal(monthStart(new Date()));
   readonly selectedBooking = signal<AdminBookingRow | null>(null);
   readonly viewMode = signal<'calendar' | 'list'>('calendar');
+  readonly viewModeItems = [
+    { id: 'calendar', label: 'Calendario' },
+    { id: 'list', label: 'Listado' },
+  ] as const;
 
   readonly viewMonthLabel = computed(() =>
     this.viewAnchor().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }),
@@ -250,8 +261,10 @@ export class AdminBookingsPageComponent {
     this.selectedBooking.set(null);
   }
 
-  setViewMode(mode: 'calendar' | 'list'): void {
-    this.viewMode.set(mode);
+  setViewMode(mode: string): void {
+    if (mode === 'calendar' || mode === 'list') {
+      this.viewMode.set(mode);
+    }
   }
 
   onListRowActivate(row: AdminBookingRow, ev: Event): void {

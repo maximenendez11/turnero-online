@@ -1,0 +1,118 @@
+@use '../../styles/design-tokens' as dv;
+
+:host {
+  display: block;
+}
+
+.seg {
+  position: relative;
+  border-radius: dv.$dv-radius-lg;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-lowest});
+  padding: 0.2rem;
+}
+
+.seg__list {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.seg--scroll .seg__list {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.seg__tab {
+  flex: 1 1 auto;
+  min-width: 7.5rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  background: transparent;
+  border: 0;
+  border-radius: dv.$dv-radius-md;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.seg__tab:hover:not(.seg__tab--active):not(:disabled) {
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  background: color-mix(in srgb, var(--booking-surface-2, #{dv.$dv-surface-container-high}) 60%, transparent);
+}
+
+.seg__tab--active {
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
+  background: var(--booking-primary, #{dv.$dv-primary});
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 40%, #000);
+}
+
+.seg__tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 35%, transparent);
+}
+
+.seg__tab--active:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--booking-surface-2, #{dv.$dv-surface-container-lowest}),
+    0 0 0 4px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 45%, transparent);
+}
+
+.seg__tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Mobile: una sola fila scrolleable + “fade” lateral para que se vea simétrico */
+@media (max-width: 560px) {
+  .seg--scroll .seg__list {
+    scroll-snap-type: x mandatory;
+    gap: 0.35rem;
+    padding: 0.1rem;
+  }
+
+  .seg--scroll .seg__tab {
+    flex: 0 0 auto;
+    min-width: max-content;
+    scroll-snap-align: start;
+  }
+
+  .seg--fade-left::before,
+  .seg--fade-right::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    bottom: 1px;
+    width: 1.1rem;
+    pointer-events: none;
+    border-radius: dv.$dv-radius-lg;
+  }
+
+  .seg--fade-left::before {
+    left: 1px;
+    background: linear-gradient(
+      to right,
+      var(--booking-surface-2, #{dv.$dv-surface-container-lowest}),
+      transparent
+    );
+  }
+
+  .seg--fade-right::after {
+    right: 1px;
+    background: linear-gradient(
+      to left,
+      var(--booking-surface-2, #{dv.$dv-surface-container-lowest}),
+      transparent
+    );
+  }
+}
+

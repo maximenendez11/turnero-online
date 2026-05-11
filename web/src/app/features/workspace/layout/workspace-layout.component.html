@@ -1,6 +1,16 @@
-<main class="workspace-layout" [ngStyle]="workspaceTheme.cssVars()">
+<main
+  class="workspace-layout"
+  [class.workspace-layout--rail-collapsed]="railCollapsed()"
+  [ngStyle]="workspaceTheme.cssVars()"
+>
   <aside class="workspace-layout__rail">
-    <app-workspace-nav-sidebar variant="rail" [title]="workspaceNavTitle()" eyebrow="Administración" />
+    <app-workspace-nav-sidebar
+      variant="rail"
+      [title]="workspaceNavTitle()"
+      eyebrow="Administración"
+      [collapsed]="railCollapsed()"
+      (collapsedChange)="onRailCollapsedChange($event)"
+    />
   </aside>
   <div class="workspace-layout__body">
     <div class="workspace-layout__mobile-topnav">
