@@ -38,3 +38,6 @@ coverage/
 
 # Misc
 *.pem
+
+# Subidas locales de vitrina (imágenes de negocios)
+uploads/

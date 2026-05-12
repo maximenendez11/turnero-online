@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.types';
@@ -7,6 +10,7 @@ import { PatchBusinessAdminDto } from './dto/patch-business-admin.dto';
 import { ReplaceOpeningWindowsDto } from './dto/replace-opening-windows.dto';
 import { CreateServiceAdminDto, PatchServiceAdminDto } from './dto/patch-service-admin.dto';
 import { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
+import { CreateStaffAdminDto, PatchStaffAdminDto } from './dto/staff-admin.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -50,6 +54,38 @@ export class AdminController {
   @Patch('services/:serviceId')
   patchService(@CurrentUser() user: JwtPayload, @Param('serviceId') serviceId: string, @Body() dto: PatchServiceAdminDto) {
     return this.admin.patchService(user, serviceId, dto);
+  }
+
+  @Post('businesses/:id/landing-media')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  uploadLandingMedia(
+    @CurrentUser() user: JwtPayload,
+    @Param('id') id: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @Query('kind') kind: string,
+    @Req() req: Request,
+  ) {
+    return this.admin.uploadLandingMedia(user, id, file, kind ?? '', req);
+  }
+
+  @Post('businesses/:id/staff')
+  createStaff(@CurrentUser() user: JwtPayload, @Param('id') id: string, @Body() dto: CreateStaffAdminDto) {
+    return this.admin.createStaffMember(user, id, dto);
+  }
+
+  @Patch('staff/:staffId')
+  patchStaff(@CurrentUser() user: JwtPayload, @Param('staffId') staffId: string, @Body() dto: PatchStaffAdminDto) {
+    return this.admin.patchStaffMember(user, staffId, dto);
+  }
+
+  @Delete('staff/:staffId')
+  deleteStaff(@CurrentUser() user: JwtPayload, @Param('staffId') staffId: string) {
+    return this.admin.deleteStaffMember(user, staffId);
   }
 
   @Get('bookings')

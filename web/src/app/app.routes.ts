@@ -156,6 +156,12 @@ export const appRoutes: Route[] = [
       import('./features/booking/pages/business-search.component').then((m) => m.BusinessSearchComponent),
   },
   {
+    path: ':tenantSlug',
+    canActivate: [tenantGuard],
+    loadComponent: () =>
+      import('./features/booking/pages/business-landing.component').then((m) => m.BusinessLandingComponent),
+  },
+  {
     path: ':tenantSlug/book/service',
     canActivate: [tenantGuard],
     loadComponent: () =>

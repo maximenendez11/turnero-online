@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString, Matches, Min, MinLength, ValidateIf } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Matches, MaxLength, Min, MinLength, ValidateIf } from 'class-validator';
 import { BusinessStatus } from '@prisma/client';
 
 export class PatchBusinessAdminDto {
@@ -44,4 +44,10 @@ export class PatchBusinessAdminDto {
   @ValidateIf((_, v) => v !== undefined && String(v).trim() !== '')
   @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'themePrimaryHex debe ser #RRGGBB' })
   themePrimaryHex?: string;
+
+  /** URL de imagen de cabecera en la landing pública; vacío borra (usa imagen por defecto en el cliente). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  bannerImageUrl?: string;
 }

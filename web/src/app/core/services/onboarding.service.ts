@@ -67,7 +67,7 @@ export class OnboardingService {
   getPublicBookingPath(draft: OnboardingDraft = this.draft()): string | null {
     const name = draft.businessName.trim();
     if (!name) return null;
-    return `/${this.slugify(name)}/book/service`;
+    return `/${this.slugify(name)}`;
   }
 
   private readInitialValue(): boolean {

@@ -64,6 +64,12 @@ model Business {
   themeBackgroundHex   String?         @map("theme_background_hex") @db.VarChar(7)
   /// Color primario / acento (#RRGGBB), null = tema por defecto.
   themePrimaryHex      String?         @map("theme_primary_hex") @db.VarChar(7)
+  /// Imagen de cabecera en la landing pública (URL absoluta o relativa); null = imagen por defecto en el cliente.
+  bannerImageUrl       String?         @map("banner_image_url") @db.VarChar(2048)
+  /// Promedio de valoración mostrada al público (0–5); null si aún no hay reseñas.
+  ratingAverage        Float?          @map("rating_average")
+  /// Cantidad de valoraciones agregadas (futuro: reseñas reales).
+  ratingCount          Int             @default(0) @map("rating_count")
   status               BusinessStatus  @default(active)
   ownerUserId          String?         @map("owner_user_id")
   createdAt            DateTime        @default(now())
@@ -73,6 +79,7 @@ model Business {
   owner          User?                   @relation("BusinessOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
   openingWindows BusinessOpeningWindow[]
   services       BusinessService[]
+  staff          BusinessStaff[]
   bookings       Booking[]
 
   @@index([ownerUserId])
@@ -86,6 +93,8 @@ model BusinessService {
   description String?
   durationMin Int
   price       Decimal  @db.Decimal(10, 2)
+  /// Imagen opcional para la vitrina pública (URL).
+  imageUrl    String?  @map("image_url") @db.VarChar(2048)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -95,6 +104,23 @@ model BusinessService {
 
   @@index([businessId])
   @@map("business_services")
+}
+
+/// Profesional mostrado en la landing pública del negocio.
+model BusinessStaff {
+  id          String   @id @default(uuid())
+  businessId  String   @map("business_id")
+  displayName String   @map("display_name")
+  role        String?
+  photoUrl    String?  @map("photo_url") @db.VarChar(2048)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@map("business_staff")
 }
 
 enum BookingStatus {

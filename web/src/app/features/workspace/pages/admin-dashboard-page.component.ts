@@ -24,7 +24,7 @@ export type DashboardBusinessStatus = {
 export type DashboardShareRow = {
   id: string;
   name: string;
-  /** Ruta app p. ej. `/mi-slug/book/service` o `null` si falta slug. */
+  /** Ruta pública p. ej. `/mi-slug` (landing) o `null` si falta slug. */
   bookingPath: string | null;
 };
 
@@ -65,7 +65,7 @@ export class AdminDashboardPageComponent implements OnDestroy {
   readonly shareRows = computed<DashboardShareRow[]>(() => {
     return this.details().map((d) => {
       const slug = d.slug?.trim() ?? '';
-      const bookingPath = slug.length > 0 ? `/${slug}/book/service` : null;
+      const bookingPath = slug.length > 0 ? `/${slug}` : null;
       return { id: d.id, name: d.name, bookingPath };
     });
   });

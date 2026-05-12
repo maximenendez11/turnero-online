@@ -1,0 +1,113 @@
+<div class="vdlg" *ngIf="open">
+  <div class="vdlg__backdrop" (click)="close()" aria-hidden="true"></div>
+  <div class="vdlg__panel" role="dialog" aria-modal="true" aria-labelledby="vdlg-staff-title">
+    <div class="vdlg__head">
+      <h2 id="vdlg-staff-title" class="vdlg__title">{{ isEdit ? 'Editar profesional' : 'Agregar profesional' }}</h2>
+      <button type="button" class="vdlg__x" (click)="close()" [disabled]="busy" aria-label="Cerrar">×</button>
+    </div>
+    <p class="vdlg__lead" *ngIf="!isEdit">
+      Nombre obligatorio. La foto es opcional: pegá un enlace o subí una imagen desde tu dispositivo (JPG, PNG o WebP,
+      hasta 5 MB).
+    </p>
+    <p class="vdlg__lead" *ngIf="isEdit">
+      Cambiá nombre, rol o foto. Si no tocás la foto, se mantiene la actual. En pestaña Enlace podés borrar la URL para
+      quitar la imagen.
+    </p>
+
+    <div class="staff-fields">
+      <label class="vdlg__label" for="vdlg-staff-name">Nombre <span class="req">*</span></label>
+      <input
+        id="vdlg-staff-name"
+        class="input"
+        type="text"
+        [(ngModel)]="displayName"
+        placeholder="Ej. Ana"
+        [disabled]="busy"
+        autocomplete="off"
+      />
+
+      <label class="vdlg__label staff-fields__gap" for="vdlg-staff-role">Rol (opcional)</label>
+      <input
+        id="vdlg-staff-role"
+        class="input"
+        type="text"
+        [(ngModel)]="role"
+        placeholder="Ej. Barbera"
+        [disabled]="busy"
+        autocomplete="off"
+      />
+    </div>
+
+    <h3 class="vdlg__sub">Foto de perfil</h3>
+
+    <div class="vdlg__preview vdlg__preview--round">
+      <img [src]="photoPreviewSrc()" alt="" (error)="photoPreviewBroken = true" />
+    </div>
+
+    <div class="vdlg__tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="vdlg__tab"
+        [class.vdlg__tab--on]="tab === 'url'"
+        [disabled]="busy"
+        (click)="setTab('url')"
+      >
+        Enlace
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="vdlg__tab"
+        [class.vdlg__tab--on]="tab === 'file'"
+        [disabled]="busy"
+        (click)="setTab('file')"
+      >
+        Archivo
+      </button>
+    </div>
+
+    <div class="vdlg__body" *ngIf="tab === 'url'">
+      <label class="vdlg__label" for="vdlg-staff-photo-url">URL de la imagen</label>
+      <input
+        id="vdlg-staff-photo-url"
+        class="input"
+        type="url"
+        [(ngModel)]="photoUrl"
+        (ngModelChange)="photoPreviewBroken = false"
+        placeholder="https://…/foto.jpg"
+        [disabled]="busy"
+        spellcheck="false"
+      />
+    </div>
+
+    <div class="vdlg__body" *ngIf="tab === 'file'">
+      <input
+        #staffFileInp
+        type="file"
+        class="sr-only"
+        accept="image/jpeg,image/png,image/webp"
+        [disabled]="busy"
+        (change)="onFilePicked($event)"
+      />
+      <button type="button" class="btn btn--secondary vdlg__file-btn" [disabled]="busy" (click)="staffFileInp.click()">
+        Elegir imagen…
+      </button>
+      <p class="vdlg__hint" *ngIf="pickedFile">{{ pickedFile.name }} · {{ pickedFile.size / 1024 | number : '1.0-0' }} KB</p>
+      <button *ngIf="pickedFile" type="button" class="btn btn--ghost btn--sm" [disabled]="busy" (click)="clearPickedFile()">
+        Quitar archivo
+      </button>
+    </div>
+
+    <p class="vdlg__warn" *ngIf="photoUrl.trim() && photoPreviewBroken && tab === 'url'">
+      No pudimos cargar la vista previa de esa URL.
+    </p>
+
+    <div class="vdlg__foot">
+      <button type="button" class="btn btn--ghost" [disabled]="busy" (click)="close()">Cancelar</button>
+      <button type="button" class="btn btn--primary" [disabled]="busy || !canSubmit()" (click)="submit()">
+        {{ busy ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Añadir a la vitrina' }}
+      </button>
+    </div>
+  </div>
+</div>

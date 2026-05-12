@@ -15,17 +15,18 @@ import {
 } from '../../booking/utils/booking-theme.utils';
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { BookingThemePreviewComponent } from '../components/booking-theme-preview/booking-theme-preview.component';
+import { AdminBusinessLandingPanelComponent } from '../components/admin-business-landing-panel/admin-business-landing-panel.component';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
 
 export type WindowDraft = { weekday: number; startMin: number; endMin: number };
 
-export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'apariencia';
+export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'apariencia' | 'vitrina';
 
 @Component({
   standalone: true,
   selector: 'app-admin-business-page',
-  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent, SegmentedControlComponent],
+  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent, SegmentedControlComponent, AdminBusinessLandingPanelComponent],
   templateUrl: './admin-business-page.component.html',
   styleUrl: './admin-business-page.component.scss',
 })
@@ -45,13 +46,14 @@ export class AdminBusinessPageComponent {
     { id: 'datos', label: 'Datos' },
     { id: 'horarios', label: 'Horarios' },
     { id: 'servicios', label: 'Servicios' },
+    { id: 'vitrina', label: 'Vitrina' },
     { id: 'apariencia', label: 'Apariencia' },
   ] as const;
 
   selectedBusinessId = '';
   detail: AdminBusinessDetail | null = null;
   windowsDraft: WindowDraft[] = [];
-  newService = { name: '', description: '', durationMin: 45, price: 0 };
+  newService = { name: '', description: '', durationMin: 45, price: 0, imageUrl: '' };
 
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -61,7 +63,7 @@ export class AdminBusinessPageComponent {
 
   get publicBookingPreview(): string {
     const slug = this.detail?.slug?.trim();
-    return slug ? `/${slug}/book/service` : '';
+    return slug ? `/${slug}` : '';
   }
 
   minutesToTime(m: number): string {
@@ -123,7 +125,7 @@ export class AdminBusinessPageComponent {
   }
 
   setSettingsTab(tab: string): void {
-    if (tab === 'datos' || tab === 'horarios' || tab === 'servicios' || tab === 'apariencia') {
+    if (tab === 'datos' || tab === 'horarios' || tab === 'servicios' || tab === 'apariencia' || tab === 'vitrina') {
       this.settingsTab.set(tab);
     }
   }
@@ -287,7 +289,17 @@ export class AdminBusinessPageComponent {
       slug: d.slug ?? '',
       themeBackgroundHex: d.themeBackgroundHex ?? '',
       themePrimaryHex: d.themePrimaryHex ?? '',
-      services: d.services.map((s) => ({ ...s, description: s.description ?? '' })),
+      bannerImageUrl: d.bannerImageUrl ?? '',
+      staff: (d.staff ?? []).map((m) => ({
+        ...m,
+        role: m.role ?? '',
+        photoUrl: m.photoUrl ?? '',
+      })),
+      services: d.services.map((s) => ({
+        ...s,
+        description: s.description ?? '',
+        imageUrl: s.imageUrl ?? '',
+      })),
     };
   }
 
@@ -311,9 +323,10 @@ export class AdminBusinessPageComponent {
           description: this.newService.description.trim() || undefined,
           durationMin: Number(this.newService.durationMin),
           price: Number(this.newService.price),
+          imageUrl: this.newService.imageUrl.trim() || undefined,
         }),
       );
-      this.newService = { name: '', description: '', durationMin: 45, price: 0 };
+      this.newService = { name: '', description: '', durationMin: 45, price: 0, imageUrl: '' };
       await this.loadDetail();
       this.error.set(null);
       this.flash('ok', 'Servicio creado.');
@@ -344,6 +357,7 @@ export class AdminBusinessPageComponent {
           durationMin: s.durationMin,
           price: this.priceNumber(s),
           isActive: s.isActive,
+          imageUrl: (s.imageUrl ?? '').trim(),
         }),
       );
       await this.loadDetail();

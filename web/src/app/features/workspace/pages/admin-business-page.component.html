@@ -178,6 +178,10 @@
                     <span class="label-caps">Descripción</span>
                     <input class="input" [(ngModel)]="s.description" />
                   </label>
+                  <label>
+                    <span class="label-caps">URL imagen (opcional)</span>
+                    <input class="input" [(ngModel)]="s.imageUrl" placeholder="https://…" spellcheck="false" />
+                  </label>
                   <div class="service-card__nums">
                     <label>
                       <span class="label-caps">Duración (min)</span>
@@ -220,12 +224,26 @@
                     <span class="label-caps">Descripción (opcional)</span>
                     <input class="input" [(ngModel)]="newService.description" />
                   </label>
+                  <label class="span-row">
+                    <span class="label-caps">URL imagen (opcional)</span>
+                    <input class="input" [(ngModel)]="newService.imageUrl" placeholder="https://…" spellcheck="false" />
+                  </label>
                 </div>
                 <button type="button" class="btn btn--secondary" [disabled]="saving() || !newService.name.trim()" (click)="addService()">
                   Añadir servicio
                 </button>
               </div>
             </article>
+          </div>
+
+          <div
+            class="settings-tabs__panel"
+            role="tabpanel"
+            id="panel-vitrina"
+            aria-labelledby="tab-vitrina"
+            [hidden]="settingsTab() !== 'vitrina'"
+          >
+            <app-admin-business-landing-panel [detail]="d" (reload)="loadDetail()" />
           </div>
 
           <div

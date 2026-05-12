@@ -11,6 +11,7 @@ import { BusinessMemberModule } from './business-member/business-member.module';
 import { PublicBookingModule } from './public-booking/public-booking.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AdminModule } from './admin/admin.module';
+import { MediaModule } from './media/media.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { AdminModule } from './admin/admin.module';
     PublicBookingModule,
     OnboardingModule,
     AdminModule,
+    MediaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

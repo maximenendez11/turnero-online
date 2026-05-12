@@ -8,6 +8,7 @@ import { BookingFlowService } from '../services/booking-flow.service';
 import { PublicBookingApiService, PublicService } from '../services/public-booking-api.service';
 import { hydrateBookingShellSnapshot, persistBookingShellSnapshot } from '../utils/booking-theme-shell.cache';
 import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
+import { formatListPrice as formatPriceArs } from '../utils/price-display.utils';
 import { AppSplashService } from '../../../core/services/app-splash.service';
 
 type ConfirmedBooking = {
@@ -160,6 +161,10 @@ export class BookingPageComponent {
 
   pickService(service: PublicService): void {
     this.flow.selectService(service);
+  }
+
+  formatPriceDisplay(raw: string): string {
+    return formatPriceArs(raw);
   }
 
   async pickDay(day: string): Promise<void> {
@@ -324,7 +329,7 @@ export class BookingPageComponent {
   summaryFooterLine(): string {
     const svc = this.flow.value.service;
     const name = svc?.name?.trim() ? svc.name : '-';
-    const price = svc?.price?.trim() ? svc.price : '—';
+    const price = svc?.price?.trim() ? formatPriceArs(svc.price) : '—';
     const head = `${name} · ${price}`;
     const at = this.flow.value.startsAt;
     if (!at) return head;

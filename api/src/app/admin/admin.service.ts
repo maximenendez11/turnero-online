@@ -6,6 +6,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { randomBytes } from 'crypto';
+import type { Request } from 'express';
+import { mkdir, writeFile } from 'fs/promises';
+import imageSize from 'image-size';
+import { join } from 'path';
 import { DateTime } from 'luxon';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtPayload } from '../auth/jwt-payload.types';
@@ -13,6 +18,9 @@ import type { PatchBusinessAdminDto } from './dto/patch-business-admin.dto';
 import type { ReplaceOpeningWindowsDto } from './dto/replace-opening-windows.dto';
 import type { CreateServiceAdminDto, PatchServiceAdminDto } from './dto/patch-service-admin.dto';
 import type { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
+import type { CreateStaffAdminDto, PatchStaffAdminDto } from './dto/staff-admin.dto';
+import { publicBaseUrlFromRequest } from './public-base-url';
+import { getUploadsDir } from '../../uploads-path';
 
 export type AdminDashboardMetricsByBusiness = {
   businessId: string;
@@ -74,6 +82,7 @@ export class AdminService {
       include: {
         openingWindows: { orderBy: [{ weekday: 'asc' }, { sortOrder: 'asc' }, { startMin: 'asc' }] },
         services: { orderBy: { name: 'asc' } },
+        staff: { orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }] },
       },
     });
     if (!business) throw new NotFoundException('Negocio no encontrado');
@@ -107,6 +116,10 @@ export class AdminService {
     if (dto.themePrimaryHex !== undefined) {
       const t = dto.themePrimaryHex.trim();
       data.themePrimaryHex = t === '' ? null : t.toLowerCase();
+    }
+    if (dto.bannerImageUrl !== undefined) {
+      const u = dto.bannerImageUrl.trim();
+      data.bannerImageUrl = u === '' ? null : u;
     }
     if (Object.keys(data).length === 0) {
       return this.getBusinessDetail(user, businessId);
@@ -147,6 +160,7 @@ export class AdminService {
         description: dto.description?.trim() || null,
         durationMin: dto.durationMin,
         price: new Prisma.Decimal(dto.price),
+        imageUrl: dto.imageUrl?.trim() || null,
         isActive: true,
       },
     });
@@ -165,7 +179,112 @@ export class AdminService {
     if (dto.durationMin !== undefined) data.durationMin = dto.durationMin;
     if (dto.price !== undefined) data.price = new Prisma.Decimal(dto.price);
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
+    if (dto.imageUrl !== undefined) {
+      const u = dto.imageUrl.trim();
+      data.imageUrl = u === '' ? null : u;
+    }
+    if (Object.keys(data).length === 0) {
+      return this.prisma.businessService.findFirstOrThrow({ where: { id: serviceId } });
+    }
     return this.prisma.businessService.update({ where: { id: serviceId }, data });
+  }
+
+  async createStaffMember(user: JwtPayload, businessId: string, dto: CreateStaffAdminDto) {
+    await this.assertBusinessAccess(user, businessId);
+    return this.prisma.businessStaff.create({
+      data: {
+        businessId,
+        displayName: dto.displayName.trim(),
+        role: dto.role?.trim() || null,
+        photoUrl: dto.photoUrl?.trim() || null,
+        sortOrder: dto.sortOrder ?? 0,
+      },
+    });
+  }
+
+  async patchStaffMember(user: JwtPayload, staffId: string, dto: PatchStaffAdminDto) {
+    const row = await this.prisma.businessStaff.findFirst({
+      where: { id: staffId },
+      select: { businessId: true },
+    });
+    if (!row) throw new NotFoundException('Profesional no encontrado');
+    await this.assertBusinessAccess(user, row.businessId);
+    const data: Prisma.BusinessStaffUpdateInput = {};
+    if (dto.displayName !== undefined) data.displayName = dto.displayName.trim();
+    if (dto.role !== undefined) data.role = dto.role.trim() === '' ? null : dto.role.trim();
+    if (dto.photoUrl !== undefined) {
+      const u = dto.photoUrl.trim();
+      data.photoUrl = u === '' ? null : u;
+    }
+    if (dto.sortOrder !== undefined) data.sortOrder = dto.sortOrder;
+    if (Object.keys(data).length === 0) {
+      return this.prisma.businessStaff.findFirstOrThrow({ where: { id: staffId } });
+    }
+    return this.prisma.businessStaff.update({ where: { id: staffId }, data });
+  }
+
+  async deleteStaffMember(user: JwtPayload, staffId: string): Promise<{ ok: boolean }> {
+    const row = await this.prisma.businessStaff.findFirst({
+      where: { id: staffId },
+      select: { businessId: true },
+    });
+    if (!row) throw new NotFoundException('Profesional no encontrado');
+    await this.assertBusinessAccess(user, row.businessId);
+    await this.prisma.businessStaff.delete({ where: { id: staffId } });
+    return { ok: true };
+  }
+
+  /**
+   * Sube imagen para vitrina (cabecera o foto de profesional). Devuelve URL absoluta lista para guardar en BD.
+   */
+  async uploadLandingMedia(
+    user: JwtPayload,
+    businessId: string,
+    file: { buffer: Buffer; mimetype: string } | undefined,
+    kindRaw: string,
+    req: Request,
+  ): Promise<{ url: string }> {
+    await this.assertBusinessAccess(user, businessId);
+    if (!file?.buffer?.length) {
+      throw new BadRequestException('Seleccioná un archivo de imagen');
+    }
+    const kind = kindRaw === 'banner' || kindRaw === 'staff' ? kindRaw : null;
+    if (!kind) {
+      throw new BadRequestException('Parámetro kind inválido (usá banner o staff)');
+    }
+    const mime = (file.mimetype || '').toLowerCase();
+    const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    if (!allowed.has(mime)) {
+      throw new BadRequestException('Formato no permitido. Usá JPG, PNG o WebP.');
+    }
+    const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+
+    let width = 0;
+    let height = 0;
+    try {
+      const dim = imageSize(file.buffer);
+      width = dim.width ?? 0;
+      height = dim.height ?? 0;
+    } catch {
+      throw new BadRequestException('No se pudo leer la imagen');
+    }
+    const maxSide = kind === 'banner' ? 8000 : 5000;
+    if (width > maxSide || height > maxSide) {
+      throw new BadRequestException(`La imagen supera el tamaño máximo permitido (${maxSide}px por lado)`);
+    }
+
+    const filename = `${randomBytes(12).toString('hex')}.${ext}`;
+    const dir = join(getUploadsDir(), 'businesses', businessId);
+    await mkdir(dir, { recursive: true });
+    const absPath = join(dir, filename);
+    await writeFile(absPath, file.buffer);
+
+    const base = publicBaseUrlFromRequest(req);
+    const url = `${base}/api/media/businesses/${businessId}/${filename}`;
+    if (url.length > 2048) {
+      throw new BadRequestException('URL resultante demasiado larga');
+    }
+    return { url };
   }
 
   /**

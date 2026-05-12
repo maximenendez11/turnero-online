@@ -29,14 +29,27 @@ export type AdminServiceRow = {
   durationMin: number;
   price: unknown;
   isActive: boolean;
+  imageUrl?: string | null;
+};
+
+export type AdminStaffRow = {
+  id: string;
+  displayName: string;
+  role: string | null;
+  photoUrl: string | null;
+  sortOrder: number;
 };
 
 export type AdminBusinessDetail = AdminBusinessListItem & {
   description: string | null;
   openingWindows: AdminOpeningWindow[];
   services: AdminServiceRow[];
+  staff: AdminStaffRow[];
   themeBackgroundHex?: string | null;
   themePrimaryHex?: string | null;
+  bannerImageUrl?: string | null;
+  ratingAverage?: number | null;
+  ratingCount?: number;
 };
 
 export type AdminBookingRow = {
@@ -128,9 +141,27 @@ export class AdminApiService {
 
   createService(
     businessId: string,
-    body: { name: string; description?: string; durationMin: number; price: number },
+    body: { name: string; description?: string; durationMin: number; price: number; imageUrl?: string },
   ): Observable<AdminServiceRow> {
     return this.http.post<AdminServiceRow>(this.url(`/businesses/${businessId}/services`), body);
+  }
+
+  createStaffMember(
+    businessId: string,
+    body: { displayName: string; role?: string; photoUrl?: string; sortOrder?: number },
+  ): Observable<AdminStaffRow> {
+    return this.http.post<AdminStaffRow>(this.url(`/businesses/${businessId}/staff`), body);
+  }
+
+  deleteStaffMember(staffId: string): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(this.url(`/staff/${staffId}`));
+  }
+
+  patchStaffMember(
+    staffId: string,
+    body: { displayName?: string; role?: string | null; photoUrl?: string | null },
+  ): Observable<AdminStaffRow> {
+    return this.http.patch<AdminStaffRow>(this.url(`/staff/${staffId}`), body);
   }
 
   patchService(serviceId: string, body: Record<string, unknown>): Observable<AdminServiceRow> {
@@ -149,5 +180,11 @@ export class AdminApiService {
 
   patchBooking(bookingId: string, body: Record<string, unknown>): Observable<AdminBookingRow> {
     return this.http.patch<AdminBookingRow>(this.url(`/bookings/${bookingId}`), body);
+  }
+
+  uploadLandingMedia(businessId: string, file: File, kind: 'banner' | 'staff'): Observable<{ url: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ url: string }>(this.url(`/businesses/${businessId}/landing-media?kind=${kind}`), fd);
   }
 }

@@ -42,6 +42,9 @@ export class PublicBookingService {
     });
   }
 
+  /**
+   * Ficha pública del negocio para la landing y el flujo de reserva: incluye servicios y equipo.
+   */
   async getBusinessBySlug(slug: string) {
     const business = await this.prisma.business.findFirst({
       where: { slug, status: 'active', deletedAt: null },
@@ -55,14 +58,64 @@ export class PublicBookingService {
         bookingIntervalMin: true,
         themeBackgroundHex: true,
         themePrimaryHex: true,
+        bannerImageUrl: true,
+        ratingAverage: true,
+        ratingCount: true,
+        services: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            durationMin: true,
+            price: true,
+            imageUrl: true,
+          },
+          orderBy: { name: 'asc' },
+        },
+        staff: {
+          select: { id: true, displayName: true, role: true, photoUrl: true },
+          orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }],
+        },
       },
+    });
+    if (!business) throw new NotFoundException('Business not found');
+    return {
+      id: business.id,
+      slug: business.slug,
+      name: business.name,
+      description: business.description,
+      address: business.address,
+      timezone: business.timezone,
+      bookingIntervalMin: business.bookingIntervalMin,
+      themeBackgroundHex: business.themeBackgroundHex,
+      themePrimaryHex: business.themePrimaryHex,
+      bannerImageUrl: business.bannerImageUrl,
+      ratingAverage: business.ratingAverage,
+      ratingCount: business.ratingCount,
+      services: business.services.map((s) => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        durationMin: s.durationMin,
+        price: s.price.toString(),
+        imageUrl: s.imageUrl,
+      })),
+      staff: business.staff,
+    };
+  }
+
+  private async requireActiveBusinessBySlug(slug: string) {
+    const business = await this.prisma.business.findFirst({
+      where: { slug, status: 'active', deletedAt: null },
+      select: { id: true, timezone: true, bookingIntervalMin: true },
     });
     if (!business) throw new NotFoundException('Business not found');
     return business;
   }
 
   async getServices(slug: string) {
-    const business = await this.getBusinessBySlug(slug);
+    const business = await this.requireActiveBusinessBySlug(slug);
     return this.prisma.businessService.findMany({
       where: { businessId: business.id, isActive: true },
       select: {
@@ -71,13 +124,14 @@ export class PublicBookingService {
         description: true,
         durationMin: true,
         price: true,
+        imageUrl: true,
       },
       orderBy: { name: 'asc' },
     });
   }
 
   async getAvailability(slug: string, serviceId: string, dateIso: string) {
-    const business = await this.getBusinessBySlug(slug);
+    const business = await this.requireActiveBusinessBySlug(slug);
     const service = await this.prisma.businessService.findFirst({
       where: { id: serviceId, businessId: business.id, isActive: true },
       select: { durationMin: true },
@@ -127,7 +181,7 @@ export class PublicBookingService {
   }
 
   async createBooking(slug: string, dto: CreatePublicBookingDto) {
-    const business = await this.getBusinessBySlug(slug);
+    const business = await this.requireActiveBusinessBySlug(slug);
     const service = await this.prisma.businessService.findFirst({
       where: { id: dto.serviceId, businessId: business.id, isActive: true },
       select: { durationMin: true },
@@ -161,7 +215,7 @@ export class PublicBookingService {
   }
 
   async getBooking(slug: string, code: string) {
-    const business = await this.getBusinessBySlug(slug);
+    const business = await this.requireActiveBusinessBySlug(slug);
     const booking = await this.prisma.booking.findFirst({
       where: { businessId: business.id, code },
       include: {

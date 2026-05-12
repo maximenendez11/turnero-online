@@ -1,0 +1,92 @@
+<main class="landing-page" [ngStyle]="shellStyles()">
+  <div class="landing-bg" aria-hidden="true"></div>
+
+  <section class="landing-card" *ngIf="loading">
+    <div class="sk-banner"></div>
+    <div class="sk-lines">
+      <div class="sk-line sk-line--lg"></div>
+      <div class="sk-line sk-line--md"></div>
+    </div>
+    <p class="loading-msg">Cargando perfil del negocio…</p>
+  </section>
+
+  <section class="landing-card landing-card--error" *ngIf="!loading && error">
+    <h1 class="h1">No encontramos este negocio</h1>
+    <p class="muted">Revisá el enlace o buscá de nuevo en el listado público.</p>
+    <div class="cta-row">
+      <button type="button" class="btn primary" (click)="reload()">Reintentar</button>
+      <a routerLink="/c/search" class="btn ghost">Buscar empresas</a>
+    </div>
+  </section>
+
+  <ng-container *ngIf="!loading && business as b">
+    <header class="banner">
+      <div class="banner__frame">
+        <img
+          class="banner__img"
+          [src]="bannerSrc(b)"
+          [alt]="'Cabecera de ' + b.name"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
+      <div class="banner__shade" aria-hidden="true"></div>
+    </header>
+
+    <div class="landing-body">
+      <section class="block block--intro">
+        <h1 class="h1">{{ b.name }}</h1>
+        <div class="stars-row" [attr.aria-label]="ratingLabel(b)">
+          <span class="stars">
+            <span *ngFor="let i of [1, 2, 3, 4, 5]" class="star" [class.star--on]="showRating(b) && i <= ratingStarsFull(b)">★</span>
+          </span>
+          <span class="stars-caption">{{ ratingLabel(b) }}</span>
+        </div>
+        <p class="lead">{{ tagline(b) }}</p>
+        <p class="address" *ngIf="b.address.trim()">
+          <span class="address__icon" aria-hidden="true">📍</span>
+          {{ b.address }}
+        </p>
+        <div class="cta-row">
+          <a class="btn primary" [routerLink]="['/', b.slug, 'book', 'service']">Sacar turno</a>
+          <a routerLink="/c/search" class="btn ghost">Buscar otro lugar</a>
+        </div>
+      </section>
+
+      <section class="block" *ngIf="b.staff.length">
+        <h2 class="h2">Profesionales</h2>
+        <p class="muted block__hint">Equipo que atiende en este local.</p>
+        <ul class="staff-grid">
+          <li class="staff-card" *ngFor="let m of b.staff; trackBy: trackStaff">
+            <div class="staff-card__photo-wrap">
+              <img class="staff-card__photo" [src]="staffPhoto(m)" [alt]="m.displayName" loading="lazy" />
+            </div>
+            <p class="staff-card__name">{{ m.displayName }}</p>
+            <p class="staff-card__role" *ngIf="m.role?.trim()">{{ m.role }}</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="block">
+        <h2 class="h2">Servicios</h2>
+        <p class="muted block__hint">Precios orientativos; confirmás el detalle al reservar.</p>
+        <ul class="svc-grid" *ngIf="b.services.length; else noSvc">
+          <li class="svc-card" *ngFor="let s of b.services; trackBy: trackService">
+            <div class="svc-card__media">
+              <img [src]="serviceImage(s)" [alt]="s.name" loading="lazy" />
+            </div>
+            <div class="svc-card__body">
+              <h3 class="svc-card__title">{{ s.name }}</h3>
+              <p class="svc-card__desc" *ngIf="s.description?.trim()">{{ s.description }}</p>
+              <p class="svc-card__meta">{{ s.durationMin }} min</p>
+              <p class="svc-card__price">{{ formatPriceDisplay(s.price) }}</p>
+            </div>
+          </li>
+        </ul>
+        <ng-template #noSvc>
+          <p class="muted empty-copy">Todavía no hay servicios publicados. Volvé más tarde o contactá al negocio.</p>
+        </ng-template>
+      </section>
+    </div>
+  </ng-container>
+</main>

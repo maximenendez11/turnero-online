@@ -57,7 +57,7 @@
         (click)="pickService(item)"
       >
         <strong>{{ item.name }}</strong>
-        <span>{{ item.durationMin }} min · {{ item.price }}</span>
+        <span>{{ item.durationMin }} min · {{ formatPriceDisplay(item.price) }}</span>
       </button>
       <p class="empty-msg" *ngIf="!servicesLoading && services.length === 0">
         No hay servicios cargados para este comercio.

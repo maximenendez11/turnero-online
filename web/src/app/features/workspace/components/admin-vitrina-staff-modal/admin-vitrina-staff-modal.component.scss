@@ -1,0 +1,38 @@
+@use '../../../../shared/styles/design-tokens' as dv;
+
+:host {
+  display: contents;
+}
+
+.staff-fields {
+  margin-bottom: dv.$dv-space-md;
+}
+
+.staff-fields__gap {
+  margin-top: dv.$dv-space-sm;
+}
+
+.vdlg__sub {
+  margin: 0 0 dv.$dv-space-sm;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.vdlg__preview--round {
+  max-height: 200px;
+}
+
+.vdlg__preview--round img {
+  width: 120px;
+  height: 120px;
+  max-height: none;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 45%, transparent);
+}
+
+.req {
+  color: #f6a89a;
+  font-weight: 700;
+}

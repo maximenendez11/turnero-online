@@ -1,0 +1,149 @@
+<article class="landing-panel card" aria-labelledby="sec-landing">
+  <div class="card__head">
+    <h2 id="sec-landing">Vitrina pública</h2>
+    <p class="card__hint">
+      Es la página que ven tus clientes antes de reservar (cabecera, equipo y servicios). Podés
+      <strong>pegar un enlace</strong> a una imagen o <strong>subir un archivo</strong> (JPG, PNG o WebP, hasta 5 MB).
+    </p>
+  </div>
+
+  <ol class="landing-steps" aria-label="Pasos de configuración">
+    <li class="landing-step">
+      <div class="landing-step__head">
+        <span class="landing-step__num" aria-hidden="true">1</span>
+        <div>
+          <h3 class="landing-step__title">Imagen de cabecera</h3>
+          <p class="landing-step__lead">
+            Se muestra ancha arriba en la página pública. Si no configurás imagen, se usa una decorativa por defecto.
+          </p>
+        </div>
+      </div>
+
+      <div class="banner-summary">
+        <div class="banner-preview">
+          <img
+            [src]="bannerPreviewSrc()"
+            alt="Vista previa del banner"
+            class="banner-preview__img"
+            loading="lazy"
+            (error)="bannerPreviewBroken = true"
+          />
+          <p class="banner-preview__caption" *ngIf="!bannerInputTrimmed()">Imagen por defecto</p>
+          <p class="banner-preview__caption" *ngIf="bannerInputTrimmed() && !bannerPreviewBroken">Tu imagen actual</p>
+          <p class="banner-preview__warn" *ngIf="bannerInputTrimmed() && bannerPreviewBroken">
+            No pudimos cargar la URL guardada. Abrí “Editar cabecera” para corregirla o subir otra.
+          </p>
+        </div>
+        <div class="banner-summary__actions">
+          <button type="button" class="lp-btn lp-btn--accent" (click)="bannerModalOpen = true">
+            <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path
+                d="M4 5h12v10H4V5zm2 2v6h8V7H6zm2 6l2-2.5 1.5 2L14 9l2 4H8zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 009 9z"
+              />
+            </svg>
+            Editar cabecera
+          </button>
+          <p class="banner-summary__url" *ngIf="bannerInputTrimmed() as u">
+            <span class="label-caps">Enlace actual</span>
+            <span class="banner-summary__mono">{{ u }}</span>
+          </p>
+        </div>
+      </div>
+    </li>
+
+    <li class="landing-step">
+      <div class="landing-step__head">
+        <span class="landing-step__num" aria-hidden="true">2</span>
+        <div>
+          <h3 class="landing-step__title">Profesionales en la vitrina</h3>
+          <p class="landing-step__lead">
+            Aparecen con foto y nombre en la página pública. Los <strong>servicios y precios</strong> se cargan en la
+            pestaña <strong>Servicios</strong> (incluida la foto de cada servicio).
+          </p>
+        </div>
+      </div>
+
+      <div class="staff-section">
+        <ng-container *ngIf="detail.staff.length > 0; else noStaff">
+          <ul class="staff-cards" role="list">
+            <li class="staff-card" *ngFor="let m of detail.staff" role="listitem">
+              <div class="staff-card__avatar">
+                <img *ngIf="staffPhotoTrim(m) as photoUrl" [src]="photoUrl" alt="" loading="lazy" />
+                <span *ngIf="!staffPhotoTrim(m)" class="staff-card__mono" aria-hidden="true">{{ staffInitial(m) }}</span>
+              </div>
+              <div class="staff-card__text">
+                <p class="staff-card__name">{{ m.displayName }}</p>
+                <p class="staff-card__role" *ngIf="m.role?.trim()">{{ m.role }}</p>
+              </div>
+              <div class="staff-card__actions">
+                <button
+                  type="button"
+                  class="lp-btn lp-btn--soft lp-btn--sm"
+                  [disabled]="saving"
+                  title="Editar nombre, rol o foto"
+                  (click)="openStaffEdit(m)"
+                >
+                  <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path
+                      d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+                    />
+                  </svg>
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="lp-btn lp-btn--danger lp-btn--sm"
+                  [disabled]="saving"
+                  title="Quitar de la vitrina pública"
+                  (click)="removeStaff(m)"
+                >
+                  <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path
+                      fill-rule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  Quitar
+                </button>
+              </div>
+            </li>
+          </ul>
+        </ng-container>
+        <ng-template #noStaff>
+          <div class="empty-hint" role="status">
+            <p class="empty-hint__title">Todavía no mostrás a nadie del equipo</p>
+            <p class="empty-hint__text">
+              Cuando agregues al menos una persona, la landing mostrará la sección “Profesionales”.
+            </p>
+          </div>
+        </ng-template>
+
+        <div class="staff-add-row">
+          <button type="button" class="lp-btn lp-btn--accent" [disabled]="saving" (click)="openStaffAdd()">
+            <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
+            </svg>
+            Agregar profesional
+          </button>
+        </div>
+      </div>
+    </li>
+  </ol>
+</article>
+
+<app-admin-vitrina-banner-modal
+  [businessId]="detail.id"
+  [open]="bannerModalOpen"
+  [bannerUrl]="detail.bannerImageUrl ?? ''"
+  (dismiss)="bannerModalOpen = false"
+  (saved)="bannerModalOpen = false; onVitrinaSaved()"
+/>
+
+<app-admin-vitrina-staff-modal
+  [businessId]="detail.id"
+  [open]="staffModalOpen"
+  [editStaff]="staffEditTarget"
+  (dismiss)="closeStaffModal()"
+  (saved)="closeStaffModal(); onVitrinaSaved()"
+/>

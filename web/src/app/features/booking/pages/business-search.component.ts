@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { PublicBookingApiService, PublicBusiness } from '../services/public-booking-api.service';
+import { PublicBookingApiService, PublicBusinessListItem } from '../services/public-booking-api.service';
 
 @Component({
   standalone: true,
@@ -19,7 +19,7 @@ import { PublicBookingApiService, PublicBusiness } from '../services/public-book
 
         <p class="hint" *ngIf="!results.length">Escribe un rubro o nombre para comenzar.</p>
 
-        <a class="result" *ngFor="let business of results" [routerLink]="'/' + business.slug + '/book/service'">
+        <a class="result" *ngFor="let business of results" [routerLink]="['/', business.slug]">
           <h3>{{ business.name }}</h3>
           <p>{{ business.description || business.address }}</p>
         </a>
@@ -88,7 +88,7 @@ import { PublicBookingApiService, PublicBusiness } from '../services/public-book
 export class BusinessSearchComponent {
   private readonly api = inject(PublicBookingApiService);
   query = '';
-  results: PublicBusiness[] = [];
+  results: PublicBusinessListItem[] = [];
 
   search(): void {
     this.api.searchBusinesses(this.query).subscribe((items) => (this.results = items));
