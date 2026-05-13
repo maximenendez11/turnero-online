@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AdminApiService } from '../../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error-message';
@@ -8,7 +7,7 @@ import { apiErrorMessage } from '../../../../core/utils/api-error-message';
 @Component({
   standalone: true,
   selector: 'app-admin-vitrina-banner-modal',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './admin-vitrina-banner-modal.component.html',
   styleUrl: './admin-vitrina-banner-modal.component.scss',
 })
@@ -23,8 +22,6 @@ export class AdminVitrinaBannerModalComponent implements OnChanges {
 
   readonly defaultPreview = '/images/landing-default-banner.svg';
 
-  tab: 'url' | 'file' = 'url';
-  draftUrl = '';
   pickedFile: File | null = null;
   pickedPreview: string | null = null;
   busy = false;
@@ -32,27 +29,15 @@ export class AdminVitrinaBannerModalComponent implements OnChanges {
 
   ngOnChanges(ch: SimpleChanges): void {
     if (ch['open']?.currentValue === true) {
-      this.draftUrl = (this.bannerUrl ?? '').trim();
       this.clearPickedFile();
-      this.tab = 'url';
       this.previewBroken = false;
     }
-  }
-
-  clearDraftUrl(): void {
-    this.draftUrl = '';
-    this.previewBroken = false;
   }
 
   close(): void {
     if (this.busy) return;
     this.clearPickedFile();
     this.dismiss.emit();
-  }
-
-  setTab(t: 'url' | 'file'): void {
-    this.tab = t;
-    this.previewBroken = false;
   }
 
   onFilePicked(ev: Event): void {
@@ -67,6 +52,7 @@ export class AdminVitrinaBannerModalComponent implements OnChanges {
     this.revokePickedPreview();
     this.pickedFile = f;
     this.pickedPreview = URL.createObjectURL(f);
+    this.previewBroken = false;
   }
 
   clearPickedFile(): void {
@@ -76,23 +62,19 @@ export class AdminVitrinaBannerModalComponent implements OnChanges {
 
   previewSrc(): string {
     if (this.pickedPreview) return this.pickedPreview;
-    const u = this.draftUrl.trim();
+    const u = (this.bannerUrl ?? '').trim();
     if (!u || this.previewBroken) return this.defaultPreview;
     return u;
   }
 
   async confirm(): Promise<void> {
-    if (this.tab === 'file' && !this.pickedFile) return;
+    if (!this.pickedFile) return;
     this.busy = true;
     try {
-      let urlOut = this.draftUrl.trim();
-      if (this.tab === 'file' && this.pickedFile) {
-        const { url } = await firstValueFrom(
-          this.api.uploadLandingMedia(this.businessId, this.pickedFile, 'banner'),
-        );
-        urlOut = url;
-      }
-      await firstValueFrom(this.api.patchBusiness(this.businessId, { bannerImageUrl: urlOut }));
+      const { url } = await firstValueFrom(
+        this.api.uploadLandingMedia(this.businessId, this.pickedFile, 'banner'),
+      );
+      await firstValueFrom(this.api.patchBusiness(this.businessId, { bannerImageUrl: url }));
       this.clearPickedFile();
       this.saved.emit();
       this.dismiss.emit();

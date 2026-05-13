@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { AppConfirmDialogHostComponent } from './core/components/app-confirm-dialog-host/app-confirm-dialog-host.component';
 import { AppSplashService } from './core/services/app-splash.service';
 
 /** Rutas donde el splash de index.html evita FOUC hasta tema/shell listo (workspace + wizard de reserva). */
@@ -13,7 +14,7 @@ function urlKeepsBootSplash(url: string): boolean {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, AppConfirmDialogHostComponent],
   templateUrl: './app.html',
 })
 export class App {

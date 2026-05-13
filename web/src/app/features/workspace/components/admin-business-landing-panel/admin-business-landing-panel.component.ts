@@ -64,7 +64,7 @@ export class AdminBusinessLandingPanelComponent implements OnChanges {
     return (m.displayName ?? '?').trim().slice(0, 1).toUpperCase();
   }
 
-  onVitrinaSaved(): void {
+  onVidrieraSaved(): void {
     this.reload.emit();
   }
 
@@ -84,7 +84,7 @@ export class AdminBusinessLandingPanelComponent implements OnChanges {
   }
 
   async removeStaff(row: AdminStaffRow): Promise<void> {
-    if (!confirm(`¿Quitar a ${row.displayName} de la vitrina pública?`)) return;
+    if (!confirm(`¿Quitar a ${row.displayName} de la vidriera pública?`)) return;
     this.saving = true;
     try {
       await firstValueFrom(this.api.deleteStaffMember(row.id));

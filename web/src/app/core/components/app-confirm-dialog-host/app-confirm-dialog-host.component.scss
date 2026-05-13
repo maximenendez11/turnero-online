@@ -1,0 +1,90 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+:host {
+  display: contents;
+}
+
+.cdlg {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: dv.$dv-space-md;
+  box-sizing: border-box;
+}
+
+.cdlg__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(4px);
+}
+
+.cdlg__panel {
+  position: relative;
+  width: min(100%, 26rem);
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface, #{dv.$dv-surface-container-lowest});
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  padding: dv.$dv-space-lg;
+}
+
+.cdlg__title {
+  margin: 0 0 dv.$dv-space-sm;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.cdlg__message {
+  margin: 0 0 dv.$dv-space-lg;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.cdlg__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: dv.$dv-radius-md;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease,
+    filter 0.15s ease;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  border-color: var(--booking-border, #{dv.$dv-outline-variant});
+}
+
+.btn--ghost:hover {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.btn--danger {
+  background: color-mix(in srgb, #e57373 22%, transparent);
+  color: #ffcbcb;
+  border-color: color-mix(in srgb, #e57373 55%, var(--booking-border, #{dv.$dv-outline-variant}));
+}
+
+.btn--danger:hover {
+  filter: brightness(1.08);
+}

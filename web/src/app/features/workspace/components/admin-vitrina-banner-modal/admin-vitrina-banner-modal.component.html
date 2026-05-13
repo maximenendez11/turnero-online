@@ -1,65 +1,19 @@
 <div class="vdlg" *ngIf="open">
   <div class="vdlg__backdrop" (click)="close()" aria-hidden="true"></div>
-  <div
-    class="vdlg__panel"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="vdlg-banner-title"
-  >
+  <div class="vdlg__panel" role="dialog" aria-modal="true" aria-labelledby="vdlg-banner-title">
     <div class="vdlg__head">
       <h2 id="vdlg-banner-title" class="vdlg__title">Imagen de cabecera</h2>
       <button type="button" class="vdlg__x" (click)="close()" [disabled]="busy" aria-label="Cerrar">×</button>
     </div>
     <p class="vdlg__lead">
-      Subí una imagen desde tu equipo o pegá un enlace público (JPG, PNG o WebP). Se guarda al confirmar.
+      Elegí una imagen desde tu equipo (JPG, PNG o WebP, hasta 5 MB). Se sube y guarda al pulsar Guardar.
     </p>
 
     <div class="vdlg__preview">
       <img [src]="previewSrc()" alt="Vista previa del banner" (error)="previewBroken = true" />
     </div>
 
-    <div class="vdlg__tabs" role="tablist">
-      <button
-        type="button"
-        role="tab"
-        class="vdlg__tab"
-        [class.vdlg__tab--on]="tab === 'url'"
-        [attr.aria-selected]="tab === 'url'"
-        [disabled]="busy"
-        (click)="setTab('url')"
-      >
-        Enlace
-      </button>
-      <button
-        type="button"
-        role="tab"
-        class="vdlg__tab"
-        [class.vdlg__tab--on]="tab === 'file'"
-        [attr.aria-selected]="tab === 'file'"
-        [disabled]="busy"
-        (click)="setTab('file')"
-      >
-        Archivo
-      </button>
-    </div>
-
-    <div class="vdlg__body" *ngIf="tab === 'url'">
-      <label class="vdlg__label" for="vdlg-banner-url">URL de la imagen</label>
-      <input
-        id="vdlg-banner-url"
-        class="input"
-        type="url"
-        [(ngModel)]="draftUrl"
-        (ngModelChange)="previewBroken = false"
-        placeholder="https://…/banner.jpg"
-        [disabled]="busy"
-        autocomplete="off"
-        spellcheck="false"
-      />
-      <p class="vdlg__hint">Tiene que ser un enlace directo a la imagen, accesible sin inicio de sesión.</p>
-    </div>
-
-    <div class="vdlg__body" *ngIf="tab === 'file'">
+    <div class="vdlg__body vdlg__body--file">
       <input
         #fileInp
         type="file"
@@ -79,20 +33,14 @@
       </button>
     </div>
 
-    <p class="vdlg__warn" *ngIf="draftUrl.trim() && previewBroken && tab === 'url'">
-      No pudimos cargar la vista previa. Revisá la URL antes de guardar.
+    <p class="vdlg__warn" *ngIf="bannerUrl.trim() && previewBroken && !pickedFile">
+      No pudimos cargar la imagen guardada. Elegí un archivo nuevo para reemplazarla.
     </p>
 
     <div class="vdlg__foot">
       <button type="button" class="btn btn--ghost" [disabled]="busy" (click)="close()">Cancelar</button>
-      <button type="button" class="btn btn--ghost" [disabled]="busy" (click)="clearDraftUrl()">Vaciar URL</button>
       <button type="button" class="btn btn--ghost" [disabled]="busy" (click)="useDefaultBanner()">Imagen por defecto</button>
-      <button
-        type="button"
-        class="btn btn--primary"
-        [disabled]="busy || (tab === 'file' && !pickedFile)"
-        (click)="confirm()"
-      >
+      <button type="button" class="btn btn--primary" [disabled]="busy || !pickedFile" (click)="confirm()">
         {{ busy ? 'Guardando…' : 'Guardar' }}
       </button>
     </div>

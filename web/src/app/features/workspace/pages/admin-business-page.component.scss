@@ -290,34 +290,6 @@
   margin: dv.$dv-space-sm 0 0;
 }
 
-.hours-list {
-  display: flex;
-  flex-direction: column;
-  gap: dv.$dv-space-sm;
-}
-
-.hours-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
-  gap: dv.$dv-space-sm;
-  align-items: end;
-  padding: dv.$dv-space-sm;
-  border-radius: dv.$dv-radius-lg;
-  background: var(--booking-surface, #{dv.$dv-surface-container-lowest});
-  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
-}
-
-.hours-row__day,
-.hours-row__time {
-  margin: 0;
-  min-width: 0;
-}
-
-.hours-row__remove {
-  align-self: end;
-  margin-bottom: 0.1rem;
-}
-
 .service-cards {
   display: flex;
   flex-direction: column;
@@ -411,31 +383,6 @@
 @media (max-width: 720px) {
   .field-grid {
     grid-template-columns: 1fr;
-  }
-
-  .hours-row {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      'day day'
-      'from to'
-      'rm rm';
-  }
-
-  .hours-row__day {
-    grid-area: day;
-  }
-
-  .hours-row__time--from {
-    grid-area: from;
-  }
-
-  .hours-row__time--to {
-    grid-area: to;
-  }
-
-  .hours-row__remove {
-    grid-area: rm;
-    justify-self: start;
   }
 
   .new-service__grid {

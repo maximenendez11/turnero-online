@@ -106,46 +106,15 @@
             <article class="card" aria-labelledby="sec-horarios">
               <div class="card__head">
                 <h2 id="sec-horarios">Horarios de apertura</h2>
-                <p class="card__hint">Definí en qué días y rangas horarias se ofrecen turnos. Podés sumar varias filas el mismo día (ej. mañana y tarde).</p>
+                <p class="card__hint">
+                  Marcá los días, cargá uno o más tramos y pulsá «Aplicar tramos a días marcados». El resumen muestra el estado actual; «Guardar horarios» persiste en el servidor.
+                </p>
               </div>
-              <div class="hours-list" role="list">
-                <div class="hours-row" *ngFor="let w of windowsDraft; let i = index" role="listitem">
-                  <label class="hours-row__day">
-                    <span class="label-caps">Día</span>
-                    <select class="input" [(ngModel)]="w.weekday">
-                      <option *ngFor="let label of weekdayLabels; let day = index" [ngValue]="day">{{ label }}</option>
-                    </select>
-                  </label>
-                  <label class="hours-row__time hours-row__time--from">
-                    <span class="label-caps">Desde</span>
-                    <input
-                      class="input"
-                      type="time"
-                      [ngModel]="minutesToTime(w.startMin)"
-                      (ngModelChange)="setStartFromTime(w, $event)"
-                    />
-                  </label>
-                  <label class="hours-row__time hours-row__time--to">
-                    <span class="label-caps">Hasta</span>
-                    <input
-                      class="input"
-                      type="time"
-                      [ngModel]="minutesToTime(w.endMin)"
-                      (ngModelChange)="setEndFromTime(w, $event)"
-                    />
-                  </label>
-                  <button type="button" class="btn btn--ghost hours-row__remove" (click)="removeWindowRow(i)" [attr.aria-label]="'Quitar tramo ' + (i + 1)">
-                    Quitar
-                  </button>
-                </div>
-              </div>
-              <p class="muted tiny" *ngIf="windowsDraft.length === 0">Todavía no hay tramos. Agregá al menos uno para que aparezcan turnos disponibles.</p>
-              <footer class="card__footer card__footer--split">
-                <button type="button" class="btn btn--ghost" (click)="addWindowRow()">+ Agregar tramo</button>
-                <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="saveWindows()">
-                  {{ saving() ? 'Guardando…' : 'Guardar horarios' }}
-                </button>
-              </footer>
+              <app-admin-opening-hours-editor
+                [windows]="windowsDraft"
+                [saving]="saving()"
+                (saveRequest)="saveWindows()"
+              />
             </article>
           </div>
 
@@ -239,11 +208,20 @@
           <div
             class="settings-tabs__panel"
             role="tabpanel"
-            id="panel-vitrina"
-            aria-labelledby="tab-vitrina"
-            [hidden]="settingsTab() !== 'vitrina'"
+            id="panel-vidriera"
+            aria-labelledby="tab-vidriera"
+            [hidden]="settingsTab() !== 'vidriera'"
           >
-            <app-admin-business-landing-panel [detail]="d" (reload)="loadDetail()" />
+            <article class="card" aria-labelledby="sec-vidriera">
+              <div class="card__head">
+                <h2 id="sec-vidriera">Vidriera pública</h2>
+                <p class="card__hint">
+                  La <strong>cabecera</strong> solo se cambia subiendo un archivo (JPG, PNG o WebP, hasta 5 MB). Para cada
+                  <strong>profesional</strong>, en el modal podés subir foto o pegar un enlace.
+                </p>
+              </div>
+              <app-admin-business-landing-panel [detail]="d" (reload)="loadDetail()" />
+            </article>
           </div>
 
           <div

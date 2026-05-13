@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -17,24 +17,39 @@ import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { BookingThemePreviewComponent } from '../components/booking-theme-preview/booking-theme-preview.component';
 import { AdminBusinessLandingPanelComponent } from '../components/admin-business-landing-panel/admin-business-landing-panel.component';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
+import { AdminOpeningHoursEditorComponent } from '../components/admin-opening-hours-editor/admin-opening-hours-editor.component';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
+import {
+  openingWindowsSnapshot,
+  sortWindowsForSave,
+  validateAllWindows,
+  type WindowDraft,
+} from '../utils/opening-hours-editor.utils';
+import { AppConfirmDialogService } from '../../../core/services/app-confirm-dialog.service';
+import { openingHoursUnsavedLeaveDialog } from './admin-business-page.deactivate';
 
-export type WindowDraft = { weekday: number; startMin: number; endMin: number };
-
-export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'apariencia' | 'vitrina';
+export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'apariencia' | 'vidriera';
 
 @Component({
   standalone: true,
   selector: 'app-admin-business-page',
-  imports: [CommonModule, FormsModule, AdminPageSkeletonComponent, BookingThemePreviewComponent, SegmentedControlComponent, AdminBusinessLandingPanelComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    AdminPageSkeletonComponent,
+    BookingThemePreviewComponent,
+    SegmentedControlComponent,
+    AdminBusinessLandingPanelComponent,
+    AdminOpeningHoursEditorComponent,
+  ],
   templateUrl: './admin-business-page.component.html',
   styleUrl: './admin-business-page.component.scss',
 })
 export class AdminBusinessPageComponent {
   private readonly api = inject(AdminApiService);
   private readonly workspaceTheme = inject(WorkspaceThemeService);
+  private readonly confirmDialog = inject(AppConfirmDialogService);
 
-  readonly weekdayLabels = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   readonly businesses = signal<AdminBusinessListItem[]>([]);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -46,7 +61,7 @@ export class AdminBusinessPageComponent {
     { id: 'datos', label: 'Datos' },
     { id: 'horarios', label: 'Horarios' },
     { id: 'servicios', label: 'Servicios' },
-    { id: 'vitrina', label: 'Vitrina' },
+    { id: 'vidriera', label: 'Vidriera' },
     { id: 'apariencia', label: 'Apariencia' },
   ] as const;
 
@@ -56,35 +71,32 @@ export class AdminBusinessPageComponent {
   newService = { name: '', description: '', durationMin: 45, price: 0, imageUrl: '' };
 
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Último negocio cargado con éxito (para revertir el select si cancela con horarios sin guardar). */
+  private loadedBusinessId = '';
+  /** Firma de `windowsDraft` alineada con el servidor tras cargar o guardar horarios. */
+  private openingHoursBaseline = '';
 
   constructor() {
     void this.init();
   }
 
+  /** Usado por el guard de ruta: horarios en borrador distintos del último estado guardado. */
+  openingHoursDirty(): boolean {
+    if (!this.detail) return false;
+    return openingWindowsSnapshot(this.windowsDraft) !== this.openingHoursBaseline;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  protected onBeforeUnload(ev: BeforeUnloadEvent): void {
+    if (this.openingHoursDirty()) {
+      ev.preventDefault();
+      ev.returnValue = '';
+    }
+  }
+
   get publicBookingPreview(): string {
     const slug = this.detail?.slug?.trim();
     return slug ? `/${slug}` : '';
-  }
-
-  minutesToTime(m: number): string {
-    const clamped = Math.max(0, Math.min(24 * 60, Math.round(m)));
-    const h = Math.floor(clamped / 60);
-    const min = clamped % 60;
-    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-  }
-
-  setStartFromTime(w: WindowDraft, time: string): void {
-    w.startMin = this.timeToMinutes(time);
-  }
-
-  setEndFromTime(w: WindowDraft, time: string): void {
-    w.endMin = this.timeToMinutes(time);
-  }
-
-  private timeToMinutes(time: string): number {
-    const [h, m] = time.split(':').map((x) => Number(x));
-    if (Number.isNaN(h)) return 0;
-    return Math.min(24 * 60, Math.max(0, h * 60 + (Number.isNaN(m) ? 0 : m)));
   }
 
   private flash(kind: 'ok' | 'err', text: string): void {
@@ -120,20 +132,39 @@ export class AdminBusinessPageComponent {
   }
 
   async onBusinessChange(): Promise<void> {
+    if (this.openingHoursDirty()) {
+      const ok = await this.confirmDialog.confirm(openingHoursUnsavedLeaveDialog());
+      if (!ok) {
+        this.selectedBusinessId = this.loadedBusinessId;
+        return;
+      }
+    }
     this.settingsTab.set('datos');
     await this.loadDetail();
   }
 
   setSettingsTab(tab: string): void {
-    if (tab === 'datos' || tab === 'horarios' || tab === 'servicios' || tab === 'apariencia' || tab === 'vitrina') {
-      this.settingsTab.set(tab);
+    void this.applySettingsTabChange(tab);
+  }
+
+  private async applySettingsTabChange(tab: string): Promise<void> {
+    if (tab !== 'datos' && tab !== 'horarios' && tab !== 'servicios' && tab !== 'apariencia' && tab !== 'vidriera') {
+      return;
     }
+    if (this.settingsTab() === tab) return;
+    if (this.openingHoursDirty()) {
+      const ok = await this.confirmDialog.confirm(openingHoursUnsavedLeaveDialog());
+      if (!ok) return;
+    }
+    this.settingsTab.set(tab as BusinessSettingsTab);
   }
 
   async loadDetail(): Promise<void> {
     if (!this.selectedBusinessId) {
       this.detail = null;
       this.windowsDraft = [];
+      this.loadedBusinessId = '';
+      this.refreshOpeningHoursBaseline();
       this.workspaceTheme.resetToDefault();
       return;
     }
@@ -146,10 +177,15 @@ export class AdminBusinessPageComponent {
         startMin: w.startMin,
         endMin: w.endMin,
       }));
+      this.loadedBusinessId = this.selectedBusinessId;
+      this.refreshOpeningHoursBaseline();
       this.syncWorkspaceShellTheme();
     } catch (e) {
       this.error.set(apiErrorMessage(e));
       this.detail = null;
+      this.windowsDraft = [];
+      this.loadedBusinessId = '';
+      this.refreshOpeningHoursBaseline();
       this.workspaceTheme.resetToDefault();
     }
   }
@@ -170,14 +206,6 @@ export class AdminBusinessPageComponent {
       this.normalizeThemeHex(this.detail.themePrimaryHex),
     );
     this.workspaceTheme.setNavBusinessName(this.detail.name);
-  }
-
-  addWindowRow(): void {
-    this.windowsDraft.push({ weekday: 1, startMin: 9 * 60, endMin: 18 * 60 });
-  }
-
-  removeWindowRow(i: number): void {
-    this.windowsDraft.splice(i, 1);
   }
 
   async saveCore(): Promise<void> {
@@ -211,9 +239,15 @@ export class AdminBusinessPageComponent {
 
   async saveWindows(): Promise<void> {
     if (!this.detail) return;
+    const validation = validateAllWindows(this.windowsDraft);
+    if (validation) {
+      this.flash('err', validation);
+      return;
+    }
     this.saving.set(true);
     this.error.set(null);
-    const windows = this.windowsDraft.map((w, i) => ({
+    const sorted = sortWindowsForSave(this.windowsDraft);
+    const windows = sorted.map((w, i) => ({
       weekday: w.weekday,
       startMin: w.startMin,
       endMin: w.endMin,
@@ -310,6 +344,11 @@ export class AdminBusinessPageComponent {
       startMin: w.startMin,
       endMin: w.endMin,
     }));
+    this.refreshOpeningHoursBaseline();
+  }
+
+  private refreshOpeningHoursBaseline(): void {
+    this.openingHoursBaseline = this.detail ? openingWindowsSnapshot(this.windowsDraft) : '';
   }
 
   async addService(): Promise<void> {

@@ -2,6 +2,7 @@ import { Route } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingCompleteGuard } from './core/guards/onboarding-complete.guard';
 import { tenantGuard } from './core/guards/tenant.guard';
+import { adminBusinessCanDeactivate } from './features/workspace/pages/admin-business-page.deactivate';
 
 export const appRoutes: Route[] = [
   {
@@ -125,6 +126,7 @@ export const appRoutes: Route[] = [
         path: 'business',
         loadComponent: () =>
           import('./features/workspace/pages/admin-business-page.component').then((m) => m.AdminBusinessPageComponent),
+        canDeactivate: [adminBusinessCanDeactivate],
       },
     ],
   },

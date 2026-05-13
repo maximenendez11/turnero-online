@@ -1,0 +1,11 @@
+<div class="cdlg" *ngIf="dlg.request() as req" role="presentation">
+  <div class="cdlg__backdrop" (click)="cancel()" aria-hidden="true"></div>
+  <div class="cdlg__panel" role="dialog" aria-modal="true" [attr.aria-labelledby]="'cdlg-title'">
+    <h2 id="cdlg-title" class="cdlg__title">{{ req.title }}</h2>
+    <p class="cdlg__message">{{ req.message }}</p>
+    <div class="cdlg__actions">
+      <button type="button" class="btn btn--ghost" (click)="cancel()">{{ req.cancelLabel }}</button>
+      <button type="button" class="btn btn--danger" (click)="confirm()">{{ req.confirmLabel }}</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,125 @@
+<div class="oh" [attr.aria-busy]="saving">
+  <p class="oh__error" *ngIf="editorError" role="alert">{{ editorError }}</p>
+
+  <section class="oh__section" aria-labelledby="oh-days-title">
+    <h3 id="oh-days-title" class="oh__section-title">Días</h3>
+    <p class="oh__section-hint">Marcá uno o más días y definí los tramos abajo; luego pulsá «Aplicar tramos».</p>
+    <div class="oh__pills" role="group" aria-label="Selección de días de la semana">
+      <button
+        type="button"
+        *ngFor="let d of dayPills"
+        class="oh__pill"
+        [class.oh__pill--on]="isDayOn(d.weekday)"
+        [attr.aria-pressed]="isDayOn(d.weekday)"
+        [disabled]="saving"
+        (click)="toggleDay(d.weekday)"
+      >
+        {{ d.short }}
+      </button>
+    </div>
+    <div class="oh__shortcuts">
+      <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving" (click)="selectMonFri()">Lun–Vie</button>
+      <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving" (click)="selectWholeWeek()">Toda la semana</button>
+      <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving" (click)="markSelectedClosed()">Marcar cerrado</button>
+      <details class="oh__more">
+        <summary class="oh__more-summary">Más acciones</summary>
+        <div class="oh__more-panel" role="group" aria-label="Acciones adicionales">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving" (click)="clearDaySelection()">Limpiar selección</button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="saving" (click)="copyFromPreviousDay()">Copiar día anterior</button>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="oh__section" id="oh-editor-panel" aria-labelledby="oh-slots-title">
+    <h3 id="oh-slots-title" class="oh__section-title">Tramos horarios</h3>
+    <p class="oh__section-hint">Para los días marcados: varios tramos por día (ej. mañana y tarde). No pueden superponerse.</p>
+
+    <p *ngIf="segments.length === 0" class="oh__slots-empty muted tiny" role="status">
+      No hay tramos cargados. Sumá uno con el botón de abajo para definir horarios.
+    </p>
+
+    <ul class="oh__slots" role="list">
+      <li class="oh__slot" *ngFor="let seg of segments; let i = index; trackBy: trackSeg">
+        <span class="oh__slot-label">Tramo {{ i + 1 }}</span>
+        <div class="oh__slot-fields">
+          <label class="oh__field">
+            <span class="label-caps">Desde</span>
+            <input
+              class="input"
+              type="time"
+              [ngModel]="timeStr(seg.startMin)"
+              (ngModelChange)="setSegStart(seg, $event)"
+              [disabled]="saving"
+            />
+          </label>
+          <label class="oh__field">
+            <span class="label-caps">Hasta</span>
+            <input
+              class="input"
+              type="time"
+              [ngModel]="timeStr(seg.endMin)"
+              (ngModelChange)="setSegEnd(seg, $event)"
+              [disabled]="saving"
+            />
+          </label>
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm oh__slot-remove"
+            [disabled]="saving"
+            (click)="removeSegment(i)"
+            [attr.aria-label]="'Quitar tramo ' + (i + 1)"
+          >
+            Quitar
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <div class="oh__apply-row">
+      <button type="button" class="btn btn--ghost" [disabled]="saving" (click)="addSegment()">
+        {{ segments.length === 0 ? '+ Agregar tramo' : '+ Agregar otro tramo' }}
+      </button>
+      <button type="button" class="btn btn--secondary" [disabled]="saving" (click)="applySegmentsToSelection()">
+        Aplicar tramos a días marcados
+      </button>
+    </div>
+  </section>
+
+  <section class="oh__section oh__section--summary" aria-labelledby="oh-sum-title">
+    <h3 id="oh-sum-title" class="oh__section-title">Resumen actual</h3>
+    <p class="oh__section-hint oh__section-hint--tight">
+      Tocá un día para cargar sus tramos arriba y editarlos. Cada tramo se muestra como una etiqueta.
+    </p>
+    <div class="oh__summary-scroll">
+      <div class="oh__summary-grid">
+        <button
+          type="button"
+          *ngFor="let row of summaryRows(); trackBy: trackSummaryDay"
+          class="oh__summary-col"
+          [class.oh__summary-col--closed]="row.closed"
+          [class.oh__summary-col--active]="isSummaryColumnActive(row.weekday)"
+          [disabled]="saving"
+          [attr.title]="row.long"
+          [attr.aria-label]="summaryAriaLabel(row)"
+          (click)="loadDayFromSummary(row.weekday)"
+        >
+          <span class="oh__summary-col-head" aria-hidden="true">{{ row.short }}</span>
+          <div class="oh__summary-chips">
+            <ng-container *ngIf="row.closed">
+              <span class="oh__chip oh__chip--closed">Cerrado</span>
+            </ng-container>
+            <span *ngFor="let label of row.chipLabels; trackBy: trackChip" class="oh__chip">{{ label }}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="oh__footer">
+    <p class="oh__footer-hint muted tiny" *ngIf="windows.length === 0">Sin tramos guardados: no se ofrecerán turnos hasta que configures al menos un día.</p>
+    <button type="button" class="btn btn--primary" [disabled]="saving" (click)="requestSave()">
+      {{ saving ? 'Guardando…' : 'Guardar horarios' }}
+    </button>
+  </footer>
+</div>

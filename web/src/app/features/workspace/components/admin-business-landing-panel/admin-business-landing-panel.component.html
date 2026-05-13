@@ -1,13 +1,5 @@
-<article class="landing-panel card" aria-labelledby="sec-landing">
-  <div class="card__head">
-    <h2 id="sec-landing">Vitrina pública</h2>
-    <p class="card__hint">
-      Es la página que ven tus clientes antes de reservar (cabecera, equipo y servicios). Podés
-      <strong>pegar un enlace</strong> a una imagen o <strong>subir un archivo</strong> (JPG, PNG o WebP, hasta 5 MB).
-    </p>
-  </div>
-
-  <ol class="landing-steps" aria-label="Pasos de configuración">
+<div class="vidriera-panel">
+  <ol class="landing-steps" aria-label="Pasos de la vidriera pública">
     <li class="landing-step">
       <div class="landing-step__head">
         <span class="landing-step__num" aria-hidden="true">1</span>
@@ -35,8 +27,8 @@
           </p>
         </div>
         <div class="banner-summary__actions">
-          <button type="button" class="lp-btn lp-btn--accent" (click)="bannerModalOpen = true">
-            <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <button type="button" class="btn btn--primary vidriera-btn" (click)="bannerModalOpen = true">
+            <svg class="vidriera-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path
                 d="M4 5h12v10H4V5zm2 2v6h8V7H6zm2 6l2-2.5 1.5 2L14 9l2 4H8zm1-4a1.25 1.25 0 100 2.5A1.25 1.25 0 009 9z"
               />
@@ -55,7 +47,7 @@
       <div class="landing-step__head">
         <span class="landing-step__num" aria-hidden="true">2</span>
         <div>
-          <h3 class="landing-step__title">Profesionales en la vitrina</h3>
+          <h3 class="landing-step__title">Profesionales en la vidriera</h3>
           <p class="landing-step__lead">
             Aparecen con foto y nombre en la página pública. Los <strong>servicios y precios</strong> se cargan en la
             pestaña <strong>Servicios</strong> (incluida la foto de cada servicio).
@@ -94,7 +86,7 @@
                   type="button"
                   class="lp-btn lp-btn--danger lp-btn--sm"
                   [disabled]="saving"
-                  title="Quitar de la vitrina pública"
+                  title="Quitar de la vidriera pública"
                   (click)="removeStaff(m)"
                 >
                   <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -120,8 +112,8 @@
         </ng-template>
 
         <div class="staff-add-row">
-          <button type="button" class="lp-btn lp-btn--accent" [disabled]="saving" (click)="openStaffAdd()">
-            <svg class="lp-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          <button type="button" class="btn btn--primary vidriera-btn" [disabled]="saving" (click)="openStaffAdd()">
+            <svg class="vidriera-btn__ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
             </svg>
             Agregar profesional
@@ -130,14 +122,14 @@
       </div>
     </li>
   </ol>
-</article>
+</div>
 
 <app-admin-vitrina-banner-modal
   [businessId]="detail.id"
   [open]="bannerModalOpen"
   [bannerUrl]="detail.bannerImageUrl ?? ''"
   (dismiss)="bannerModalOpen = false"
-  (saved)="bannerModalOpen = false; onVitrinaSaved()"
+  (saved)="bannerModalOpen = false; onVidrieraSaved()"
 />
 
 <app-admin-vitrina-staff-modal
@@ -145,5 +137,5 @@
   [open]="staffModalOpen"
   [editStaff]="staffEditTarget"
   (dismiss)="closeStaffModal()"
-  (saved)="closeStaffModal(); onVitrinaSaved()"
+  (saved)="closeStaffModal(); onVidrieraSaved()"
 />

@@ -109,30 +109,10 @@
   object-fit: contain;
 }
 
-.vdlg__tabs {
+.vdlg__body--file {
   display: flex;
-  gap: 0.35rem;
-  margin-bottom: dv.$dv-space-md;
-  padding: 0.2rem;
-  border-radius: dv.$dv-radius-md;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.vdlg__tab {
-  flex: 1;
-  border: none;
-  border-radius: calc(dv.$dv-radius-md - 2px);
-  padding: 0.5rem 0.65rem;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  background: transparent;
-  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
-}
-
-.vdlg__tab--on {
-  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
-  color: var(--booking-text, #{dv.$dv-on-surface});
+  flex-direction: column;
+  gap: dv.$dv-space-sm;
 }
 
 .vdlg__body {
@@ -164,7 +144,9 @@
 
 .vdlg__file-btn {
   width: 100%;
+  display: inline-flex;
   justify-content: center;
+  align-items: center;
 }
 
 .vdlg__foot {
@@ -202,6 +184,10 @@
   padding: 0.5rem 0.95rem;
   cursor: pointer;
   border: 1px solid transparent;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease,
+    filter 0.15s ease;
 }
 
 .btn:disabled {
@@ -214,16 +200,29 @@
   color: var(--booking-on-primary, #{dv.$dv-on-primary});
 }
 
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
 .btn--secondary {
   background: transparent;
   color: #4edea3;
   border-color: color-mix(in srgb, #4edea3 55%, var(--booking-border, #{dv.$dv-outline-variant}));
 }
 
+.btn--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, #4edea3 12%, transparent);
+}
+
 .btn--ghost {
   background: transparent;
   color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
   border-color: var(--booking-border, #{dv.$dv-outline-variant});
+}
+
+.btn--ghost:hover:not(:disabled) {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  color: var(--booking-text, #{dv.$dv-on-surface});
 }
 
 .btn--sm {
