@@ -1,11 +1,14 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import {
   jsWeekdayInBusinessZone,
   parseIsoDateOnly,
@@ -17,9 +20,13 @@ import { BookingContactTokenService } from './booking-contact-token.service';
 
 @Injectable()
 export class PublicBookingService {
+  private readonly logger = new Logger(PublicBookingService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly bookingContactTokens: BookingContactTokenService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async searchBusinesses(query?: string) {
@@ -238,14 +245,69 @@ export class PublicBookingService {
         durationMin: service.durationMin,
         status: BookingStatus.confirmed,
       },
-      select: {
-        code: true,
-        startsAt: true,
-        durationMin: true,
+      include: {
+        service: { select: { name: true, durationMin: true, price: true, priceOnRequest: true } },
+        business: { select: { name: true, slug: true, address: true, timezone: true } },
       },
     });
 
-    return booking;
+    const publicBase = this.config.get<string>('publicAppUrl') ?? 'http://localhost:4200';
+    const manageUrl = `${publicBase}/${encodeURIComponent(slug)}/manage/${encodeURIComponent(booking.code)}`;
+    const tz = booking.business.timezone || 'America/Argentina/Buenos_Aires';
+    const whenLine = this.capitalizeEs(
+      new Intl.DateTimeFormat('es-AR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: tz,
+      }).format(booking.startsAt),
+    );
+    const priceLine = this.formatServicePriceLine(booking.service);
+
+    void this.mail
+      .sendBookingConfirmed({
+        to: claims.email,
+        businessName: booking.business.name,
+        businessAddress: booking.business.address,
+        customerName: dto.customerFullName.trim(),
+        serviceName: booking.service.name,
+        durationMin: booking.service.durationMin,
+        priceLine,
+        whenLine,
+        timezoneLabel: tz,
+        bookingCode: booking.code,
+        manageUrl,
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.warn(`No se pudo enviar el correo de confirmación del turno ${booking.code}: ${msg}`);
+      });
+
+    return {
+      code: booking.code,
+      startsAt: booking.startsAt,
+      durationMin: booking.durationMin,
+    };
+  }
+
+  private capitalizeEs(s: string): string {
+    if (!s) return s;
+    return s.charAt(0).toLocaleUpperCase('es') + s.slice(1);
+  }
+
+  private formatServicePriceLine(service: { price: unknown; priceOnRequest: boolean }): string {
+    if (service.priceOnRequest) return 'Precio a consultar';
+    const n = Number(service.price as string | number);
+    if (Number.isNaN(n)) return '—';
+    try {
+      return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
+    } catch {
+      return String(n);
+    }
   }
 
   async getBooking(slug: string, code: string) {

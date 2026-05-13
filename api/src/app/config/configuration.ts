@@ -12,6 +12,14 @@ export default () => ({
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
   },
+  /** URL pública del front (sin barra final), p. ej. enlaces en correos de reserva. */
+  publicAppUrl: (() => {
+    const explicit = process.env.PUBLIC_APP_URL?.trim();
+    if (explicit) return explicit.replace(/\/+$/, '');
+    const cors = process.env.CORS_ORIGIN?.trim();
+    if (cors && cors !== '*') return cors.replace(/\/+$/, '');
+    return 'http://localhost:4200';
+  })(),
   weather: {
     apiKey: process.env.WEATHER_API_KEY,
   },
