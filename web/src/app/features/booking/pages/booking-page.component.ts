@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, of, timeout } from 'rxjs';
 import { rememberBooking } from '../../customer/recent-bookings.storage';
@@ -10,6 +11,8 @@ import { hydrateBookingShellSnapshot, persistBookingShellSnapshot } from '../uti
 import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
 import { formatListPrice as formatPriceArs, formatServiceListPrice } from '../utils/price-display.utils';
 import { AppSplashService } from '../../../core/services/app-splash.service';
+import { ConfigService, type PublicConfig } from '../../../core/services/config.service';
+import { BookingConfirmContactComponent } from '../components/booking-confirm-contact.component';
 
 type ConfirmedBooking = {
   code: string;
@@ -23,7 +26,7 @@ type ConfirmedBooking = {
 @Component({
   standalone: true,
   selector: 'app-booking-page',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, BookingConfirmContactComponent],
   templateUrl: './booking-page.component.html',
   styleUrl: './booking-page.component.scss',
 })
@@ -33,6 +36,7 @@ export class BookingPageComponent {
   private readonly api = inject(PublicBookingApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly splash = inject(AppSplashService);
+  private readonly publicConfig = inject(ConfigService);
   readonly flow = inject(BookingFlowService);
 
   readonly tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? 'peluqueria-demo';
@@ -57,7 +61,10 @@ export class BookingPageComponent {
 
   readonly stepperLabels = ['Servicio', 'Fecha', 'Datos', 'Listo'] as const;
   customerFullName = '';
-  customerContact = '';
+  googleOAuthClientId: string | null = null;
+  bookingContactToken = '';
+  reserveSubmitting = false;
+  reserveError = '';
   confirmedBooking: ConfirmedBooking | null = null;
   successBookingLoading = false;
 
@@ -142,6 +149,7 @@ export class BookingPageComponent {
       await this.loadSlots();
     } else if (this.step === 3) {
       await businessLoad;
+      await this.loadPublicConfigForBooking();
       this.stepTitle = 'Confirmar reserva';
       this.stepSubtitle = 'Completa tus datos para confirmar.';
       if (!this.flow.value.service || !this.flow.value.startsAt) {
@@ -196,9 +204,15 @@ export class BookingPageComponent {
   canReserve(): boolean {
     return (
       this.customerFullName.trim().length >= 2 &&
-      this.customerContact.trim().length >= 3 &&
+      this.bookingContactToken.trim().length >= 20 &&
       !!this.flow.value.startsAt
     );
+  }
+
+  onContactVerified(ev: { token: string; email: string } | null): void {
+    this.bookingContactToken = ev?.token?.trim() ?? '';
+    this.reserveError = '';
+    this.cdr.markForCheck();
   }
 
   async goNext(): Promise<void> {
@@ -212,22 +226,58 @@ export class BookingPageComponent {
   }
 
   async reserve(): Promise<void> {
-    if (!this.flow.value.service || !this.flow.value.startsAt) return;
-    const result = await firstValueFrom(
-      this.api.createBooking(this.tenantSlug, {
-        serviceId: this.flow.value.service.id,
-        startsAt: this.flow.value.startsAt,
-        customerFullName: this.customerFullName.trim(),
-        customerContact: this.customerContact.trim(),
-      }),
+    if (!this.flow.value.service || !this.flow.value.startsAt || !this.bookingContactToken.trim()) return;
+    this.reserveSubmitting = true;
+    this.reserveError = '';
+    this.cdr.markForCheck();
+    try {
+      const result = await firstValueFrom(
+        this.api.createBooking(this.tenantSlug, {
+          serviceId: this.flow.value.service.id,
+          startsAt: this.flow.value.startsAt,
+          customerFullName: this.customerFullName.trim(),
+          bookingContactToken: this.bookingContactToken.trim(),
+        }),
+      );
+      rememberBooking({
+        tenantSlug: this.tenantSlug,
+        code: result.code,
+        at: new Date().toISOString(),
+      });
+      this.flow.reset();
+      await this.router.navigateByUrl(`/${this.tenantSlug}/book/success/${result.code}`);
+    } catch (e) {
+      this.reserveError = this.formatReserveError(e);
+    } finally {
+      this.reserveSubmitting = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  private formatReserveError(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      const body = err.error as { message?: string | string[] } | null;
+      const m = body?.message;
+      if (Array.isArray(m)) return m.join('. ');
+      if (typeof m === 'string' && m.trim()) return m;
+    }
+    return 'No se pudo confirmar la reserva. Reintentá o verificá de nuevo tu contacto.';
+  }
+
+  private async loadPublicConfigForBooking(): Promise<void> {
+    await firstValueFrom(
+      this.publicConfig.loadPublicConfig().pipe(
+        catchError(() =>
+          of({
+            googleMapsApiKey: null,
+            recaptchaSiteKey: null,
+            googleOAuthClientId: null,
+          } as PublicConfig),
+        ),
+      ),
     );
-    rememberBooking({
-      tenantSlug: this.tenantSlug,
-      code: result.code,
-      at: new Date().toISOString(),
-    });
-    this.flow.reset();
-    await this.router.navigateByUrl(`/${this.tenantSlug}/book/success/${result.code}`);
+    this.googleOAuthClientId = this.publicConfig.getGoogleOAuthClientId();
+    this.cdr.markForCheck();
   }
 
   private generateNextDays(): string[] {

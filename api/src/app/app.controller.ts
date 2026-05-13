@@ -19,9 +19,11 @@ export class AppController {
   getPublicConfig() {
     const googleMapsApiKey = this.config.get<string>('googleMaps.apiKey');
     const recaptchaSiteKey = this.config.get<string>('recaptcha.siteKey');
+    const googleOAuthClientId = this.config.get<string>('google.oauthClientId');
     return {
       googleMapsApiKey: googleMapsApiKey || null,
       recaptchaSiteKey: recaptchaSiteKey || null,
+      googleOAuthClientId: googleOAuthClientId?.trim() ? googleOAuthClientId.trim() : null,
     };
   }
 }

@@ -38,4 +38,15 @@ export default () => ({
     /** Opcional: casilla(s) en copia (CC). Varias separadas por coma. */
     contactCc: process.env.MAIL_CONTACT_CC || '',
   },
+  google: {
+    /** Client ID de tipo «Aplicación web» para verificar `id_token` en reservas públicas. */
+    oauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID || '',
+  },
+  bookingContact: {
+    /** Secreto para el JWT de contacto; por defecto el mismo que usuarios (claims distintos). */
+    jwtSecret: process.env.BOOKING_CONTACT_JWT_SECRET || process.env.JWT_SECRET || '',
+    jwtExpiresIn: process.env.BOOKING_CONTACT_JWT_EXPIRES_IN || '15m',
+    otpExpiresMinutes: parseInt(process.env.BOOKING_CONTACT_OTP_EXPIRES_MINUTES || '15', 10) || 15,
+    otpMaxAttempts: parseInt(process.env.BOOKING_CONTACT_OTP_MAX_ATTEMPTS || '5', 10) || 5,
+  },
 });

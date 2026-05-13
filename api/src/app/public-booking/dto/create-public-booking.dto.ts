@@ -11,7 +11,8 @@ export class CreatePublicBookingDto {
   @MinLength(2)
   customerFullName!: string;
 
+  /** JWT emitido tras verificar email (OTP) o Google para este negocio. */
   @IsString()
-  @MinLength(3)
-  customerContact!: string;
+  @MinLength(20)
+  bookingContactToken!: string;
 }

@@ -124,10 +124,12 @@
         Nombre completo
         <input [(ngModel)]="customerFullName" name="customerFullName" />
       </label>
-      <label>
-        Contacto (email, telefono, etc.)
-        <input [(ngModel)]="customerContact" name="customerContact" />
-      </label>
+      <app-booking-confirm-contact
+        [tenantSlug]="tenantSlug"
+        [googleOAuthClientId]="googleOAuthClientId"
+        (verifiedChange)="onContactVerified($event)"
+      />
+      <p class="error-msg" *ngIf="reserveError">{{ reserveError }}</p>
     </div>
 
     <div *ngIf="step === 4" class="success-block">
@@ -167,7 +169,9 @@
       <ng-container *ngIf="step !== 4">
         <button class="ghost" type="button" *ngIf="step > 1" (click)="goPrev()">Atras</button>
         <button type="button" *ngIf="step < 3" (click)="goNext()" [disabled]="!canContinue()">Continuar</button>
-        <button type="button" *ngIf="step === 3" (click)="reserve()" [disabled]="!canReserve()">Reservar</button>
+        <button type="button" *ngIf="step === 3" (click)="reserve()" [disabled]="!canReserve() || reserveSubmitting">
+          {{ reserveSubmitting ? 'Reservando…' : 'Reservar' }}
+        </button>
       </ng-container>
     </div>
   </footer>

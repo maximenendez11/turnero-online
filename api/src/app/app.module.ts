@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -19,6 +20,9 @@ import { MediaModule } from './media/media.module';
       isGlobal: true,
       load: [configuration],
       envFilePath: ['../.env', '.env'],
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [{ name: 'default', ttl: 60_000, limit: 200 }],
     }),
     PrismaModule,
     HealthModule,

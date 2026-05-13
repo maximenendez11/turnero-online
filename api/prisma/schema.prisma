@@ -80,10 +80,28 @@ model Business {
   openingWindows BusinessOpeningWindow[]
   services       BusinessService[]
   staff          BusinessStaff[]
-  bookings       Booking[]
+  bookings           Booking[]
+  bookingContactOtps BookingContactOtp[]
 
   @@index([ownerUserId])
   @@map("businesses")
+}
+
+/// Código de verificación por email antes de confirmar una reserva pública (hash, no texto plano).
+model BookingContactOtp {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  email      String   @db.VarChar(320)
+  codeHash   String   @map("code_hash") @db.VarChar(255)
+  expiresAt  DateTime @map("expires_at")
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, email, createdAt])
+  @@index([expiresAt])
+  @@map("booking_contact_otps")
 }
 
 model BusinessService {

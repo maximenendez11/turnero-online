@@ -1,0 +1,52 @@
+<div class="contact-verify">
+  <p class="contact-hint">Verificá un medio de contacto para confirmar la reserva.</p>
+
+  <div *ngIf="verifiedEmail" class="contact-verified" role="status">
+    <strong>Contacto verificado</strong>
+    <span>{{ verifiedEmail }}</span>
+    <button type="button" class="linkish" (click)="backToChoice()">Cambiar método</button>
+  </div>
+
+  <ng-container *ngIf="!verifiedEmail">
+    <div *ngIf="contactChoice === 'idle'" class="contact-methods">
+      <button type="button" class="method-btn" (click)="pickEmail()">Continuar con email</button>
+      <button *ngIf="hasGoogle" type="button" class="method-btn" (click)="pickGoogle()">Continuar con Google</button>
+      <p *ngIf="!hasGoogle" class="muted small">Google no está configurado en este sitio: usá verificación por email.</p>
+    </div>
+
+    <div *ngIf="contactChoice === 'email'" class="contact-email">
+      <button type="button" class="linkish back" (click)="backToChoice()">← Otros métodos</button>
+      <label>
+        Email
+        <input type="email" name="verifyEmail" [(ngModel)]="emailInput" autocomplete="email" />
+      </label>
+      <p class="error-line" *ngIf="sendCodeError">{{ sendCodeError }}</p>
+      <button
+        type="button"
+        class="secondary"
+        (click)="sendCode()"
+        [disabled]="sendCodeLoading || !emailInput.trim() || sendCooldownRemaining > 0"
+      >
+        <span *ngIf="sendCodeLoading">Enviando…</span>
+        <span *ngIf="!sendCodeLoading && sendCooldownRemaining === 0">Enviar código</span>
+        <span *ngIf="!sendCodeLoading && sendCooldownRemaining > 0">Reenviar en {{ sendCooldownRemaining }}s</span>
+      </button>
+      <label>
+        Código de 6 dígitos
+        <input name="verifyCode" [(ngModel)]="codeInput" inputmode="numeric" maxlength="8" autocomplete="one-time-code" />
+      </label>
+      <p class="error-line" *ngIf="verifyError">{{ verifyError }}</p>
+      <button type="button" (click)="verifyCode()" [disabled]="verifyLoading || !codeInput.trim()">
+        {{ verifyLoading ? 'Verificando…' : 'Verificar código' }}
+      </button>
+    </div>
+
+    <div *ngIf="contactChoice === 'google'" class="contact-google">
+      <button type="button" class="linkish back" (click)="backToChoice()">← Otros métodos</button>
+      <p *ngIf="googleLoading" class="muted">Cargando botón de Google…</p>
+      <p class="error-line" *ngIf="googleError">{{ googleError }}</p>
+      <div #googleBtnHost class="google-host"></div>
+      <p *ngIf="verifyLoading" class="muted">Verificando con el servidor…</p>
+    </div>
+  </ng-container>
+</div>

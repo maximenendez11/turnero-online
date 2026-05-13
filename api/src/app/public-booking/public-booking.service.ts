@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { BookingStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -8,10 +13,14 @@ import {
   zonedBusinessDayRange,
 } from './availability-calendar.utils';
 import { CreatePublicBookingDto } from './dto/create-public-booking.dto';
+import { BookingContactTokenService } from './booking-contact-token.service';
 
 @Injectable()
 export class PublicBookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bookingContactTokens: BookingContactTokenService,
+  ) {}
 
   async searchBusinesses(query?: string) {
     const where: Prisma.BusinessWhereInput = {
@@ -202,6 +211,11 @@ export class PublicBookingService {
 
   async createBooking(slug: string, dto: CreatePublicBookingDto) {
     const business = await this.requireActiveBusinessBySlug(slug);
+    const claims = this.bookingContactTokens.verifyToken(dto.bookingContactToken);
+    if (claims.businessId !== business.id || claims.slug !== slug) {
+      throw new UnauthorizedException('El contacto verificado no corresponde a este comercio.');
+    }
+
     const service = await this.prisma.businessService.findFirst({
       where: { id: dto.serviceId, businessId: business.id, isActive: true },
       select: { durationMin: true },
@@ -219,7 +233,7 @@ export class PublicBookingService {
         businessId: business.id,
         serviceId: dto.serviceId,
         customerFullName: dto.customerFullName.trim(),
-        customerContact: dto.customerContact.trim(),
+        customerContact: claims.email,
         startsAt,
         durationMin: service.durationMin,
         status: BookingStatus.confirmed,

@@ -54,7 +54,7 @@ export type CreateBookingPayload = {
   serviceId: string;
   startsAt: string;
   customerFullName: string;
-  customerContact: string;
+  bookingContactToken: string;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -95,6 +95,33 @@ export class PublicBookingApiService {
 
   createBooking(slug: string, payload: CreateBookingPayload): Observable<{ code: string }> {
     return this.http.post<{ code: string }>(this.api(`/businesses/${slug}/bookings`), payload);
+  }
+
+  sendBookingEmailCode(slug: string, email: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(this.api(`/businesses/${slug}/booking-contact/email/send-code`), {
+      email,
+    });
+  }
+
+  verifyBookingEmailCode(
+    slug: string,
+    email: string,
+    code: string,
+  ): Observable<{ bookingContactToken: string; email: string }> {
+    return this.http.post<{ bookingContactToken: string; email: string }>(
+      this.api(`/businesses/${slug}/booking-contact/email/verify-code`),
+      { email, code },
+    );
+  }
+
+  verifyGoogleBookingContact(
+    slug: string,
+    idToken: string,
+  ): Observable<{ bookingContactToken: string; email: string; name: string | null }> {
+    return this.http.post<{ bookingContactToken: string; email: string; name: string | null }>(
+      this.api(`/businesses/${slug}/booking-contact/google`),
+      { idToken },
+    );
   }
 
   getBooking(slug: string, code: string): Observable<any> {

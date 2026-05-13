@@ -1,0 +1,118 @@
+.contact-verify {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.contact-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--booking-text-muted, #c2c6d6);
+}
+
+.contact-verified {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--booking-primary, #adc6ff) 40%, transparent);
+  background: color-mix(in srgb, var(--booking-primary, #adc6ff) 10%, transparent);
+  color: var(--booking-text, #e5e2e1);
+}
+
+.contact-verified strong {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--booking-primary, #adc6ff);
+}
+
+.contact-methods {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.method-btn {
+  border: 1px solid var(--booking-border, #424754);
+  border-radius: 0.65rem;
+  background: var(--booking-surface-2, #1c1b1b);
+  color: var(--booking-text, #e5e2e1);
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contact-email,
+.contact-google {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.contact-email label,
+.contact-google label {
+  display: grid;
+  gap: 0.2rem;
+  color: var(--booking-text-muted, #c2c6d6);
+}
+
+.contact-email input,
+.contact-google input {
+  border: 1px solid var(--booking-border, #424754);
+  background: var(--booking-surface-2, #1c1b1b);
+  color: var(--booking-text, #e5e2e1);
+  border-radius: 0.6rem;
+  padding: 0.6rem 0.7rem;
+}
+
+.contact-email button[type='button']:not(.linkish):not(.secondary),
+.contact-google button[type='button']:not(.linkish) {
+  border: 0;
+  background: var(--booking-primary, #adc6ff);
+  color: var(--booking-on-primary, #002e6a);
+  border-radius: 0.65rem;
+  padding: 0.55rem 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.contact-email button.secondary {
+  border: 1px solid var(--booking-border, #424754);
+  background: transparent;
+  color: var(--booking-text, #e5e2e1);
+  font-weight: 600;
+}
+
+.contact-email button:disabled,
+.contact-google button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.linkish {
+  border: 0;
+  background: transparent;
+  color: var(--booking-primary, #adc6ff);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.15rem 0;
+}
+
+.linkish.back {
+  margin-bottom: 0.25rem;
+}
+
+.muted.small {
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.error-line {
+  margin: 0;
+  color: #ffb4ab;
+  font-size: 0.85rem;
+}
+
+.google-host {
+  min-height: 2.5rem;
+}

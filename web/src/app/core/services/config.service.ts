@@ -6,6 +6,7 @@ import { BUILD_API_URL } from '../build-config.generated';
 export interface PublicConfig {
   googleMapsApiKey: string | null;
   recaptchaSiteKey: string | null;
+  googleOAuthClientId: string | null;
 }
 
 @Injectable({
@@ -16,6 +17,7 @@ export class ConfigService {
   private readonly apiUrl = BUILD_API_URL;
   private googleMapsApiKey: string | null = null;
   private recaptchaSiteKey: string | null = null;
+  private googleOAuthClientId: string | null = null;
   private configLoad$: Observable<PublicConfig> | null = null;
 
   getApiUrl(): string {
@@ -36,6 +38,13 @@ export class ConfigService {
     return this.recaptchaSiteKey;
   }
 
+  /** Client ID web de Google (GIS), solo para verificación de identidad en reservas. */
+  getGoogleOAuthClientId(): string | null {
+    const fromEnv = (window as any).__env?.GOOGLE_OAUTH_CLIENT_ID;
+    if (fromEnv) return String(fromEnv);
+    return this.googleOAuthClientId;
+  }
+
   /** Carga la config pública desde la API (incluye googleMapsApiKey del .env del backend). */
   loadPublicConfig(): Observable<PublicConfig> {
     if (this.configLoad$) return this.configLoad$;
@@ -45,6 +54,7 @@ export class ConfigService {
         tap((c) => {
           if (c.googleMapsApiKey) this.googleMapsApiKey = c.googleMapsApiKey;
           if (c.recaptchaSiteKey) this.recaptchaSiteKey = c.recaptchaSiteKey;
+          if (c.googleOAuthClientId) this.googleOAuthClientId = c.googleOAuthClientId;
         }),
         shareReplay(1)
       );
