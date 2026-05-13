@@ -86,6 +86,9 @@ importers:
       class-validator:
         specifier: ^0.14.3
         version: 0.14.4
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       helmet:
         specifier: ^7.2.0
         version: 7.2.0
@@ -95,6 +98,9 @@ importers:
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
+      multer:
+        specifier: ^2.1.1
+        version: 2.1.1
       nodemailer:
         specifier: ^6.9.0
         version: 6.10.1
@@ -204,6 +210,9 @@ importers:
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
+      '@types/express':
+        specifier: ^5.0.0
+        version: 5.0.6
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -13277,7 +13286,7 @@ snapshots:
 
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
-      '@types/express-serve-static-core': 4.19.8
+      '@types/express-serve-static-core': 5.1.1
       '@types/node': 20.19.39
 
   '@types/connect@3.4.38':
@@ -13410,7 +13419,7 @@ snapshots:
 
   '@types/serve-index@1.9.4':
     dependencies:
-      '@types/express': 4.17.25
+      '@types/express': 5.0.6
 
   '@types/serve-static@1.15.10':
     dependencies:
