@@ -93,6 +93,7 @@ export class PublicBookingService {
           orderBy: { name: 'asc' },
         },
         staff: {
+          where: { showOnLanding: true },
           select: { id: true, displayName: true, role: true, photoUrl: true },
           orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }],
         },

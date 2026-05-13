@@ -8,6 +8,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import {
   AdminApiService,
@@ -16,12 +17,11 @@ import {
 } from '../../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../../core/utils/api-error-message';
 import { AdminVitrinaBannerModalComponent } from '../admin-vitrina-banner-modal/admin-vitrina-banner-modal.component';
-import { AdminVitrinaStaffModalComponent } from '../admin-vitrina-staff-modal/admin-vitrina-staff-modal.component';
 
 @Component({
   standalone: true,
   selector: 'app-admin-business-landing-panel',
-  imports: [CommonModule, AdminVitrinaBannerModalComponent, AdminVitrinaStaffModalComponent],
+  imports: [CommonModule, RouterLink, AdminVitrinaBannerModalComponent],
   templateUrl: './admin-business-landing-panel.component.html',
   styleUrl: './admin-business-landing-panel.component.scss',
 })
@@ -33,11 +33,9 @@ export class AdminBusinessLandingPanelComponent implements OnChanges {
   @Input({ required: true }) detail!: AdminBusinessDetail;
   @Output() readonly reload = new EventEmitter<void>();
 
-  saving = false;
+  toggleSaving = false;
   bannerPreviewBroken = false;
   bannerModalOpen = false;
-  staffModalOpen = false;
-  staffEditTarget: AdminStaffRow | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['detail'] && this.detail) {
@@ -68,31 +66,19 @@ export class AdminBusinessLandingPanelComponent implements OnChanges {
     this.reload.emit();
   }
 
-  openStaffAdd(): void {
-    this.staffEditTarget = null;
-    this.staffModalOpen = true;
-  }
-
-  openStaffEdit(m: AdminStaffRow): void {
-    this.staffEditTarget = m;
-    this.staffModalOpen = true;
-  }
-
-  closeStaffModal(): void {
-    this.staffModalOpen = false;
-    this.staffEditTarget = null;
-  }
-
-  async removeStaff(row: AdminStaffRow): Promise<void> {
-    if (!confirm(`¿Quitar a ${row.displayName} de la vidriera pública?`)) return;
-    this.saving = true;
+  async onShowOnLandingChange(m: AdminStaffRow, ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const next = input.checked;
+    if (next === m.showOnLanding) return;
+    this.toggleSaving = true;
     try {
-      await firstValueFrom(this.api.deleteStaffMember(row.id));
+      await firstValueFrom(this.api.patchStaffMember(m.id, { showOnLanding: next }));
       this.reload.emit();
     } catch (e) {
       alert(apiErrorMessage(e));
+      input.checked = m.showOnLanding;
     } finally {
-      this.saving = false;
+      this.toggleSaving = false;
     }
   }
 }

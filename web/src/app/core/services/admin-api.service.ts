@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ConfigService } from './config.service';
 
 export type AdminBusinessListItem = {
@@ -54,6 +54,8 @@ export type AdminStaffRow = {
   role: string | null;
   photoUrl: string | null;
   sortOrder: number;
+  /** Vidriera pública: si es false, no se lista en la landing (sigue disponible para servicios). */
+  showOnLanding: boolean;
 };
 
 export type AdminBusinessDetail = AdminBusinessListItem & {
@@ -91,6 +93,15 @@ export type AdminDashboardMetrics = {
   generatedAt: string;
   todayConfirmed: number;
   byBusiness: AdminDashboardMetricsByBusiness[];
+};
+
+export type AdminCustomerRow = {
+  customerFullName: string;
+  customerContact: string;
+  lastAttendedAt: string | null;
+  lastServiceName: string | null;
+  visitsTotal: number;
+  revenueThisMonth: number;
 };
 
 @Injectable({ providedIn: 'root' })
@@ -175,7 +186,13 @@ export class AdminApiService {
 
   patchStaffMember(
     staffId: string,
-    body: { displayName?: string; role?: string | null; photoUrl?: string | null },
+    body: {
+      displayName?: string;
+      role?: string | null;
+      photoUrl?: string | null;
+      sortOrder?: number;
+      showOnLanding?: boolean;
+    },
   ): Observable<AdminStaffRow> {
     return this.http.patch<AdminStaffRow>(this.url(`/staff/${staffId}`), body);
   }
@@ -209,6 +226,56 @@ export class AdminApiService {
       params,
       headers: this.jsonNoCacheHeaders(),
     });
+  }
+
+  getCustomers(businessId: string): Observable<AdminCustomerRow[]> {
+    const params = this.cacheBustParams({ businessId });
+    return this.http.get<unknown>(this.url('/customers'), {
+      params,
+      headers: this.jsonNoCacheHeaders(),
+    }).pipe(map((raw) => this.normalizeCustomersResponse(raw)));
+  }
+
+  private normalizeCustomersResponse(raw: unknown): AdminCustomerRow[] {
+    if (raw == null) return [];
+    if (!Array.isArray(raw)) return [];
+    const out: AdminCustomerRow[] = [];
+    for (const row of raw) {
+      if (!row || typeof row !== 'object') continue;
+      const o = row as Record<string, unknown>;
+      const customerFullName = typeof o['customerFullName'] === 'string' ? o['customerFullName'] : '';
+      const customerContact = typeof o['customerContact'] === 'string' ? o['customerContact'] : '';
+      const lastAttendedAt =
+        o['lastAttendedAt'] === null || o['lastAttendedAt'] === undefined
+          ? null
+          : typeof o['lastAttendedAt'] === 'string'
+            ? o['lastAttendedAt']
+            : null;
+      const lastServiceName =
+        o['lastServiceName'] === null || o['lastServiceName'] === undefined
+          ? null
+          : typeof o['lastServiceName'] === 'string'
+            ? o['lastServiceName']
+            : null;
+      const visitsTotal =
+        typeof o['visitsTotal'] === 'number' && Number.isFinite(o['visitsTotal']) ? o['visitsTotal'] : 0;
+      const rev = o['revenueThisMonth'];
+      const revenueThisMonth =
+        typeof rev === 'number' && Number.isFinite(rev)
+          ? rev
+          : typeof rev === 'string' && rev.trim() !== '' && Number.isFinite(Number(rev))
+            ? Number(rev)
+            : 0;
+      out.push({
+        customerFullName,
+        customerContact,
+        lastAttendedAt,
+        lastServiceName,
+        visitsTotal,
+        revenueThisMonth,
+      });
+    }
+    return out;
   }
 
   patchBooking(bookingId: string, body: Record<string, unknown>): Observable<AdminBookingRow> {

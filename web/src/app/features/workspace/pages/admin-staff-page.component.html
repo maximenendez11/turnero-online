@@ -1,0 +1,87 @@
+<section class="admin-page" [attr.aria-busy]="loading() || listBusy()">
+  <header class="admin-page__head">
+    <h1>Profesionales</h1>
+    <p class="muted">
+      Equipo del negocio: nombre, rol y foto. En <strong>Negocio → Vidriera</strong> elegís quiénes se muestran en la página
+      pública.
+    </p>
+  </header>
+
+  <div class="toolbar" *ngIf="!loading()">
+    <label *ngIf="businesses().length > 1">
+      <span>Negocio</span>
+      <select [ngModel]="filterBusinessId()" (ngModelChange)="onFilterBusinessChange($event)">
+        <option value="">Elegí un negocio…</option>
+        <option *ngFor="let b of businesses()" [value]="b.id">{{ b.name }}</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="error-block" *ngIf="error()">
+    <p class="error">{{ error() }}</p>
+    <button type="button" class="btn-retry" (click)="retry()">Reintentar</button>
+  </div>
+
+  <app-admin-page-skeleton *ngIf="loading()" variant="customers" />
+
+  <div class="staff-body" *ngIf="!loading()">
+    <div class="notice notice--hint" *ngIf="needsBusinessPick()" role="status">
+      Elegí un negocio arriba para gestionar su equipo.
+    </div>
+
+    <ng-container *ngIf="!needsBusinessPick()">
+      <div class="staff-card-wrap" [class.staff-card-wrap--dim]="listBusy()">
+        <div class="staff-toolbar">
+          <button type="button" class="btn btn--primary staff-add" [disabled]="listBusy()" (click)="openStaffAdd()">
+            + Agregar profesional
+          </button>
+        </div>
+
+        <ul class="staff-list" role="list" *ngIf="staffRows().length > 0">
+          <li class="staff-row" *ngFor="let m of staffRows()" role="listitem">
+            <div class="staff-row__avatar">
+              <img *ngIf="staffPhotoTrim(m) as photoUrl" [src]="photoUrl" alt="" loading="lazy" />
+              <span *ngIf="!staffPhotoTrim(m)" class="staff-row__mono" aria-hidden="true">{{ staffInitial(m) }}</span>
+            </div>
+            <div class="staff-row__text">
+              <p class="staff-row__name">{{ m.displayName }}</p>
+              <p class="staff-row__role" *ngIf="m.role?.trim()">{{ m.role }}</p>
+              <p class="staff-row__role staff-row__role--muted" *ngIf="!m.role?.trim()">Sin rol cargado</p>
+            </div>
+            <div class="staff-row__actions">
+              <button
+                type="button"
+                class="lp-btn lp-btn--soft lp-btn--sm"
+                [disabled]="listBusy() || savingDeleteId() === m.id"
+                (click)="openStaffEdit(m)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="lp-btn lp-btn--danger lp-btn--sm"
+                [disabled]="listBusy() || savingDeleteId() === m.id"
+                (click)="removeStaff(m)"
+              >
+                {{ savingDeleteId() === m.id ? 'Eliminando…' : 'Eliminar' }}
+              </button>
+            </div>
+          </li>
+        </ul>
+
+        <div class="staff-empty" *ngIf="staffRows().length === 0 && !listBusy()" role="status">
+          <p>Todavía no hay profesionales en este negocio.</p>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</section>
+
+<app-admin-vitrina-staff-modal
+  *ngIf="filterBusinessId().trim()"
+  [businessId]="filterBusinessId().trim()"
+  [open]="staffModalOpen"
+  [editStaff]="staffEditTarget"
+  (dismiss)="closeStaffModal()"
+  (saved)="onStaffSaved()"
+/>

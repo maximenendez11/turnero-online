@@ -489,3 +489,65 @@
     width: 100%;
   }
 }
+
+/* ——— Clientes ——— */
+.admin-skel-cust__toolbar {
+  margin: 0.75rem 0 1rem;
+}
+
+.admin-skel-cust__select {
+  height: 2rem;
+  width: 14rem;
+  max-width: 100%;
+  border-radius: dv.$dv-radius-md;
+}
+
+.admin-skel-cust__search {
+  margin-bottom: 1rem;
+}
+
+.admin-skel-cust__search-line {
+  height: 2.5rem;
+  width: min(28rem, 100%);
+  border-radius: dv.$dv-radius-md;
+}
+
+.admin-skel-cust__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-skel-cust__row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border-radius: dv.$dv-radius-lg;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface, #{dv.$dv-surface-container-lowest});
+}
+
+.admin-skel-cust__name {
+  height: 1rem;
+  width: 40%;
+  border-radius: dv.$dv-radius-sm;
+}
+
+.admin-skel-cust__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+@media (max-width: 40rem) {
+  .admin-skel-cust__metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-skel-cust__metric {
+  height: 2.25rem;
+  border-radius: dv.$dv-radius-sm;
+}
+

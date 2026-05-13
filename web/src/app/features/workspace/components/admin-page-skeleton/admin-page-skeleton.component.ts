@@ -9,7 +9,7 @@ import { Component, input } from '@angular/core';
   styleUrl: './admin-page-skeleton.component.scss',
 })
 export class AdminPageSkeletonComponent {
-  readonly variant = input.required<'business' | 'bookings' | 'dashboard'>();
+  readonly variant = input.required<'business' | 'bookings' | 'dashboard' | 'customers'>();
 
   protected readonly calCells = Array.from({ length: 42 }, (_, i) => i);
   protected readonly weekDays = Array.from({ length: 7 }, (_, i) => i);
@@ -17,4 +17,5 @@ export class AdminPageSkeletonComponent {
   protected readonly dashStatusRows = [0, 1];
   protected readonly dashMetricsBizRows = [0, 1];
   protected readonly dashShareRows = [0];
+  protected readonly custRows = [0, 1, 2, 3, 4];
 }

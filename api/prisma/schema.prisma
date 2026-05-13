@@ -150,7 +150,7 @@ model BusinessServiceStaff {
   @@map("business_service_staff")
 }
 
-/// Profesional mostrado en la landing pública del negocio.
+/// Profesional del equipo. `show_on_landing` controla si aparece en la vidriera pública (landing).
 model BusinessStaff {
   id          String   @id @default(uuid())
   businessId  String   @map("business_id")
@@ -158,6 +158,8 @@ model BusinessStaff {
   role        String?
   photoUrl    String?  @map("photo_url") @db.VarChar(2048)
   sortOrder   Int      @default(0) @map("sort_order")
+  /// Si es false, sigue existiendo para servicios pero no se lista en la landing pública.
+  showOnLanding Boolean @default(true) @map("show_on_landing")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 

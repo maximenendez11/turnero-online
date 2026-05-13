@@ -37,6 +37,20 @@ export type AdminDashboardMetrics = {
   byBusiness: AdminDashboardMetricsByBusiness[];
 };
 
+/** Cliente agregado por contacto (reservas confirmadas del negocio). */
+export type AdminCustomerRow = {
+  customerFullName: string;
+  customerContact: string;
+  /** Último turno ya pasado (confirmado). */
+  lastAttendedAt: string | null;
+  /** Nombre del servicio del último turno pasado (si aplica). */
+  lastServiceName: string | null;
+  /** Turnos confirmados con fecha/hora ya pasadas. */
+  visitsTotal: number;
+  /** Suma de precios de servicios de turnos confirmados cuyo `startsAt` cae en el mes civil actual del negocio. */
+  revenueThisMonth: number;
+};
+
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}
@@ -317,6 +331,7 @@ export class AdminService {
       data.photoUrl = u === '' ? null : u;
     }
     if (dto.sortOrder !== undefined) data.sortOrder = dto.sortOrder;
+    if (dto.showOnLanding !== undefined) data.showOnLanding = dto.showOnLanding;
     if (Object.keys(data).length === 0) {
       return this.prisma.businessStaff.findFirstOrThrow({ where: { id: staffId } });
     }
@@ -499,6 +514,117 @@ export class AdminService {
       timeZone: zonedNow.zoneName || rawTz,
       todayConfirmed,
     };
+  }
+
+  /**
+   * Clientes deduplicados por dato de contacto (email/tel en minúsculas).
+   * Métricas: última visita pasada, total de visitas pasadas, facturación del mes civil del negocio.
+   */
+  async listCustomers(user: JwtPayload, businessIdRaw: string | undefined): Promise<AdminCustomerRow[]> {
+    const businessId = businessIdRaw?.trim();
+    if (!businessId) {
+      throw new BadRequestException('Parámetro businessId requerido');
+    }
+    await this.assertBusinessAccess(user, businessId);
+
+    const business = await this.prisma.business.findFirst({
+      where: { id: businessId, deletedAt: null },
+      select: { timezone: true },
+    });
+    if (!business) throw new NotFoundException('Negocio no encontrado');
+
+    const rawTz = business.timezone?.trim() || 'America/Argentina/Buenos_Aires';
+    let zonedNow: DateTime;
+    try {
+      zonedNow = DateTime.now().setZone(rawTz);
+      if (!zonedNow.isValid) throw new Error('invalid tz');
+    } catch {
+      zonedNow = DateTime.now().setZone('America/Argentina/Buenos_Aires');
+    }
+
+    const monthStartUtc = zonedNow.startOf('month').toUTC();
+    const nextMonthStartUtc = zonedNow.plus({ months: 1 }).startOf('month').toUTC();
+    const nowUtc = DateTime.utc();
+
+    const bookings = await this.prisma.booking.findMany({
+      where: { businessId, status: 'confirmed' },
+      select: {
+        customerFullName: true,
+        customerContact: true,
+        startsAt: true,
+        service: { select: { price: true, priceOnRequest: true, name: true } },
+      },
+      orderBy: { startsAt: 'desc' },
+      take: 20000,
+    });
+
+    const customerKey = (fullName: string, contact: string): string => {
+      const c = contact.trim().toLowerCase();
+      if (c.length > 0) return `c:${c}`;
+      const n = fullName.trim().toLowerCase();
+      return `n:${n}`;
+    };
+
+    type Agg = {
+      customerFullName: string;
+      customerContact: string;
+      lastAttendedAt: Date | null;
+      lastServiceName: string | null;
+      visitsTotal: number;
+      revenueThisMonth: number;
+    };
+
+    const map = new Map<string, Agg>();
+
+    for (const b of bookings) {
+      const key = customerKey(b.customerFullName, b.customerContact);
+      const startsLux = DateTime.fromJSDate(b.startsAt, { zone: 'utc' });
+      const isPast = startsLux < nowUtc;
+      const priceNum = b.service.priceOnRequest ? 0 : Number(b.service.price);
+      const inMonth =
+        b.startsAt >= monthStartUtc.toJSDate() && b.startsAt < nextMonthStartUtc.toJSDate();
+
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          customerFullName: b.customerFullName.trim(),
+          customerContact: b.customerContact.trim(),
+          lastAttendedAt: isPast ? b.startsAt : null,
+          lastServiceName: isPast ? b.service.name : null,
+          visitsTotal: isPast ? 1 : 0,
+          revenueThisMonth: inMonth ? priceNum : 0,
+        });
+      } else {
+        if (isPast) {
+          existing.visitsTotal += 1;
+          if (!existing.lastAttendedAt || b.startsAt > existing.lastAttendedAt) {
+            existing.lastAttendedAt = b.startsAt;
+            existing.lastServiceName = b.service.name;
+          }
+        }
+        if (inMonth) {
+          existing.revenueThisMonth += priceNum;
+        }
+      }
+    }
+
+    const rows = [...map.values()].sort((a, b) => {
+      if (a.lastAttendedAt && b.lastAttendedAt) {
+        return b.lastAttendedAt.getTime() - a.lastAttendedAt.getTime();
+      }
+      if (a.lastAttendedAt) return -1;
+      if (b.lastAttendedAt) return 1;
+      return a.customerFullName.localeCompare(b.customerFullName, 'es');
+    });
+
+    return rows.map((r) => ({
+      customerFullName: r.customerFullName,
+      customerContact: r.customerContact,
+      lastAttendedAt: r.lastAttendedAt ? r.lastAttendedAt.toISOString() : null,
+      lastServiceName: r.lastServiceName,
+      visitsTotal: r.visitsTotal,
+      revenueThisMonth: Math.round(r.revenueThisMonth * 100) / 100,
+    }));
   }
 
   async listBookings(user: JwtPayload, businessId?: string) {

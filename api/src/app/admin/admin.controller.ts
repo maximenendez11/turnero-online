@@ -112,6 +112,11 @@ export class AdminController {
     return this.admin.deleteStaffMember(user, staffId);
   }
 
+  @Get('customers')
+  listCustomers(@CurrentUser() user: JwtPayload, @Query('businessId') businessId: string) {
+    return this.admin.listCustomers(user, businessId);
+  }
+
   @Get('bookings')
   listBookings(@CurrentUser() user: JwtPayload, @Query('businessId') businessId?: string) {
     return this.admin.listBookings(user, businessId);

@@ -8,7 +8,9 @@
       ? 'Cargando turnos y calendario'
       : variant() === 'dashboard'
         ? 'Cargando panel'
-        : 'Cargando datos del negocio'
+        : variant() === 'customers'
+          ? 'Cargando clientes'
+          : 'Cargando datos del negocio'
   "
 >
   <span class="admin-skel__sr-only">Cargando…</span>
@@ -101,6 +103,27 @@
             </li>
           }
         </ul>
+      </div>
+    }
+
+    @case ('customers') {
+      <div class="admin-skel-cust__toolbar">
+        <div class="admin-skel__pulse admin-skel-cust__select"></div>
+      </div>
+      <div class="admin-skel-cust__search">
+        <div class="admin-skel__pulse admin-skel-cust__search-line"></div>
+      </div>
+      <div class="admin-skel-cust__list">
+        @for (r of custRows; track r) {
+          <div class="admin-skel-cust__row">
+            <div class="admin-skel__pulse admin-skel-cust__name"></div>
+            <div class="admin-skel-cust__metrics">
+              <div class="admin-skel__pulse admin-skel-cust__metric"></div>
+              <div class="admin-skel__pulse admin-skel-cust__metric"></div>
+              <div class="admin-skel__pulse admin-skel-cust__metric"></div>
+            </div>
+          </div>
+        }
       </div>
     }
 

@@ -330,6 +330,7 @@ export class AdminBusinessPageComponent {
         ...m,
         role: m.role ?? '',
         photoUrl: m.photoUrl ?? '',
+        showOnLanding: (m as { showOnLanding?: boolean }).showOnLanding !== false,
       })),
       services: d.services.map((raw) => {
         const row = raw as AdminServiceRow & { eligibleStaff?: AdminServiceStaffLink[] };

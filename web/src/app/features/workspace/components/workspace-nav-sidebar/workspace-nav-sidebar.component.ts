@@ -87,6 +87,8 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
     const p = (link.path ?? '').toLowerCase();
     if (p.includes('dashboard')) return 'dashboard';
     if (p.includes('appointment') || p.includes('booking') || p.includes('turno')) return 'event';
+    if (p.includes('customer') || p.includes('cliente')) return 'group';
+    if (p.includes('/staff')) return 'badge';
     if (p.includes('business') || p.includes('negocio')) return 'store';
     return 'circle';
   }

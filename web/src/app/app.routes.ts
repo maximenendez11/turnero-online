@@ -128,6 +128,18 @@ export const appRoutes: Route[] = [
           import('./features/workspace/pages/admin-business-page.component').then((m) => m.AdminBusinessPageComponent),
         canDeactivate: [adminBusinessCanDeactivate],
       },
+      {
+        path: 'staff',
+        loadComponent: () =>
+          import('./features/workspace/pages/admin-staff-page.component').then((m) => m.AdminStaffPageComponent),
+      },
+      {
+        path: 'customers',
+        loadComponent: () =>
+          import('@app/features/workspace/pages/admin-customers-page.component').then(
+            (m) => m.AdminCustomersPageComponent,
+          ),
+      },
     ],
   },
   {
