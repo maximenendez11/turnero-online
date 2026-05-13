@@ -79,7 +79,7 @@
               <h3 class="svc-card__title">{{ s.name }}</h3>
               <p class="svc-card__desc" *ngIf="s.description?.trim()">{{ s.description }}</p>
               <p class="svc-card__meta">{{ s.durationMin }} min</p>
-              <p class="svc-card__price">{{ formatPriceDisplay(s.price) }}</p>
+              <p class="svc-card__price">{{ formatPriceDisplay(s) }}</p>
             </div>
           </li>
         </ul>

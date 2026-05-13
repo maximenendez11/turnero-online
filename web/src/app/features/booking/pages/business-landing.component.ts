@@ -10,7 +10,7 @@ import {
   PublicStaffMember,
 } from '../services/public-booking-api.service';
 import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
-import { formatListPrice as formatPriceArs } from '../utils/price-display.utils';
+import { formatServiceListPrice } from '../utils/price-display.utils';
 
 @Component({
   standalone: true,
@@ -104,8 +104,8 @@ export class BusinessLandingComponent {
     return s.id;
   }
 
-  formatPriceDisplay(raw: string): string {
-    return formatPriceArs(raw);
+  formatPriceDisplay(svc: PublicService): string {
+    return formatServiceListPrice(svc);
   }
 
   trackStaff(_: number, m: PublicStaffMember): string {

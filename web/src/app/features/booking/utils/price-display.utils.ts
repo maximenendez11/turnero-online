@@ -54,3 +54,9 @@ export function formatListPrice(raw: string): string {
     maximumFractionDigits: 2,
   }).format(n);
 }
+
+/** Listado público: respeta «precio a definir». */
+export function formatServiceListPrice(service: { price: string; priceOnRequest?: boolean | null }): string {
+  if (service.priceOnRequest) return 'A definir';
+  return formatListPrice(service.price);
+}

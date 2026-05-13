@@ -42,7 +42,10 @@ export type PublicService = {
   description: string | null;
   durationMin: number;
   price: string;
+  priceOnRequest?: boolean;
   imageUrl?: string | null;
+  imageUrl2?: string | null;
+  imageUrl3?: string | null;
 };
 
 export type AvailabilityResponse = { slots: string[] };
@@ -149,6 +152,7 @@ export class PublicBookingApiService {
     const p = o['price'];
     const price =
       typeof p === 'string' ? p : typeof p === 'number' && !Number.isNaN(p) ? String(p) : null;
+    const priceOnRequest = o['priceOnRequest'] === true;
     if (!id || !svcName || price === null || durationMin === null) return null;
     return {
       id,
@@ -156,7 +160,10 @@ export class PublicBookingApiService {
       description: typeof o['description'] === 'string' ? o['description'] : null,
       durationMin,
       price,
+      priceOnRequest,
       imageUrl: typeof o['imageUrl'] === 'string' ? o['imageUrl'] : null,
+      imageUrl2: typeof o['imageUrl2'] === 'string' ? o['imageUrl2'] : null,
+      imageUrl3: typeof o['imageUrl3'] === 'string' ? o['imageUrl3'] : null,
     };
   }
 

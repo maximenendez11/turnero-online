@@ -7,6 +7,7 @@ import {
   type AdminBusinessDetail,
   type AdminBusinessListItem,
   type AdminServiceRow,
+  type AdminServiceStaffLink,
 } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
 import {
@@ -18,6 +19,7 @@ import { BookingThemePreviewComponent } from '../components/booking-theme-previe
 import { AdminBusinessLandingPanelComponent } from '../components/admin-business-landing-panel/admin-business-landing-panel.component';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { AdminOpeningHoursEditorComponent } from '../components/admin-opening-hours-editor/admin-opening-hours-editor.component';
+import { AdminBusinessServicesTabComponent } from '../components/admin-business-services-tab/admin-business-services-tab.component';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
 import {
   openingWindowsSnapshot,
@@ -41,6 +43,7 @@ export type BusinessSettingsTab = 'datos' | 'horarios' | 'servicios' | 'aparienc
     SegmentedControlComponent,
     AdminBusinessLandingPanelComponent,
     AdminOpeningHoursEditorComponent,
+    AdminBusinessServicesTabComponent,
   ],
   templateUrl: './admin-business-page.component.html',
   styleUrl: './admin-business-page.component.scss',
@@ -68,7 +71,6 @@ export class AdminBusinessPageComponent {
   selectedBusinessId = '';
   detail: AdminBusinessDetail | null = null;
   windowsDraft: WindowDraft[] = [];
-  newService = { name: '', description: '', durationMin: 45, price: 0, imageUrl: '' };
 
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
   /** Último negocio cargado con éxito (para revertir el select si cancela con horarios sin guardar). */
@@ -329,11 +331,26 @@ export class AdminBusinessPageComponent {
         role: m.role ?? '',
         photoUrl: m.photoUrl ?? '',
       })),
-      services: d.services.map((s) => ({
-        ...s,
-        description: s.description ?? '',
-        imageUrl: s.imageUrl ?? '',
-      })),
+      services: d.services.map((raw) => {
+        const row = raw as AdminServiceRow & { eligibleStaff?: AdminServiceStaffLink[] };
+        const { eligibleStaff, ...rest } = row;
+        const staffIds = eligibleStaff?.map((l) => l.staffId) ?? [];
+        return {
+          ...rest,
+          description: rest.description ?? '',
+          imageUrl: rest.imageUrl ?? '',
+          imageUrl2: rest.imageUrl2 ?? '',
+          imageUrl3: rest.imageUrl3 ?? '',
+          priceOnRequest: rest.priceOnRequest ?? false,
+          depositPercent: rest.depositPercent ?? null,
+          modalityPresencial: rest.modalityPresencial ?? true,
+          modalityOnline: rest.modalityOnline ?? false,
+          modalityDomicilio: rest.modalityDomicilio ?? false,
+          schedulingType: rest.schedulingType ?? 'regular',
+          reminderClarifications: rest.reminderClarifications ?? '',
+          staffIds,
+        };
+      }),
     };
   }
 
@@ -351,62 +368,4 @@ export class AdminBusinessPageComponent {
     this.openingHoursBaseline = this.detail ? openingWindowsSnapshot(this.windowsDraft) : '';
   }
 
-  async addService(): Promise<void> {
-    if (!this.detail || !this.newService.name.trim()) return;
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      await firstValueFrom(
-        this.api.createService(this.detail.id, {
-          name: this.newService.name.trim(),
-          description: this.newService.description.trim() || undefined,
-          durationMin: Number(this.newService.durationMin),
-          price: Number(this.newService.price),
-          imageUrl: this.newService.imageUrl.trim() || undefined,
-        }),
-      );
-      this.newService = { name: '', description: '', durationMin: 45, price: 0, imageUrl: '' };
-      await this.loadDetail();
-      this.error.set(null);
-      this.flash('ok', 'Servicio creado.');
-    } catch (e) {
-      this.error.set(apiErrorMessage(e));
-      this.flash('err', apiErrorMessage(e));
-    } finally {
-      this.saving.set(false);
-    }
-  }
-
-  priceNumber(s: AdminServiceRow): number {
-    return Number(s.price);
-  }
-
-  setServicePrice(s: AdminServiceRow, v: number): void {
-    s.price = v;
-  }
-
-  async saveService(s: AdminServiceRow): Promise<void> {
-    this.saving.set(true);
-    this.error.set(null);
-    try {
-      await firstValueFrom(
-        this.api.patchService(s.id, {
-          name: s.name,
-          description: s.description,
-          durationMin: s.durationMin,
-          price: this.priceNumber(s),
-          isActive: s.isActive,
-          imageUrl: (s.imageUrl ?? '').trim(),
-        }),
-      );
-      await this.loadDetail();
-      this.error.set(null);
-      this.flash('ok', `Servicio «${s.name}» guardado.`);
-    } catch (e) {
-      this.error.set(apiErrorMessage(e));
-      this.flash('err', apiErrorMessage(e));
-    } finally {
-      this.saving.set(false);
-    }
-  }
 }

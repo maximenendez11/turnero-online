@@ -69,7 +69,10 @@ export class PublicBookingService {
             description: true,
             durationMin: true,
             price: true,
+            priceOnRequest: true,
             imageUrl: true,
+            imageUrl2: true,
+            imageUrl3: true,
           },
           orderBy: { name: 'asc' },
         },
@@ -99,7 +102,10 @@ export class PublicBookingService {
         description: s.description,
         durationMin: s.durationMin,
         price: s.price.toString(),
+        priceOnRequest: s.priceOnRequest,
         imageUrl: s.imageUrl,
+        imageUrl2: s.imageUrl2,
+        imageUrl3: s.imageUrl3,
       })),
       staff: business.staff,
     };
@@ -116,7 +122,7 @@ export class PublicBookingService {
 
   async getServices(slug: string) {
     const business = await this.requireActiveBusinessBySlug(slug);
-    return this.prisma.businessService.findMany({
+    const rows = await this.prisma.businessService.findMany({
       where: { businessId: business.id, isActive: true },
       select: {
         id: true,
@@ -124,10 +130,24 @@ export class PublicBookingService {
         description: true,
         durationMin: true,
         price: true,
+        priceOnRequest: true,
         imageUrl: true,
+        imageUrl2: true,
+        imageUrl3: true,
       },
       orderBy: { name: 'asc' },
     });
+    return rows.map((s) => ({
+      id: s.id,
+      name: s.name,
+      description: s.description,
+      durationMin: s.durationMin,
+      price: s.price.toString(),
+      priceOnRequest: s.priceOnRequest,
+      imageUrl: s.imageUrl,
+      imageUrl2: s.imageUrl2,
+      imageUrl3: s.imageUrl3,
+    }));
   }
 
   async getAvailability(slug: string, serviceId: string, dateIso: string) {

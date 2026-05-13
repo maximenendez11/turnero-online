@@ -93,17 +93,43 @@ model BusinessService {
   description String?
   durationMin Int
   price       Decimal  @db.Decimal(10, 2)
+  /// Si es true, el precio no se compromete (ej. «a consultar»); `price` puede ser 0.
+  priceOnRequest Boolean @default(false) @map("price_on_request")
+  /// Porcentaje de seña sugerida (0–100); null = no mostrar cálculo / sin seña fija.
+  depositPercent Int?    @map("deposit_percent")
+  modalityPresencial Boolean @default(true) @map("modality_presencial")
+  modalityOnline     Boolean @default(false) @map("modality_online")
+  modalityDomicilio  Boolean @default(false) @map("modality_domicilio")
+  schedulingType    BusinessServiceSchedulingType @default(regular) @map("scheduling_type")
+  /// Texto largo para recordatorios / condiciones (puntualidad, políticas, etc.).
+  reminderClarifications String? @map("reminder_clarifications") @db.Text
   /// Imagen opcional para la vitrina pública (URL).
   imageUrl    String?  @map("image_url") @db.VarChar(2048)
+  imageUrl2   String?  @map("image_url_2") @db.VarChar(2048)
+  imageUrl3   String?  @map("image_url_3") @db.VarChar(2048)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  business       Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  eligibleStaff  BusinessServiceStaff[]
 
   @@index([businessId])
   @@map("business_services")
+}
+
+/// Profesionales habilitados para este servicio. Sin filas = todos los del negocio.
+model BusinessServiceStaff {
+  serviceId String @map("service_id")
+  staffId   String @map("staff_id")
+
+  service BusinessService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff   BusinessStaff   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, staffId])
+  @@index([staffId])
+  @@map("business_service_staff")
 }
 
 /// Profesional mostrado en la landing pública del negocio.
@@ -118,6 +144,7 @@ model BusinessStaff {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  serviceAssignments BusinessServiceStaff[]
 
   @@index([businessId])
   @@map("business_staff")
@@ -127,6 +154,13 @@ enum BookingStatus {
   pending
   confirmed
   cancelled
+}
+
+/// Cómo se agenda el servicio en el catálogo (la lógica de turnos públicos sigue siendo por franjas por ahora).
+enum BusinessServiceSchedulingType {
+  regular
+  variable_date
+  cupos
 }
 
 model Booking {

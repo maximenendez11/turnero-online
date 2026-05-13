@@ -128,80 +128,12 @@
             <article class="card" aria-labelledby="sec-servicios">
               <div class="card__head">
                 <h2 id="sec-servicios">Servicios</h2>
-                <p class="card__hint">Nombre, duración y precio son los que ve el cliente al reservar.</p>
+                <p class="card__hint">
+                  Buscá en el catálogo, tocá un servicio para editarlo o añadí uno nuevo. Los cambios se guardan desde la ficha
+                  del servicio.
+                </p>
               </div>
-
-              <div class="service-cards">
-                <div class="service-card" *ngFor="let s of d.services">
-                  <div class="service-card__top">
-                    <label class="grow">
-                      <span class="label-caps">Nombre</span>
-                      <input class="input" [(ngModel)]="s.name" />
-                    </label>
-                    <label class="service-card__active">
-                      <input type="checkbox" [(ngModel)]="s.isActive" />
-                      <span>Visible</span>
-                    </label>
-                  </div>
-                  <label>
-                    <span class="label-caps">Descripción</span>
-                    <input class="input" [(ngModel)]="s.description" />
-                  </label>
-                  <label>
-                    <span class="label-caps">URL imagen (opcional)</span>
-                    <input class="input" [(ngModel)]="s.imageUrl" placeholder="https://…" spellcheck="false" />
-                  </label>
-                  <div class="service-card__nums">
-                    <label>
-                      <span class="label-caps">Duración (min)</span>
-                      <input class="input" type="number" min="5" step="5" [(ngModel)]="s.durationMin" />
-                    </label>
-                    <label>
-                      <span class="label-caps">Precio</span>
-                      <input
-                        class="input"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        [ngModel]="priceNumber(s)"
-                        (ngModelChange)="setServicePrice(s, $event)"
-                      />
-                    </label>
-                  </div>
-                  <div class="service-card__actions">
-                    <button type="button" class="btn btn--primary btn--sm" [disabled]="saving()" (click)="saveService(s)">Guardar</button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="new-service">
-                <h3 class="new-service__title" id="new-svc">Alta rápida de servicio</h3>
-                <div class="new-service__grid" [attr.aria-labelledby]="'new-svc'">
-                  <label>
-                    <span class="label-caps">Nombre</span>
-                    <input class="input" [(ngModel)]="newService.name" placeholder="Ej. Corte clásico" />
-                  </label>
-                  <label>
-                    <span class="label-caps">Duración (min)</span>
-                    <input class="input" type="number" min="5" [(ngModel)]="newService.durationMin" />
-                  </label>
-                  <label>
-                    <span class="label-caps">Precio</span>
-                    <input class="input" type="number" min="0" step="0.01" [(ngModel)]="newService.price" />
-                  </label>
-                  <label class="span-row">
-                    <span class="label-caps">Descripción (opcional)</span>
-                    <input class="input" [(ngModel)]="newService.description" />
-                  </label>
-                  <label class="span-row">
-                    <span class="label-caps">URL imagen (opcional)</span>
-                    <input class="input" [(ngModel)]="newService.imageUrl" placeholder="https://…" spellcheck="false" />
-                  </label>
-                </div>
-                <button type="button" class="btn btn--secondary" [disabled]="saving() || !newService.name.trim()" (click)="addService()">
-                  Añadir servicio
-                </button>
-              </div>
+              <app-admin-business-services-tab [detail]="d" (reload)="loadDetail()" />
             </article>
           </div>
 

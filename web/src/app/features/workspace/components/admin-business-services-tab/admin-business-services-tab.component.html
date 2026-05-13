@@ -1,0 +1,273 @@
+<section class="svc-tab" [attr.aria-busy]="saving()">
+  <div class="notice notice--ok" *ngIf="notice()?.kind === 'ok'" role="status">{{ notice()!.text }}</div>
+  <div class="notice notice--err" *ngIf="notice()?.kind === 'err'" role="alert">{{ notice()!.text }}</div>
+
+  <ng-container *ngIf="view === 'list'">
+    <div class="svc-tab__search">
+      <label class="svc-tab__search-field">
+        <span class="label-caps">Buscar servicio</span>
+        <input
+          class="input"
+          type="search"
+          [(ngModel)]="searchQuery"
+          placeholder="Nombre del servicio…"
+          autocomplete="off"
+          [attr.aria-label]="'Buscar en servicios'"
+        />
+      </label>
+    </div>
+
+    <div class="svc-tab__list" role="list" *ngIf="filteredServices.length > 0">
+      <button
+        type="button"
+        class="svc-row"
+        *ngFor="let s of filteredServices"
+        (click)="openEdit(s)"
+        role="listitem"
+      >
+        <span class="svc-row__name">{{ s.name }}</span>
+        <span class="svc-row__right">
+          <span class="chip" [class.chip--off]="!s.isActive">{{ s.isActive ? 'Activo' : 'Inactivo' }}</span>
+          <span class="svc-row__price">{{ listPrice(s) }}</span>
+        </span>
+      </button>
+    </div>
+
+    <div class="svc-tab__empty" *ngIf="filteredServices.length === 0">
+      <p *ngIf="detail.services.length === 0">Todavía no cargaste ningún servicio.</p>
+      <p *ngIf="detail.services.length > 0">No hay servicios que coincidan con la búsqueda.</p>
+    </div>
+
+    <div class="svc-tab__footer">
+      <button type="button" class="btn btn--secondary" [disabled]="saving()" (click)="openCreate()">
+        + Añadir nuevo servicio
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-container *ngIf="view === 'editor' && draft as dr">
+    <h3 class="svc-tab__editor-title">{{ editorMode === 'create' ? 'Nuevo servicio' : 'Editar servicio' }}</h3>
+
+    <fieldset class="svc-fields" [disabled]="saving()">
+      <legend class="sr-only">Datos del servicio</legend>
+
+      <label class="span-full">
+        <span class="label-caps">Nombre</span>
+        <input class="input" [(ngModel)]="dr.name" />
+      </label>
+
+      <div class="span-full svc-price-row">
+        <div class="ck-switch">
+          <span class="ck-switch__text">
+            <span class="ck-switch__title">Precio a definir / a consultar</span>
+            <span class="ck-switch__hint">El cliente verá el servicio sin precio fijo.</span>
+          </span>
+          <label class="ck-switch__track" for="svc-editor-price-or">
+            <input id="svc-editor-price-or" type="checkbox" class="ck-switch__input" [(ngModel)]="dr.priceOnRequest" />
+            <span class="ck-switch__ui" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
+
+      <label *ngIf="!dr.priceOnRequest">
+        <span class="label-caps">Precio (ARS)</span>
+        <input class="input" type="number" min="0" step="0.01" [(ngModel)]="dr.price" />
+      </label>
+
+      <label>
+        <span class="label-caps">Duración (min)</span>
+        <input class="input" type="number" min="5" step="5" [(ngModel)]="dr.durationMin" />
+      </label>
+
+      <label>
+        <span class="label-caps">Seña (%)</span>
+        <input
+          class="input"
+          type="number"
+          min="0"
+          max="100"
+          step="1"
+          [ngModel]="dr.depositPercent ?? ''"
+          (ngModelChange)="setDepositPercent($event)"
+        />
+        <span class="micro-hint" *ngIf="depositHint() as hint">Monto estimado de seña: {{ hint }}</span>
+        <span class="micro-hint" *ngIf="!depositHint()">Dejá vacío si no aplica seña fija.</span>
+      </label>
+
+      <div class="span-full">
+        <span class="label-caps">Modalidad de prestación</span>
+        <div class="ck-pill-row" role="group" aria-label="Modalidades">
+          <label class="ck-pill">
+            <input type="checkbox" class="ck-pill__input" [(ngModel)]="dr.modalityPresencial" />
+            <span class="ck-pill__face">Presencial</span>
+          </label>
+          <label class="ck-pill">
+            <input type="checkbox" class="ck-pill__input" [(ngModel)]="dr.modalityOnline" />
+            <span class="ck-pill__face">Online</span>
+          </label>
+          <label class="ck-pill">
+            <input type="checkbox" class="ck-pill__input" [(ngModel)]="dr.modalityDomicilio" />
+            <span class="ck-pill__face">A domicilio</span>
+          </label>
+        </div>
+      </div>
+
+      <label class="span-full">
+        <span class="label-caps">Tipo de servicio</span>
+        <select class="input" [(ngModel)]="dr.schedulingType">
+          <option *ngFor="let k of schedulingKeys" [ngValue]="k">{{ schedulingLabels[k] }}</option>
+        </select>
+      </label>
+
+      <label class="span-full">
+        <span class="label-caps">Descripción</span>
+        <textarea class="input input--area" rows="3" [(ngModel)]="dr.description"></textarea>
+      </label>
+
+      <label class="span-full">
+        <span class="label-caps">Aclaraciones para recordatorios</span>
+        <textarea
+          class="input input--area"
+          rows="4"
+          [(ngModel)]="dr.reminderClarifications"
+          placeholder="Ej.: llegar 10 minutos antes, políticas de cancelación, puntualidad…"
+        ></textarea>
+      </label>
+
+      <div class="span-full">
+        <div class="ck-switch">
+          <span class="ck-switch__text">
+            <span class="ck-switch__title">Servicio visible en reservas públicas</span>
+            <span class="ck-switch__hint">Si está apagado, el cliente no puede elegir este servicio.</span>
+          </span>
+          <label class="ck-switch__track" for="svc-editor-active">
+            <input id="svc-editor-active" type="checkbox" class="ck-switch__input" [(ngModel)]="dr.isActive" />
+            <span class="ck-switch__ui" aria-hidden="true"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="span-full svc-staff-block" *ngIf="detail.staff.length > 0">
+        <div class="svc-staff-head">
+          <span class="svc-staff-head__badge" aria-hidden="true">{{ detail.staff.length }}</span>
+          <div class="svc-staff-head__copy">
+            <h4 class="svc-staff-head__title">Profesionales para este servicio</h4>
+            <p class="svc-staff-head__lead">
+              Misma presentación que en Vidriera: tocá una tarjeta para incluir o quitar al profesional de este
+              servicio. Si ninguno queda marcado al guardar, se interpreta como «todos».
+            </p>
+          </div>
+        </div>
+        <ul class="svc-staff-cards" role="list">
+          <li class="svc-staff-cards__item" *ngFor="let m of detail.staff" role="listitem">
+            <button
+              type="button"
+              class="svc-staff-card"
+              [class.svc-staff-card--on]="staffChecked(m.id)"
+              [disabled]="saving()"
+              (click)="toggleStaff(m.id)"
+              [attr.aria-pressed]="staffChecked(m.id) ? 'true' : 'false'"
+              [attr.aria-label]="
+                staffChecked(m.id)
+                  ? 'Quitar a ' + m.displayName + ' de este servicio'
+                  : 'Incluir a ' + m.displayName + ' en este servicio'
+              "
+            >
+              <div class="svc-staff-card__avatar">
+                <img *ngIf="staffPhotoTrim(m) as photoUrl" [src]="photoUrl" alt="" loading="lazy" />
+                <span *ngIf="!staffPhotoTrim(m)" class="svc-staff-card__mono" aria-hidden="true">{{ staffInitial(m) }}</span>
+              </div>
+              <div class="svc-staff-card__text">
+                <p class="svc-staff-card__name">{{ m.displayName }}</p>
+                <p class="svc-staff-card__role" *ngIf="m.role?.trim()">{{ m.role }}</p>
+                <p class="svc-staff-card__role svc-staff-card__role--placeholder" *ngIf="!m.role?.trim()">
+                  Sin rol cargado
+                </p>
+              </div>
+              <div class="svc-staff-card__side">
+                <span class="svc-staff-card__pill" *ngIf="staffChecked(m.id)">
+                  <svg class="svc-staff-card__pill-ico" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-7.25 7.25a1 1 0 01-1.414 0l-3-3a1 1 0 111.414-1.414l2.293 2.293 6.543-6.543a1 1 0 011.414 0z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  Asignado
+                </span>
+                <span class="svc-staff-card__hint-off" *ngIf="!staffChecked(m.id)">Tocá para asignar</span>
+              </div>
+            </button>
+          </li>
+        </ul>
+      </div>
+      <p class="micro-hint span-full" *ngIf="detail.staff.length === 0">
+        No hay profesionales cargados. Podés sumarlos en la pestaña «Vidriera».
+      </p>
+
+      <div class="span-full svc-img-block">
+        <span class="label-caps">Imágenes del servicio (hasta 3)</span>
+        <p class="micro-hint" *ngIf="!canUploadServiceImages()">
+          Guardá el servicio por primera vez; después podés volver a editarlo y adjuntar fotos desde tu equipo (JPG, PNG o
+          WebP, hasta 5 MB cada una).
+        </p>
+        <p class="micro-hint" *ngIf="canUploadServiceImages()">
+          Solo archivos del equipo (JPG, PNG o WebP, hasta 5 MB). La imagen se guarda al elegir el archivo.
+        </p>
+        <div class="svc-img-slots">
+          <div class="svc-img-slot" *ngFor="let slot of imageSlots">
+            <p class="svc-img-slot__label">Imagen {{ slot }}</p>
+            <div class="svc-img-slot__preview">
+              <img
+                [src]="serviceImagePreview(slot) || defaultServiceImg"
+                alt=""
+                loading="lazy"
+              />
+            </div>
+            <div class="svc-img-slot__actions">
+              <input
+                type="file"
+                class="sr-only"
+                [id]="'svc-srv-img-' + slot"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="!canUploadServiceImages() || saving() || serviceImageBusy() !== null"
+                (change)="onServiceImageFile(slot, $event)"
+              />
+              <label
+                class="btn btn--secondary svc-img-slot__pick"
+                [attr.for]="'svc-srv-img-' + slot"
+                [class.is-disabled]="!canUploadServiceImages() || saving() || serviceImageBusy() !== null"
+              >
+                {{ serviceImageBusy() === slot ? 'Subiendo…' : 'Elegir archivo' }}
+              </label>
+              <button
+                type="button"
+                class="btn btn--ghost svc-img-slot__clear"
+                [disabled]="!serviceImagePreview(slot) || saving() || serviceImageBusy() !== null"
+                (click)="clearServiceImage(slot)"
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <footer class="svc-tab__actions">
+      <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="back()">Volver</button>
+      <button
+        type="button"
+        class="btn btn--ghost"
+        *ngIf="editorMode === 'edit'"
+        [disabled]="saving()"
+        (click)="remove()"
+      >
+        Eliminar
+      </button>
+      <button type="button" class="btn btn--primary" [disabled]="saving() || !dr.name.trim()" (click)="save()">
+        {{ saving() ? 'Guardando…' : 'Guardar' }}
+      </button>
+    </footer>
+  </ng-container>
+</section>

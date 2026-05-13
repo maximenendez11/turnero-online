@@ -22,14 +22,30 @@ export type AdminOpeningWindow = {
   sortOrder: number;
 };
 
+export type AdminServiceSchedulingType = 'regular' | 'variable_date' | 'cupos';
+
+export type AdminServiceStaffLink = { staffId: string };
+
 export type AdminServiceRow = {
   id: string;
   name: string;
   description: string | null;
   durationMin: number;
   price: unknown;
+  priceOnRequest: boolean;
+  depositPercent: number | null;
+  modalityPresencial: boolean;
+  modalityOnline: boolean;
+  modalityDomicilio: boolean;
+  schedulingType: AdminServiceSchedulingType;
+  reminderClarifications: string | null;
   isActive: boolean;
   imageUrl?: string | null;
+  imageUrl2?: string | null;
+  imageUrl3?: string | null;
+  /** Asignación explícita; vacío en API = todos los profesionales. */
+  staffIds: string[];
+  eligibleStaff?: AdminServiceStaffLink[];
 };
 
 export type AdminStaffRow = {
@@ -141,7 +157,7 @@ export class AdminApiService {
 
   createService(
     businessId: string,
-    body: { name: string; description?: string; durationMin: number; price: number; imageUrl?: string },
+    body: Record<string, unknown>,
   ): Observable<AdminServiceRow> {
     return this.http.post<AdminServiceRow>(this.url(`/businesses/${businessId}/services`), body);
   }
@@ -166,6 +182,23 @@ export class AdminApiService {
 
   patchService(serviceId: string, body: Record<string, unknown>): Observable<AdminServiceRow> {
     return this.http.patch<AdminServiceRow>(this.url(`/services/${serviceId}`), body);
+  }
+
+  deleteService(serviceId: string): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(this.url(`/services/${serviceId}`));
+  }
+
+  uploadServiceImage(
+    businessId: string,
+    serviceId: string,
+    slot: 1 | 2 | 3,
+    file: File,
+  ): Observable<{ url: string }> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<{ url: string }>(this.url(`/businesses/${businessId}/services/${serviceId}/media`), fd, {
+      params: new HttpParams().set('slot', String(slot)),
+    });
   }
 
   getBookings(businessId?: string): Observable<AdminBookingRow[]> {

@@ -81,7 +81,10 @@ export class AdminService {
       where: { id: businessId, deletedAt: null },
       include: {
         openingWindows: { orderBy: [{ weekday: 'asc' }, { sortOrder: 'asc' }, { startMin: 'asc' }] },
-        services: { orderBy: { name: 'asc' } },
+        services: {
+          orderBy: { name: 'asc' },
+          include: { eligibleStaff: { select: { staffId: true } } },
+        },
         staff: { orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }] },
       },
     });
@@ -153,40 +156,137 @@ export class AdminService {
 
   async createService(user: JwtPayload, businessId: string, dto: CreateServiceAdminDto) {
     await this.assertBusinessAccess(user, businessId);
-    return this.prisma.businessService.create({
+    const mp = dto.modalityPresencial ?? true;
+    const mo = dto.modalityOnline ?? false;
+    const md = dto.modalityDomicilio ?? false;
+    if (!mp && !mo && !md) {
+      throw new BadRequestException('Tenés que elegir al menos una modalidad de prestación.');
+    }
+    const row = await this.prisma.businessService.create({
       data: {
         businessId,
         name: dto.name.trim(),
         description: dto.description?.trim() || null,
         durationMin: dto.durationMin,
         price: new Prisma.Decimal(dto.price),
+        priceOnRequest: dto.priceOnRequest ?? false,
+        depositPercent: dto.depositPercent === undefined ? null : dto.depositPercent,
+        modalityPresencial: mp,
+        modalityOnline: mo,
+        modalityDomicilio: md,
+        schedulingType: dto.schedulingType ?? 'regular',
+        reminderClarifications: dto.reminderClarifications?.trim() || null,
         imageUrl: dto.imageUrl?.trim() || null,
+        imageUrl2: dto.imageUrl2?.trim() || null,
+        imageUrl3: dto.imageUrl3?.trim() || null,
         isActive: true,
       },
+    });
+    if (dto.staffIds !== undefined) {
+      await this.replaceServiceEligibleStaff(row.id, businessId, dto.staffIds);
+    }
+    return this.prisma.businessService.findFirstOrThrow({
+      where: { id: row.id },
+      include: { eligibleStaff: { select: { staffId: true } } },
     });
   }
 
   async patchService(user: JwtPayload, serviceId: string, dto: PatchServiceAdminDto) {
-    const service = await this.prisma.businessService.findFirst({
+    const existing = await this.prisma.businessService.findFirst({
       where: { id: serviceId },
-      select: { businessId: true },
+      select: {
+        businessId: true,
+        modalityPresencial: true,
+        modalityOnline: true,
+        modalityDomicilio: true,
+      },
     });
-    if (!service) throw new NotFoundException('Servicio no encontrado');
-    await this.assertBusinessAccess(user, service.businessId);
+    if (!existing) throw new NotFoundException('Servicio no encontrado');
+    await this.assertBusinessAccess(user, existing.businessId);
+
+    const mp = dto.modalityPresencial ?? existing.modalityPresencial;
+    const mo = dto.modalityOnline ?? existing.modalityOnline;
+    const md = dto.modalityDomicilio ?? existing.modalityDomicilio;
+    if (!mp && !mo && !md) {
+      throw new BadRequestException('Tenés que elegir al menos una modalidad de prestación.');
+    }
+
     const data: Prisma.BusinessServiceUpdateInput = {};
     if (dto.name !== undefined) data.name = dto.name.trim();
     if (dto.description !== undefined) data.description = dto.description?.trim() || null;
     if (dto.durationMin !== undefined) data.durationMin = dto.durationMin;
     if (dto.price !== undefined) data.price = new Prisma.Decimal(dto.price);
+    if (dto.priceOnRequest !== undefined) data.priceOnRequest = dto.priceOnRequest;
+    if (dto.depositPercent !== undefined) {
+      data.depositPercent = dto.depositPercent === null ? null : dto.depositPercent;
+    }
+    if (dto.modalityPresencial !== undefined) data.modalityPresencial = dto.modalityPresencial;
+    if (dto.modalityOnline !== undefined) data.modalityOnline = dto.modalityOnline;
+    if (dto.modalityDomicilio !== undefined) data.modalityDomicilio = dto.modalityDomicilio;
+    if (dto.schedulingType !== undefined) data.schedulingType = dto.schedulingType;
+    if (dto.reminderClarifications !== undefined) {
+      const t = dto.reminderClarifications?.trim();
+      data.reminderClarifications = t === '' ? null : (t ?? null);
+    }
     if (dto.isActive !== undefined) data.isActive = dto.isActive;
     if (dto.imageUrl !== undefined) {
       const u = dto.imageUrl.trim();
       data.imageUrl = u === '' ? null : u;
     }
-    if (Object.keys(data).length === 0) {
-      return this.prisma.businessService.findFirstOrThrow({ where: { id: serviceId } });
+    if (dto.imageUrl2 !== undefined) {
+      const u = dto.imageUrl2.trim();
+      data.imageUrl2 = u === '' ? null : u;
     }
-    return this.prisma.businessService.update({ where: { id: serviceId }, data });
+    if (dto.imageUrl3 !== undefined) {
+      const u = dto.imageUrl3.trim();
+      data.imageUrl3 = u === '' ? null : u;
+    }
+
+    if (Object.keys(data).length > 0) {
+      await this.prisma.businessService.update({ where: { id: serviceId }, data });
+    }
+    if (dto.staffIds !== undefined) {
+      await this.replaceServiceEligibleStaff(serviceId, existing.businessId, dto.staffIds);
+    }
+    return this.prisma.businessService.findFirstOrThrow({
+      where: { id: serviceId },
+      include: { eligibleStaff: { select: { staffId: true } } },
+    });
+  }
+
+  async deleteService(user: JwtPayload, serviceId: string) {
+    const row = await this.prisma.businessService.findFirst({
+      where: { id: serviceId },
+      select: { businessId: true },
+    });
+    if (!row) throw new NotFoundException('Servicio no encontrado');
+    await this.assertBusinessAccess(user, row.businessId);
+    const bookingCount = await this.prisma.booking.count({ where: { serviceId } });
+    if (bookingCount > 0) {
+      throw new BadRequestException('No se puede eliminar: hay reservas asociadas a este servicio.');
+    }
+    await this.prisma.businessService.delete({ where: { id: serviceId } });
+    return { ok: true };
+  }
+
+  /** Sin filas en la tabla intermedia = todos los profesionales del negocio pueden ofrecer el servicio. */
+  private async replaceServiceEligibleStaff(serviceId: string, businessId: string, staffIds: string[]) {
+    const all = await this.prisma.businessStaff.findMany({ where: { businessId }, select: { id: true } });
+    const allIds = all.map((s) => s.id);
+    const uniq = [...new Set(staffIds)];
+    for (const id of uniq) {
+      if (!allIds.includes(id)) throw new BadRequestException('Profesional no pertenece a este negocio');
+    }
+    const isAll =
+      allIds.length > 0 &&
+      uniq.length === allIds.length &&
+      allIds.every((id) => uniq.includes(id));
+    await this.prisma.businessServiceStaff.deleteMany({ where: { serviceId } });
+    if (!isAll && uniq.length > 0) {
+      await this.prisma.businessServiceStaff.createMany({
+        data: uniq.map((staffId) => ({ serviceId, staffId })),
+      });
+    }
   }
 
   async createStaffMember(user: JwtPayload, businessId: string, dto: CreateStaffAdminDto) {
@@ -235,29 +335,21 @@ export class AdminService {
   }
 
   /**
-   * Sube imagen para vitrina (cabecera o foto de profesional). Devuelve URL absoluta lista para guardar en BD.
+   * Valida buffer de imagen (MIME, dimensiones). Devuelve extensión de archivo para guardar en disco.
    */
-  async uploadLandingMedia(
-    user: JwtPayload,
-    businessId: string,
+  private prepareBusinessImageUpload(
     file: { buffer: Buffer; mimetype: string } | undefined,
-    kindRaw: string,
-    req: Request,
-  ): Promise<{ url: string }> {
-    await this.assertBusinessAccess(user, businessId);
+    maxSide: number,
+  ): 'jpg' | 'png' | 'webp' {
     if (!file?.buffer?.length) {
       throw new BadRequestException('Seleccioná un archivo de imagen');
-    }
-    const kind = kindRaw === 'banner' || kindRaw === 'staff' ? kindRaw : null;
-    if (!kind) {
-      throw new BadRequestException('Parámetro kind inválido (usá banner o staff)');
     }
     const mime = (file.mimetype || '').toLowerCase();
     const allowed = new Set(['image/jpeg', 'image/png', 'image/webp']);
     if (!allowed.has(mime)) {
       throw new BadRequestException('Formato no permitido. Usá JPG, PNG o WebP.');
     }
-    const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+    const ext: 'jpg' | 'png' | 'webp' = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
 
     let width = 0;
     let height = 0;
@@ -268,16 +360,78 @@ export class AdminService {
     } catch {
       throw new BadRequestException('No se pudo leer la imagen');
     }
-    const maxSide = kind === 'banner' ? 8000 : 5000;
     if (width > maxSide || height > maxSide) {
       throw new BadRequestException(`La imagen supera el tamaño máximo permitido (${maxSide}px por lado)`);
     }
+    return ext;
+  }
+
+  /**
+   * Sube imagen de catálogo de servicio (hasta 3 por servicio). Persiste la URL en `imageUrl` / `imageUrl2` / `imageUrl3`.
+   */
+  async uploadServiceMedia(
+    user: JwtPayload,
+    businessId: string,
+    serviceId: string,
+    slot: number,
+    file: { buffer: Buffer; mimetype: string } | undefined,
+    req: Request,
+  ): Promise<{ url: string }> {
+    await this.assertBusinessAccess(user, businessId);
+    if (slot !== 1 && slot !== 2 && slot !== 3) {
+      throw new BadRequestException('Parámetro slot inválido (usá 1, 2 o 3)');
+    }
+    const svc = await this.prisma.businessService.findFirst({
+      where: { id: serviceId, businessId },
+      select: { id: true },
+    });
+    if (!svc) throw new NotFoundException('Servicio no encontrado');
+
+    const ext = this.prepareBusinessImageUpload(file, 5000);
+    const filename = `${randomBytes(12).toString('hex')}.${ext}`;
+    const dir = join(getUploadsDir(), 'businesses', businessId);
+    await mkdir(dir, { recursive: true });
+    const absPath = join(dir, filename);
+    await writeFile(absPath, file!.buffer);
+
+    const base = publicBaseUrlFromRequest(req);
+    const url = `${base}/api/media/businesses/${businessId}/${filename}`;
+    if (url.length > 2048) {
+      throw new BadRequestException('URL resultante demasiado larga');
+    }
+
+    const data: Prisma.BusinessServiceUpdateInput =
+      slot === 1 ? { imageUrl: url } : slot === 2 ? { imageUrl2: url } : { imageUrl3: url };
+    await this.prisma.businessService.update({
+      where: { id: serviceId },
+      data,
+    });
+    return { url };
+  }
+
+  /**
+   * Sube imagen para vitrina (cabecera o foto de profesional). Devuelve URL absoluta lista para guardar en BD.
+   */
+  async uploadLandingMedia(
+    user: JwtPayload,
+    businessId: string,
+    file: { buffer: Buffer; mimetype: string } | undefined,
+    kindRaw: string,
+    req: Request,
+  ): Promise<{ url: string }> {
+    await this.assertBusinessAccess(user, businessId);
+    const kind = kindRaw === 'banner' || kindRaw === 'staff' ? kindRaw : null;
+    if (!kind) {
+      throw new BadRequestException('Parámetro kind inválido (usá banner o staff)');
+    }
+    const maxSide = kind === 'banner' ? 8000 : 5000;
+    const ext = this.prepareBusinessImageUpload(file, maxSide);
 
     const filename = `${randomBytes(12).toString('hex')}.${ext}`;
     const dir = join(getUploadsDir(), 'businesses', businessId);
     await mkdir(dir, { recursive: true });
     const absPath = join(dir, filename);
-    await writeFile(absPath, file.buffer);
+    await writeFile(absPath, file!.buffer);
 
     const base = publicBaseUrlFromRequest(req);
     const url = `${base}/api/media/businesses/${businessId}/${filename}`;

@@ -56,6 +56,30 @@ export class AdminController {
     return this.admin.patchService(user, serviceId, dto);
   }
 
+  @Delete('services/:serviceId')
+  deleteService(@CurrentUser() user: JwtPayload, @Param('serviceId') serviceId: string) {
+    return this.admin.deleteService(user, serviceId);
+  }
+
+  @Post('businesses/:businessId/services/:serviceId/media')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  uploadServiceMedia(
+    @CurrentUser() user: JwtPayload,
+    @Param('businessId') businessId: string,
+    @Param('serviceId') serviceId: string,
+    @UploadedFile() file: { buffer: Buffer; mimetype: string } | undefined,
+    @Query('slot') slotRaw: string,
+    @Req() req: Request,
+  ) {
+    const slot = Number.parseInt(slotRaw ?? '', 10);
+    return this.admin.uploadServiceMedia(user, businessId, serviceId, slot, file, req);
+  }
+
   @Post('businesses/:id/landing-media')
   @UseInterceptors(
     FileInterceptor('file', {
