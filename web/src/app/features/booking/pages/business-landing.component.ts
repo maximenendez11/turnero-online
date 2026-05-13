@@ -3,7 +3,6 @@ import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
-import { AppSplashService } from '../../../core/services/app-splash.service';
 import {
   PublicBookingApiService,
   PublicBusiness,
@@ -24,7 +23,6 @@ export class BusinessLandingComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(PublicBookingApiService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly splash = inject(AppSplashService);
 
   readonly defaultBanner = '/images/landing-default-banner.svg';
   readonly defaultServiceImg = '/images/service-placeholder.svg';
@@ -54,7 +52,6 @@ export class BusinessLandingComponent {
         this.loading = false;
         this.business = b;
         this.error = !b;
-        this.splash.hide();
         this.cdr.markForCheck();
       });
   }
@@ -125,7 +122,6 @@ export class BusinessLandingComponent {
       this.loading = false;
       this.business = b;
       this.error = !b;
-      this.splash.hide();
       this.cdr.markForCheck();
     });
   }
