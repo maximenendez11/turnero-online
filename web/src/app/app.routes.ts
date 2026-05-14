@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { redirectIfAuthenticatedGuard } from './core/guards/redirect-if-authenticated.guard';
 import { onboardingCompleteGuard } from './core/guards/onboarding-complete.guard';
 import { tenantGuard } from './core/guards/tenant.guard';
 import { adminBusinessCanDeactivate } from './features/workspace/pages/admin-business-page.deactivate';
@@ -12,6 +13,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'auth/login',
+    canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
     data: {
       title: 'Iniciar Sesion',
@@ -23,6 +25,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'auth/register',
+    canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
     data: {
       title: 'Crear Cuenta',
@@ -34,6 +37,7 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'auth/forgot-password',
+    canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
     data: {
       title: 'Recuperar Acceso',
