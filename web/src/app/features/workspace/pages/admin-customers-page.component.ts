@@ -120,7 +120,7 @@ export class AdminCustomersPageComponent {
   async onFilterBusinessChange(id: string): Promise<void> {
     this.filterBusinessId.set(id);
     await this.reloadCustomers();
-    await this.syncWorkspaceShellTheme();
+    this.syncWorkspaceShellTheme();
   }
 
   private async init(): Promise<void> {
@@ -133,7 +133,7 @@ export class AdminCustomersPageComponent {
         this.filterBusinessId.set(list[0].id);
       }
       await this.reloadCustomers();
-      await this.syncWorkspaceShellTheme();
+      this.syncWorkspaceShellTheme();
     } catch (e) {
       this.error.set(apiErrorMessage(e));
     } finally {
@@ -161,23 +161,23 @@ export class AdminCustomersPageComponent {
     }
   }
 
-  private async syncWorkspaceShellTheme(): Promise<void> {
+  private syncWorkspaceShellTheme(): void {
     const id = this.filterBusinessId().trim();
     if (!id) {
       this.workspaceTheme.resetToDefault();
       return;
     }
-    try {
-      const d = await firstValueFrom(this.api.getBusiness(id));
-      const bg = (d.themeBackgroundHex ?? '').trim();
-      const pr = (d.themePrimaryHex ?? '').trim();
-      this.workspaceTheme.applyBusinessTheme(
-        /^#[0-9A-Fa-f]{6}$/.test(bg) ? bg : null,
-        /^#[0-9A-Fa-f]{6}$/.test(pr) ? pr : null,
-      );
-      this.workspaceTheme.setNavBusinessName(d.name);
-    } catch {
+    const d = this.businesses().find((b) => b.id === id);
+    if (!d) {
       this.workspaceTheme.resetToDefault();
+      return;
     }
+    const bg = (d.themeBackgroundHex ?? '').trim();
+    const pr = (d.themePrimaryHex ?? '').trim();
+    this.workspaceTheme.applyBusinessTheme(
+      /^#[0-9A-Fa-f]{6}$/.test(bg) ? bg : null,
+      /^#[0-9A-Fa-f]{6}$/.test(pr) ? pr : null,
+    );
+    this.workspaceTheme.setNavBusinessName(d.name);
   }
 }

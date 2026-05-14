@@ -12,6 +12,10 @@ export type AdminBusinessListItem = {
   address: string;
   timezone: string;
   bookingIntervalMin: number;
+  themeBackgroundHex?: string | null;
+  themePrimaryHex?: string | null;
+  /** Presente en `GET /admin/businesses` (resumen + horarios para dashboard). */
+  openingWindows?: AdminOpeningWindow[];
 };
 
 export type AdminOpeningWindow = {

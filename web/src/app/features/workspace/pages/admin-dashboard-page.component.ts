@@ -1,10 +1,9 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, OnDestroy, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import {
   AdminApiService,
-  type AdminBusinessDetail,
   type AdminBusinessListItem,
   type AdminDashboardMetrics,
 } from '../../../core/services/admin-api.service';
@@ -40,7 +39,7 @@ export class AdminDashboardPageComponent implements OnDestroy {
   private readonly workspaceTheme = inject(WorkspaceThemeService);
   private readonly platformId = inject(PLATFORM_ID);
 
-  private readonly details = signal<AdminBusinessDetail[]>([]);
+  private readonly details = signal<AdminBusinessListItem[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
@@ -53,13 +52,16 @@ export class AdminDashboardPageComponent implements OnDestroy {
 
   readonly statusRows = computed<DashboardBusinessStatus[]>(() => {
     const at = new Date(this.nowMs());
-    return this.details().map((d) => ({
-      id: d.id,
-      name: d.name,
-      isOpen: isOpenNowInWindows(d.openingWindows, d.timezone, at),
-      hasSchedule: d.openingWindows.length > 0,
-      timeZone: d.timezone,
-    }));
+    return this.details().map((d) => {
+      const windows = d.openingWindows ?? [];
+      return {
+        id: d.id,
+        name: d.name,
+        isOpen: isOpenNowInWindows(windows, d.timezone, at),
+        hasSchedule: windows.length > 0,
+        timeZone: d.timezone,
+      };
+    });
   });
 
   readonly shareRows = computed<DashboardShareRow[]>(() => {
@@ -162,19 +164,8 @@ export class AdminDashboardPageComponent implements OnDestroy {
         this.workspaceTheme.resetToDefault();
         return;
       }
-      const details = await firstValueFrom(
-        forkJoin(
-          list.map((b: AdminBusinessListItem) =>
-            this.api.getBusiness(b.id).pipe(
-              catchError(() => of(null)),
-              map((d) => d),
-            ),
-          ),
-        ),
-      );
-      const ok = details.filter((d): d is AdminBusinessDetail => d !== null);
-      this.details.set(ok);
-      this.syncWorkspaceShellTheme(ok);
+      this.details.set(list);
+      this.syncWorkspaceShellTheme(list);
     } catch (e) {
       this.error.set(apiErrorMessage(e));
       this.details.set([]);
@@ -188,7 +179,7 @@ export class AdminDashboardPageComponent implements OnDestroy {
    * Igual que en Turnos/Negocio: el layout usa `WorkspaceThemeService` para `--booking-*`.
    * Con varios negocios se aplica el tema del primero de la lista (orden API).
    */
-  private syncWorkspaceShellTheme(details: AdminBusinessDetail[]): void {
+  private syncWorkspaceShellTheme(details: AdminBusinessListItem[]): void {
     if (details.length === 0) {
       this.workspaceTheme.resetToDefault();
       return;

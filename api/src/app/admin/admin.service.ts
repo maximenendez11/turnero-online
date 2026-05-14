@@ -68,6 +68,12 @@ export class AdminService {
           address: true,
           timezone: true,
           bookingIntervalMin: true,
+          themeBackgroundHex: true,
+          themePrimaryHex: true,
+          openingWindows: {
+            orderBy: [{ weekday: 'asc' }, { sortOrder: 'asc' }, { startMin: 'asc' }],
+            select: { id: true, weekday: true, startMin: true, endMin: true, sortOrder: true },
+          },
         },
         orderBy: { name: 'asc' },
       });
@@ -84,6 +90,12 @@ export class AdminService {
         address: true,
         timezone: true,
         bookingIntervalMin: true,
+        themeBackgroundHex: true,
+        themePrimaryHex: true,
+        openingWindows: {
+          orderBy: [{ weekday: 'asc' }, { sortOrder: 'asc' }, { startMin: 'asc' }],
+          select: { id: true, weekday: true, startMin: true, endMin: true, sortOrder: true },
+        },
       },
       orderBy: { name: 'asc' },
     });
