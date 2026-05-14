@@ -45,6 +45,18 @@
         </a>
       </li>
     </ul>
+    <div class="nav-sidebar__footer">
+      <button
+        type="button"
+        class="nav-sidebar__logout"
+        (click)="logout()"
+        [attr.aria-label]="collapsed ? 'Cerrar sesión' : null"
+        [title]="collapsed ? 'Cerrar sesión' : null"
+      >
+        <span class="material-symbols-outlined nav-sidebar__link-icon" aria-hidden="true">logout</span>
+        <span class="nav-sidebar__link-text">Cerrar sesión</span>
+      </button>
+    </div>
   </nav>
 
   <div *ngSwitchCase="'topbar'" class="nav-mobile">
@@ -118,6 +130,12 @@
             </a>
           </li>
         </ul>
+        <div class="nav-sidebar__footer">
+          <button type="button" class="nav-sidebar__logout" (click)="logout()">
+            <span class="material-symbols-outlined nav-sidebar__link-icon" aria-hidden="true">logout</span>
+            <span class="nav-sidebar__link-text">Cerrar sesión</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

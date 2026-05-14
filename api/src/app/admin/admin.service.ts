@@ -121,7 +121,7 @@ export class AdminService {
   async patchBusiness(user: JwtPayload, businessId: string, dto: PatchBusinessAdminDto) {
     await this.assertBusinessAccess(user, businessId);
     if (dto.slug !== undefined) {
-      const slug = dto.slug.trim();
+      const slug = (dto.slug ?? '').trim();
       if (slug) {
         const clash = await this.prisma.business.findFirst({
           where: { slug, deletedAt: null, NOT: { id: businessId } },
@@ -131,24 +131,36 @@ export class AdminService {
       }
     }
     const data: Prisma.BusinessUpdateInput = {};
-    if (dto.name !== undefined) data.name = dto.name.trim();
-    if (dto.slug !== undefined) data.slug = dto.slug.trim() || null;
-    if (dto.description !== undefined) data.description = dto.description?.trim() || null;
-    if (dto.address !== undefined) data.address = dto.address.trim();
-    if (dto.timezone !== undefined) data.timezone = dto.timezone.trim();
+    if (dto.name !== undefined) data.name = (dto.name ?? '').trim();
+    if (dto.slug !== undefined) data.slug = (dto.slug ?? '').trim() || null;
+    if (dto.description !== undefined) data.description = (dto.description ?? '').trim() || null;
+    if (dto.address !== undefined) data.address = (dto.address ?? '').trim();
+    if (dto.timezone !== undefined) data.timezone = (dto.timezone ?? '').trim();
     if (dto.bookingIntervalMin !== undefined) data.bookingIntervalMin = dto.bookingIntervalMin;
     if (dto.status !== undefined) data.status = dto.status;
     if (dto.themeBackgroundHex !== undefined) {
-      const t = dto.themeBackgroundHex.trim();
+      const t = (dto.themeBackgroundHex ?? '').trim();
       data.themeBackgroundHex = t === '' ? null : t.toLowerCase();
     }
     if (dto.themePrimaryHex !== undefined) {
-      const t = dto.themePrimaryHex.trim();
+      const t = (dto.themePrimaryHex ?? '').trim();
       data.themePrimaryHex = t === '' ? null : t.toLowerCase();
     }
     if (dto.bannerImageUrl !== undefined) {
-      const u = dto.bannerImageUrl.trim();
+      const u = (dto.bannerImageUrl ?? '').trim();
       data.bannerImageUrl = u === '' ? null : u;
+    }
+    if (dto.socialWhatsappUrl !== undefined) {
+      const u = (dto.socialWhatsappUrl ?? '').trim();
+      data.socialWhatsappUrl = u === '' ? null : u;
+    }
+    if (dto.socialInstagramUrl !== undefined) {
+      const u = (dto.socialInstagramUrl ?? '').trim();
+      data.socialInstagramUrl = u === '' ? null : u;
+    }
+    if (dto.socialFacebookUrl !== undefined) {
+      const u = (dto.socialFacebookUrl ?? '').trim();
+      data.socialFacebookUrl = u === '' ? null : u;
     }
     if (Object.keys(data).length === 0) {
       return this.getBusinessDetail(user, businessId);

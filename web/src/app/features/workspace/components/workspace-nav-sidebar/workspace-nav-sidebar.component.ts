@@ -13,6 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
+import { SessionService } from '../../../../core/services/session.service';
 import { WORKSPACE_NAV_LINKS, type WorkspaceNavLink } from '../../workspace-nav.config';
 
 /** `rail`: columna lateral (desktop). `topbar`: barra móvil con menú hamburguesa y cajón lateral. */
@@ -27,6 +28,7 @@ export type WorkspaceNavSidebarVariant = 'rail' | 'topbar';
 })
 export class WorkspaceNavSidebarComponent implements OnDestroy {
   private readonly router = inject(Router);
+  private readonly session = inject(SessionService);
   private readonly platformId = inject(PLATFORM_ID);
 
   /**
@@ -107,6 +109,12 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
     if (!this.menuOpen()) return;
     this.menuOpen.set(false);
     this.syncBodyScroll();
+  }
+
+  logout(): void {
+    this.closeMenu();
+    this.session.signOut();
+    void this.router.navigateByUrl('/');
   }
 
   get titleInitials(): string {

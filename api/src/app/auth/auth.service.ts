@@ -7,6 +7,7 @@ import type { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { LoginDto } from './dto/login.dto';
 import type { RegisterDto } from './dto/register.dto';
+import { RecaptchaVerificationService } from './recaptcha-verification.service';
 
 export type AuthTokens = {
   accessToken: string;
@@ -21,9 +22,11 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly recaptcha: RecaptchaVerificationService,
   ) {}
 
   async register(dto: RegisterDto): Promise<AuthTokens> {
+    await this.recaptcha.assertValid(dto.recaptchaToken, 'register');
     const existing = await this.prisma.user.findFirst({
       where: { email: dto.email, deletedAt: null },
     });
@@ -39,6 +42,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
+    await this.recaptcha.assertValid(dto.recaptchaToken, 'login');
     const user = await this.prisma.user.findFirst({
       where: { email: dto.email, deletedAt: null },
     });

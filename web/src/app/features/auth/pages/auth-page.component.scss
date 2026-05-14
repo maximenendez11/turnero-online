@@ -55,6 +55,8 @@ input {
   padding: 0.72rem 0.8rem;
   color: #e5e2e1;
   outline: none;
+  /* iOS (Safari, Chrome, etc.): WebKit hace zoom al enfocar si el texto del input es <16px */
+  font-size: 16px;
 }
 
 input:focus {
@@ -65,7 +67,65 @@ input:disabled {
   opacity: 0.6;
 }
 
-button {
+.auth-password-label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.auth-password-field {
+  position: relative;
+  display: block;
+}
+
+.auth-password-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 2.65rem;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  right: 0.3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.35rem;
+  height: 2.35rem;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: #c2c6d6;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.auth-password-toggle:hover:not(:disabled) {
+  color: #e5e2e1;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid #adc6ff;
+  outline-offset: 2px;
+}
+
+.auth-password-toggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.auth-password-toggle .material-symbols-outlined {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+form > button[type='submit'] {
   margin-top: 0.35rem;
   border: 0;
   border-radius: 0.75rem;
@@ -76,9 +136,25 @@ button {
   cursor: pointer;
 }
 
-button:disabled {
+form > button[type='submit']:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.auth-recaptcha-terms {
+  margin: 0.85rem 0 0;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: #8c909f;
+
+  a {
+    color: #adc6ff;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
 }
 
 a {

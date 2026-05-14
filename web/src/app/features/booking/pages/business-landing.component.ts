@@ -17,7 +17,7 @@ import { formatServiceListPrice } from '../utils/price-display.utils';
   selector: 'app-business-landing',
   imports: [CommonModule, RouterLink],
   templateUrl: './business-landing.component.html',
-  styleUrl: './business-landing.component.scss',
+  styleUrls: ['./business-landing.component.scss', './business-landing-extras.scss'],
 })
 export class BusinessLandingComponent {
   private readonly route = inject(ActivatedRoute);
@@ -27,6 +27,9 @@ export class BusinessLandingComponent {
   readonly defaultBanner = '/images/landing-default-banner.svg';
   readonly defaultServiceImg = '/images/service-placeholder.svg';
   readonly defaultPersonImg = '/images/person-placeholder.svg';
+  /** Placeholders para el skeleton de la vidriera (misma grilla que servicios reales). */
+  readonly skeletonServiceSlots = [0, 1] as const;
+  readonly skeletonStaffSlots = [0, 1] as const;
 
   tenantSlug = '';
   business: PublicBusiness | null = null;
@@ -110,6 +113,39 @@ export class BusinessLandingComponent {
 
   trackStaff(_: number, m: PublicStaffMember): string {
     return m.id;
+  }
+
+  hasSocialLinks(b: PublicBusiness): boolean {
+    return !!(this.whatsappHref(b) || this.instagramHref(b) || this.facebookHref(b));
+  }
+
+  whatsappHref(b: PublicBusiness): string | null {
+    const raw = b.socialWhatsappUrl?.trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    let digits = raw.replace(/\D/g, '');
+    if (digits.length < 8) return null;
+    if (!digits.startsWith('54') && digits.length <= 11) {
+      digits = `54${digits}`;
+    }
+    return `https://wa.me/${digits}`;
+  }
+
+  instagramHref(b: PublicBusiness): string | null {
+    const raw = b.socialInstagramUrl?.trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const handle = raw.startsWith('@') ? raw.slice(1) : raw;
+    const h = handle.replace(/^\/+|\/+$/g, '');
+    if (!h) return null;
+    return `https://www.instagram.com/${h}/`;
+  }
+
+  facebookHref(b: PublicBusiness): string | null {
+    const raw = b.socialFacebookUrl?.trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return `https://${raw.replace(/^\/+/, '')}`;
   }
 
   reload(): void {

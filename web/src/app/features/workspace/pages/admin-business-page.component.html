@@ -78,6 +78,33 @@
                   <span class="label-caps">Descripción</span>
                   <textarea class="input input--area" rows="3" [(ngModel)]="d.description"></textarea>
                 </label>
+                <label class="span-2">
+                  <span class="label-caps">WhatsApp (público)</span>
+                  <input
+                    class="input"
+                    [(ngModel)]="d.socialWhatsappUrl"
+                    placeholder="https://wa.me/549… o solo número con código país"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="span-2">
+                  <span class="label-caps">Instagram (URL)</span>
+                  <input
+                    class="input"
+                    [(ngModel)]="d.socialInstagramUrl"
+                    placeholder="https://www.instagram.com/tu_perfil/"
+                    autocomplete="off"
+                  />
+                </label>
+                <label class="span-2">
+                  <span class="label-caps">Facebook (URL)</span>
+                  <input
+                    class="input"
+                    [(ngModel)]="d.socialFacebookUrl"
+                    placeholder="https://www.facebook.com/tu_pagina"
+                    autocomplete="off"
+                  />
+                </label>
                 <label>
                   <span class="label-caps">Zona horaria</span>
                   <input class="input" [(ngModel)]="d.timezone" />

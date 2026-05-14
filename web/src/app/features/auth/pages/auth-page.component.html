@@ -16,22 +16,48 @@
           required
         />
       </label>
-      <label *ngIf="showPassword">
+      <label *ngIf="showPassword" class="auth-password-label">
         <span>Contraseña</span>
-        <input
-          type="password"
-          name="password"
-          [attr.autocomplete]="isRegister ? 'new-password' : 'current-password'"
-          placeholder="••••••••"
-          [(ngModel)]="password"
-          [disabled]="loading()"
-          [required]="showPassword"
-        />
+        <div class="auth-password-field">
+          <input
+            [type]="passwordVisible() ? 'text' : 'password'"
+            name="password"
+            [attr.autocomplete]="isRegister ? 'new-password' : 'current-password'"
+            placeholder="••••••••"
+            [(ngModel)]="password"
+            [disabled]="loading()"
+            [required]="showPassword"
+          />
+          <button
+            type="button"
+            class="auth-password-toggle"
+            (click)="togglePasswordVisible()"
+            [attr.aria-pressed]="passwordVisible()"
+            [attr.aria-label]="passwordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [disabled]="loading()"
+            tabindex="0"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ passwordVisible() ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </div>
       </label>
       <button type="submit" [disabled]="loading()">
         {{ loading() ? 'Conectando…' : data.submitLabel }}
       </button>
     </form>
+    <p *ngIf="showRecaptchaTerms()" class="auth-recaptcha-terms">
+      Este sitio está protegido por reCAPTCHA; aplican la
+      <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer"
+        >Política de privacidad</a
+      >
+      y los
+      <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer"
+        >Términos de servicio</a
+      >
+      de Google.
+    </p>
     <a *ngIf="data.secondaryLabel && data.secondaryHref" [routerLink]="data.secondaryHref">
       {{ data.secondaryLabel }}
     </a>

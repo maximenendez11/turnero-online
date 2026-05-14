@@ -70,6 +70,12 @@ model Business {
   ratingAverage        Float?          @map("rating_average")
   /// Cantidad de valoraciones agregadas (futuro: reseñas reales).
   ratingCount          Int             @default(0) @map("rating_count")
+  /// URL o número de WhatsApp (p. ej. https://wa.me/54911… o solo dígitos con código país).
+  socialWhatsappUrl    String?         @map("social_whatsapp_url") @db.VarChar(512)
+  /// URL del perfil de Instagram.
+  socialInstagramUrl   String?         @map("social_instagram_url") @db.VarChar(512)
+  /// URL de la página de Facebook.
+  socialFacebookUrl    String?         @map("social_facebook_url") @db.VarChar(512)
   status               BusinessStatus  @default(active)
   ownerUserId          String?         @map("owner_user_id")
   createdAt            DateTime        @default(now())

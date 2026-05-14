@@ -16,11 +16,11 @@ export class AuthApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ConfigService);
 
-  register(body: { email: string; password: string }): Observable<AuthResponse> {
+  register(body: { email: string; password: string; recaptchaToken?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.config.getApiUrl()}/auth/register`, body);
   }
 
-  login(body: { email: string; password: string }): Observable<AuthResponse> {
+  login(body: { email: string; password: string; recaptchaToken?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.config.getApiUrl()}/auth/login`, body);
   }
 }

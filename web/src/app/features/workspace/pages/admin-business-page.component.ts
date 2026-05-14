@@ -224,6 +224,9 @@ export class AdminBusinessPageComponent {
           timezone: this.detail.timezone,
           bookingIntervalMin: this.detail.bookingIntervalMin,
           status: this.detail.status,
+          socialWhatsappUrl: this.detail.socialWhatsappUrl?.trim() || null,
+          socialInstagramUrl: this.detail.socialInstagramUrl?.trim() || null,
+          socialFacebookUrl: this.detail.socialFacebookUrl?.trim() || null,
         }),
       );
       this.detail = this.mapDetailForForm(d);
@@ -326,6 +329,9 @@ export class AdminBusinessPageComponent {
       themeBackgroundHex: d.themeBackgroundHex ?? '',
       themePrimaryHex: d.themePrimaryHex ?? '',
       bannerImageUrl: d.bannerImageUrl ?? '',
+      socialWhatsappUrl: d.socialWhatsappUrl ?? '',
+      socialInstagramUrl: d.socialInstagramUrl ?? '',
+      socialFacebookUrl: d.socialFacebookUrl ?? '',
       staff: (d.staff ?? []).map((m) => ({
         ...m,
         role: m.role ?? '',

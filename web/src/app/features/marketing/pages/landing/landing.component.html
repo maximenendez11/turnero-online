@@ -9,11 +9,59 @@
       <a href="#pricing">Precios</a>
       <a class="nav-accent" routerLink="/app">Acceso</a>
     </div>
-    <div class="nav-actions">
-      <span class="material-symbols-outlined">notifications</span>
+    <div class="nav-right">
+      <button
+        type="button"
+        class="menu-toggle"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="landing-nav-drawer"
+        aria-label="Abrir menú de navegación"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">{{ menuOpen() ? 'close' : 'menu' }}</span>
+      </button>
+      <div class="nav-actions">
+        <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+      </div>
     </div>
   </nav>
 </header>
+
+<div
+  class="nav-backdrop"
+  [class.is-open]="menuOpen()"
+  (click)="closeMenu()"
+  aria-hidden="true"
+></div>
+
+<aside
+  id="landing-nav-drawer"
+  class="nav-drawer"
+  [class.is-open]="menuOpen()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Navegación"
+  [attr.aria-hidden]="!menuOpen()"
+>
+  <div class="drawer-header">
+    <p class="drawer-title">Menú</p>
+    <button type="button" class="drawer-close" (click)="closeMenu()" aria-label="Cerrar menú">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </div>
+  <a href="#features" class="drawer-link" (click)="closeMenu()">
+    <span class="material-symbols-outlined" aria-hidden="true">auto_awesome</span>
+    Funcionalidades
+  </a>
+  <a href="#pricing" class="drawer-link" (click)="closeMenu()">
+    <span class="material-symbols-outlined" aria-hidden="true">payments</span>
+    Precios
+  </a>
+  <a routerLink="/app" class="drawer-link drawer-link--accent" (click)="closeMenu()">
+    <span class="material-symbols-outlined" aria-hidden="true">login</span>
+    Acceso al panel
+  </a>
+</aside>
 
 <main>
   <section class="hero">
@@ -54,50 +102,78 @@
           basados en roles para todo su personal.
         </p>
       </article>
-      
-     
     </div>
   </section>
 
-  <section class="login section-shell" id="login">
-    <div class="glass login-card">
-      <div class="login-header">
-        <h2>Bienvenido de Nuevo</h2>
-        <p>Acceda a su panel de control empresarial y gestione sus citas con Tu turno digital.</p>
-      </div>
-      <form class="login-form" (submit)="$event.preventDefault()">
-        <label>
-          <span>Correo Electronico</span>
-          <input type="email" placeholder="propietario@empresa.com" />
-        </label>
-        <label>
-          <span>Contrasena</span>
-          <input type="password" placeholder="••••••••" />
-        </label>
-        <a class="btn btn-primary full" routerLink="/app">Iniciar Sesion</a>
-      </form>
-      <div class="divider"><span>o continuar con</span></div>
-      <div class="social-actions">
-        <button class="btn btn-glass" type="button">
-          <span class="material-symbols-outlined">mail</span>
-          Google
-        </button>
-        <button class="btn btn-glass" type="button">
-          <span class="material-symbols-outlined">smartphone</span>
-          Apple
-        </button>
-      </div>
-      <p class="register-text">
-        Nuevo en Tu turno digital? <a routerLink="/auth/register">Crear una cuenta</a>
+  <section class="pricing section-shell" id="pricing">
+    <div class="pricing-intro">
+      <h2>Planes y precios</h2>
+      <p>
+        Valores orientativos en pesos argentinos. Ajustá cantidad de profesionales para ver un total
+        mensual de ejemplo; luego definimos precios finales y condiciones comerciales.
       </p>
+    </div>
+    <div class="pricing-grid">
+      @for (tier of pricingTiers; track tier.name) {
+        <article
+          class="glass pricing-card"
+          [class.pricing-card--featured]="tier.featured"
+        >
+          <h3>{{ tier.name }}</h3>
+          <p class="pricing-includes">Incluye</p>
+          <ul class="pricing-list">
+            @for (item of tier.items; track item.text) {
+              <li>
+                @if (item.icon === 'check') {
+                  <span class="material-symbols-outlined pricing-icon pricing-icon--check" aria-hidden="true"
+                    >check_circle</span
+                  >
+                } @else {
+                  <span class="material-symbols-outlined pricing-icon pricing-icon--plus" aria-hidden="true"
+                    >add_circle</span
+                  >
+                }
+                <span>{{ item.text }}</span>
+              </li>
+            }
+          </ul>
+          <div class="pricing-staff">
+            <span class="pricing-staff-label">Cantidad de profesionales</span>
+            <div class="pricing-staff-row">
+              <button
+                type="button"
+                class="pricing-staff-btn"
+                (click)="adjustStaff(-1)"
+                [disabled]="staffCount() <= minStaff"
+                aria-label="Menos profesionales"
+              >
+                −
+              </button>
+              <span class="pricing-staff-value">{{ staffCount() }}</span>
+              <button
+                type="button"
+                class="pricing-staff-btn"
+                (click)="adjustStaff(1)"
+                [disabled]="staffCount() >= maxStaff"
+                aria-label="Más profesionales"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <p class="pricing-total">
+            Total estimado mes
+            <strong>{{ formatArs(monthlyTotal(tier.baseArs)) }}</strong>
+          </p>
+        </article>
+      }
     </div>
   </section>
 
  
 </main>
 
-<footer class="site-footer" id="pricing">
-  
+<footer class="site-footer">
   <div class="section-shell footer-bottom">
     <p class="footer-copy">© 2026 Tu turno digital. Todos los derechos reservados.</p>
     <nav class="footer-legal" aria-label="Legal">

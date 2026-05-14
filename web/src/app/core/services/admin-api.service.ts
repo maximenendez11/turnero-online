@@ -70,6 +70,9 @@ export type AdminBusinessDetail = AdminBusinessListItem & {
   themeBackgroundHex?: string | null;
   themePrimaryHex?: string | null;
   bannerImageUrl?: string | null;
+  socialWhatsappUrl?: string | null;
+  socialInstagramUrl?: string | null;
+  socialFacebookUrl?: string | null;
   ratingAverage?: number | null;
   ratingCount?: number;
 };

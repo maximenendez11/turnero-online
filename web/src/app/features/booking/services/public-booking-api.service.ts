@@ -32,6 +32,9 @@ export type PublicBusiness = {
   bannerImageUrl?: string | null;
   ratingAverage?: number | null;
   ratingCount?: number;
+  socialWhatsappUrl?: string | null;
+  socialInstagramUrl?: string | null;
+  socialFacebookUrl?: string | null;
   services: PublicService[];
   staff: PublicStaffMember[];
 };
@@ -165,6 +168,9 @@ export class PublicBookingApiService {
       bannerImageUrl: typeof o['bannerImageUrl'] === 'string' ? o['bannerImageUrl'] : null,
       ratingAverage: typeof ratingAvg === 'number' && !Number.isNaN(ratingAvg) ? ratingAvg : null,
       ratingCount: typeof ratingCnt === 'number' && ratingCnt >= 0 ? ratingCnt : 0,
+      socialWhatsappUrl: typeof o['socialWhatsappUrl'] === 'string' ? o['socialWhatsappUrl'] : null,
+      socialInstagramUrl: typeof o['socialInstagramUrl'] === 'string' ? o['socialInstagramUrl'] : null,
+      socialFacebookUrl: typeof o['socialFacebookUrl'] === 'string' ? o['socialFacebookUrl'] : null,
       services,
       staff,
     };

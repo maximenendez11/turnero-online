@@ -77,6 +77,9 @@ export class PublicBookingService {
         bannerImageUrl: true,
         ratingAverage: true,
         ratingCount: true,
+        socialWhatsappUrl: true,
+        socialInstagramUrl: true,
+        socialFacebookUrl: true,
         services: {
           where: { isActive: true },
           select: {
@@ -113,6 +116,9 @@ export class PublicBookingService {
       bannerImageUrl: business.bannerImageUrl,
       ratingAverage: business.ratingAverage,
       ratingCount: business.ratingCount,
+      socialWhatsappUrl: business.socialWhatsappUrl,
+      socialInstagramUrl: business.socialInstagramUrl,
+      socialFacebookUrl: business.socialFacebookUrl,
       services: business.services.map((s) => ({
         id: s.id,
         name: s.name,
