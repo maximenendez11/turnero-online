@@ -24,6 +24,23 @@
   background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
 }
 
+.booking-cal__toolbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.booking-cal__granularity {
+  flex-shrink: 0;
+}
+
+.booking-cal__granularity ::ng-deep .seg {
+  --seg-bg: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 88%, transparent);
+}
+
 .booking-cal__nav {
   display: flex;
   align-items: center;
@@ -293,6 +310,11 @@
 
 @media (max-width: 720px) {
   .booking-cal__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-cal__toolbar-main {
     flex-direction: column;
     align-items: stretch;
   }

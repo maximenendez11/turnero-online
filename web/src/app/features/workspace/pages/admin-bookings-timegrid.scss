@@ -1,0 +1,462 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+/* Rejilla horaria (vista semana / día), estilo tipo agenda */
+.timegrid {
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-xl;
+  overflow: hidden;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+}
+
+.timegrid__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+}
+
+.timegrid__toolbar-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.timegrid__granularity {
+  flex-shrink: 0;
+}
+
+.timegrid__granularity ::ng-deep .seg {
+  --seg-bg: color-mix(in srgb, var(--booking-surface, #{dv.$dv-surface-container}) 88%, transparent);
+}
+
+.timegrid__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  min-height: 2.75rem;
+}
+
+.timegrid__period {
+  min-width: 8rem;
+  max-width: min(100%, 20rem);
+  text-align: center;
+  font-weight: 600;
+  font-size: clamp(0.82rem, 2.2vw, 0.95rem);
+  text-transform: capitalize;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.timegrid__nav-btn {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timegrid__nav-btn:hover,
+.timegrid__today:hover {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+}
+
+.timegrid__nav-btn:focus-visible,
+.timegrid__today:focus-visible,
+.timegrid__evt:focus-visible {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 2px;
+}
+
+.timegrid__today {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+  margin-left: 0.25rem;
+  border-radius: dv.$dv-radius-md;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: transparent;
+  color: var(--booking-primary, #{dv.$dv-primary});
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timegrid__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.timegrid__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.timegrid__range-caption {
+  flex: 1 0 100%;
+  margin: 0;
+  padding: 0 0.5rem 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.timegrid__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.timegrid__dot--confirmed {
+  background: var(--booking-primary, #{dv.$dv-primary});
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 40%, transparent);
+}
+
+.timegrid__dot--pending {
+  background: #d4a574;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #d4a574 45%, transparent);
+}
+
+.timegrid__dot--cancelled {
+  background: #b87a86;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #cf6679 35%, transparent);
+}
+
+.timegrid__body-wrap {
+  overflow: auto;
+  max-height: min(78vh, 52rem);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--booking-border, #{dv.$dv-outline-variant}) var(--booking-surface-2, #{dv.$dv-surface-container-low});
+}
+
+.timegrid__head-row {
+  display: flex;
+  min-width: min(100%, 22rem);
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  border-bottom: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+}
+
+.timegrid__corner {
+  width: 3.1rem;
+  flex-shrink: 0;
+  border-right: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+}
+
+.timegrid__day-heads {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.timegrid__day-head {
+  flex: 1;
+  min-width: 6.35rem;
+  padding: 0.4rem 0.2rem;
+  text-align: center;
+  border-left: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+}
+
+.timegrid__day-head--today .timegrid__dow,
+.timegrid__day-head--today .timegrid__dnum {
+  color: var(--booking-primary, #{dv.$dv-primary});
+}
+
+.timegrid__dow {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  letter-spacing: 0.04em;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.timegrid__dnum {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.timegrid__dmon {
+  display: block;
+  font-size: 0.58rem;
+  text-transform: lowercase;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.timegrid__grid-row {
+  --timegrid-slot-h: 4rem;
+  --timegrid-slot-count: 12;
+  display: flex;
+  min-width: min(100%, 22rem);
+  min-height: calc(var(--timegrid-slot-count) * var(--timegrid-slot-h));
+}
+
+/* Vista día: más altura por hora y bloques más legibles (una sola columna de turnos). */
+.timegrid__grid-row--day {
+  --timegrid-slot-h: 5.25rem;
+}
+
+.timegrid__hours {
+  width: 3.1rem;
+  flex-shrink: 0;
+  border-right: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.timegrid__hour-cell {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  height: var(--timegrid-slot-h, 4rem);
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  text-align: right;
+  padding: 0.2rem 0.35rem 0 0;
+  line-height: 1.2;
+  border-top: 1px solid color-mix(in srgb, var(--booking-border, #{dv.$dv-outline-variant}) 55%, transparent);
+  box-sizing: border-box;
+}
+
+.timegrid__hour-cell--first {
+  border-top: 0;
+}
+
+.timegrid__tracks {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.timegrid__track {
+  flex: 1;
+  min-width: 6.35rem;
+  position: relative;
+  border-left: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--booking-border, #{dv.$dv-outline-variant}) 35%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 100% var(--timegrid-slot-h, 4rem);
+  background-position: 0 0;
+}
+
+.timegrid__track--today {
+  background-color: color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 6%, transparent);
+}
+
+.timegrid__evt {
+  position: absolute;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: dv.$dv-radius-md;
+  border-left: 4px solid transparent;
+  padding: 0.55rem 0.6rem 0.5rem;
+  min-height: 3.35rem;
+  text-align: left;
+  cursor: pointer;
+  font-size: clamp(0.84rem, 0.55vw + 0.74rem, 1.02rem);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  justify-content: flex-start;
+  align-items: stretch;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.timegrid__grid-row--day .timegrid__evt {
+  padding: 0.62rem 0.65rem 0.55rem;
+  min-height: 3.6rem;
+}
+
+.timegrid__evt--narrow {
+  font-size: clamp(0.78rem, 0.48vw + 0.68rem, 0.92rem);
+  padding: 0.45rem 0.48rem 0.42rem;
+  gap: 0.14rem;
+  min-height: 3rem;
+}
+
+.timegrid__grid-row--day .timegrid__evt--narrow {
+  padding: 0.5rem 0.5rem 0.45rem;
+  min-height: 3.25rem;
+}
+
+.timegrid__evt--narrow .timegrid__evt-sub {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  font-size: 0.82em;
+  font-weight: 600;
+}
+
+.timegrid__evt--confirmed {
+  background: color-mix(
+    in srgb,
+    var(--booking-primary, #{dv.$dv-primary}) 28%,
+    var(--booking-surface-2, #{dv.$dv-surface-container-high})
+  );
+  border-left-color: var(--booking-primary, #{dv.$dv-primary});
+}
+
+.timegrid__evt--pending {
+  background: color-mix(in srgb, #d4a574 32%, var(--booking-surface-2, #{dv.$dv-surface-container-high}));
+  border-left-color: #c4925c;
+}
+
+.timegrid__evt--cancelled {
+  background: color-mix(in srgb, #cf6679 18%, var(--booking-surface-2, #{dv.$dv-surface-container-high}));
+  border-left-color: color-mix(in srgb, #cf6679 75%, var(--booking-surface-2, #{dv.$dv-surface-container-high}));
+  opacity: 0.92;
+  color: color-mix(in srgb, var(--booking-text, #{dv.$dv-on-surface}) 88%, #cf6679);
+}
+
+.timegrid__evt--cancelled .timegrid__evt-title,
+.timegrid__evt--cancelled .timegrid__evt-sub {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.timegrid__evt--selected {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 0;
+  z-index: 2;
+}
+
+.timegrid__evt-title {
+  /* Sin flex-grow: si el bloque es bajo, evita que el -webkit-box se encoja y recorte la 1.ª línea. */
+  flex: 0 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  font-size: 1.05em;
+  line-height: 1.3;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.timegrid__evt--narrow .timegrid__evt-title {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  font-size: 1em;
+}
+
+.timegrid__evt-sub {
+  flex-shrink: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  opacity: 0.98;
+  line-height: 1.22;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (hover: hover) {
+  .timegrid__evt:hover {
+    filter: brightness(1.06);
+  }
+}
+
+.timegrid__hint {
+  padding: 0.75rem 1rem;
+  margin: 0;
+  border-top: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+@media (max-width: 720px) {
+  .timegrid__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timegrid__toolbar-main {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timegrid__nav {
+    justify-content: center;
+  }
+
+  .timegrid__legend {
+    justify-content: center;
+  }
+
+  .timegrid__evt-sub {
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .timegrid__evt {
+    font-size: clamp(0.8rem, 1.1vw + 0.68rem, 0.95rem);
+    padding: 0.48rem 0.45rem 0.42rem;
+  }
+
+  .timegrid__grid-row--day {
+    --timegrid-slot-h: 4.5rem;
+  }
+
+  .timegrid__grid-row--day .timegrid__evt {
+    padding: 0.52rem 0.5rem 0.46rem;
+  }
+
+  .timegrid__evt--narrow {
+    font-size: clamp(0.76rem, 1vw + 0.62rem, 0.88rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timegrid__body-wrap {
+    scroll-behavior: auto;
+  }
+}

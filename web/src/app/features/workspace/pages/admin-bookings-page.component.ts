@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DateTime } from 'luxon';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { AdminApiService, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
@@ -8,13 +9,16 @@ import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
-import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
+import type { AdminBookingCalendarCell, AdminCalendarGranularity } from './admin-bookings-calendar.types';
+import type { OpeningWindowLike } from '../utils/opening-hours-now.utils';
 import {
   buildCalendarWeeks,
+  FALLBACK_CALENDAR_TIMEZONE,
   formatBookingDateCompactInZone,
   formatBookingDateMediumInZone,
   formatBookingDayGroupTitleInZone,
   formatBookingTimeInZone,
+  formatBookingTimeRange24InZone,
   formatDayKeyInTimeZone,
   formatIsoToDatetimeLocalInZone,
   isSameZonedCalendarDay,
@@ -22,9 +26,21 @@ import {
   parseDatetimeLocalInZoneToIso,
   safeIanaTimeZone,
 } from './admin-bookings-calendar.utils';
+import {
+  bookingDaySegmentsInKeys,
+  buildHourSlots,
+  buildTimeGridColumns,
+  computeVisibleTimeRange,
+  formatTimeGridRangeLabel,
+  mondayKeyFromDayKey,
+  weekDayKeysFromMonday,
+} from './admin-bookings-timegrid.utils';
 
 type AdminBookingListDayGroup = {
   trackKey: string;
+  /** Día civil YYYY-MM-DD en `timeZone` (para filtrar desde hoy). */
+  dayKey: string;
+  timeZone: string;
   dayTitle: string;
   isToday: boolean;
   rows: AdminBookingRow[];
@@ -54,6 +70,11 @@ export class AdminBookingsPageComponent {
   readonly savingId = signal<string | null>(null);
 
   readonly viewAnchor = signal(monthStart(new Date()));
+  /** Día de referencia (YYYY-MM-DD en `calendarTimeZone`) para vista semana / día. */
+  readonly rangeDayKey = signal<string>(
+    formatDayKeyInTimeZone(new Date(), FALLBACK_CALENDAR_TIMEZONE),
+  );
+  readonly calendarGranularity = signal<AdminCalendarGranularity>('month');
   readonly selectedBooking = signal<AdminBookingRow | null>(null);
   readonly viewMode = signal<'calendar' | 'list'>('calendar');
   readonly viewModeItems = [
@@ -64,6 +85,96 @@ export class AdminBookingsPageComponent {
   readonly viewMonthLabel = computed(() =>
     this.viewAnchor().toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }),
   );
+
+  readonly calendarPeriodLabel = computed(() => {
+    const tz = this.calendarTimeZone();
+    if (this.calendarGranularity() === 'month') {
+      return this.viewMonthLabel();
+    }
+    const k = this.rangeDayKey();
+    const dt = DateTime.fromISO(k, { zone: tz });
+    if (!dt.isValid) return this.viewMonthLabel();
+    if (this.calendarGranularity() === 'day') {
+      const raw = dt.setLocale('es').toFormat("EEEE d 'de' MMMM yyyy");
+      return raw.length ? raw.charAt(0).toLocaleUpperCase('es') + raw.slice(1) : raw;
+    }
+    const start = DateTime.fromISO(mondayKeyFromDayKey(k, tz), { zone: tz });
+    if (!start.isValid) return this.viewMonthLabel();
+    const end = start.plus({ days: 6 });
+    if (start.month === end.month && start.year === end.year) {
+      return `${start.day}–${end.day} de ${start.setLocale('es').toFormat('MMMM yyyy')}`;
+    }
+    if (start.year === end.year) {
+      return `${start.setLocale('es').toFormat('d MMM')} – ${end.setLocale('es').toFormat('d MMM yyyy')}`;
+    }
+    return `${start.setLocale('es').toFormat('d MMM yyyy')} – ${end.setLocale('es').toFormat('d MMM yyyy')}`;
+  });
+
+  readonly timeGridDayKeys = computed((): string[] => {
+    const g = this.calendarGranularity();
+    if (g === 'month') return [];
+    const tz = this.calendarTimeZone();
+    return g === 'day'
+      ? [this.rangeDayKey()]
+      : weekDayKeysFromMonday(mondayKeyFromDayKey(this.rangeDayKey(), tz), tz);
+  });
+
+  /** Horarios del negocio filtrado (o único); vacío en "Todos" con varios negocios. */
+  readonly openingWindowsForCalendar = computed((): OpeningWindowLike[] => {
+    const list = this.businesses();
+    const fid = this.filterBusinessId().trim();
+    if (fid) {
+      return list.find((b) => b.id === fid)?.openingWindows ?? [];
+    }
+    if (list.length === 1) {
+      return list[0]?.openingWindows ?? [];
+    }
+    return [];
+  });
+
+  readonly timeGridVisibleRange = computed(() => {
+    if (this.calendarGranularity() === 'month') {
+      return { startMin: 8 * 60, endMin: 20 * 60 };
+    }
+    const keys = this.timeGridDayKeys();
+    const tz = this.calendarTimeZone();
+    const segs = bookingDaySegmentsInKeys(this.bookings(), keys, tz);
+    return computeVisibleTimeRange({
+      dayKeys: keys,
+      openingWindows: this.openingWindowsForCalendar(),
+      bookingSegments: segs,
+      timeZone: tz,
+    });
+  });
+
+  readonly timeGridHourSlots = computed(() => {
+    if (this.calendarGranularity() === 'month') return [];
+    return buildHourSlots(this.timeGridVisibleRange());
+  });
+
+  readonly timeGridColumns = computed(() => {
+    if (this.calendarGranularity() === 'month') return [];
+    const keys = this.timeGridDayKeys();
+    return buildTimeGridColumns(keys, this.bookings(), this.calendarTimeZone(), this.timeGridVisibleRange());
+  });
+
+  readonly timeGridRangeCaption = computed(() => {
+    if (this.calendarGranularity() === 'month') return '';
+    return `Franja horaria: ${formatTimeGridRangeLabel(this.timeGridVisibleRange())}`;
+  });
+
+  readonly bookingsInVisiblePeriodCount = computed(() => {
+    const tz = this.calendarTimeZone();
+    if (this.calendarGranularity() === 'month') {
+      return this.bookingsInVisibleMonth().length;
+    }
+    if (this.calendarGranularity() === 'day') {
+      const k = this.rangeDayKey();
+      return this.bookings().filter((r) => formatDayKeyInTimeZone(new Date(r.startsAt), tz) === k).length;
+    }
+    const keySet = new Set(this.timeGridDayKeys());
+    return this.bookings().filter((r) => keySet.has(formatDayKeyInTimeZone(new Date(r.startsAt), tz))).length;
+  });
 
   /**
    * Zona horaria para ubicar turnos en el calendario (API guarda UTC).
@@ -121,6 +232,8 @@ export class AdminBookingsPageComponent {
   readonly filterBusinessId = signal('');
   readonly listSearchQuery = signal('');
   readonly listStatusFilter = signal<'all' | 'pending' | 'confirmed' | 'cancelled'>('all');
+  /** Si es false, el listado solo muestra grupos de día desde hoy (por zona de cada negocio). */
+  readonly listShowPastBookings = signal(false);
 
   /** Turnos del listado tras búsqueda y filtro de estado (orden cronológico). */
   readonly listFilteredRows = computed(() => {
@@ -137,7 +250,7 @@ export class AdminBookingsPageComponent {
   });
 
   /** Agrupa por día civil según la zona de cada negocio (listado tipo timeline). */
-  readonly listDayGroups = computed((): AdminBookingListDayGroup[] => {
+  readonly listDayGroupsUnfiltered = computed((): AdminBookingListDayGroup[] => {
     const rows = this.listFilteredRows();
     const buckets = new Map<string, { tz: string; dayKey: string; rows: AdminBookingRow[] }>();
     for (const r of rows) {
@@ -160,12 +273,29 @@ export class AdminBookingsPageComponent {
       const tz = g.tz;
       return {
         trackKey: `${tz}|${g.dayKey}`,
+        dayKey: g.dayKey,
+        timeZone: tz,
         dayTitle: formatBookingDayGroupTitleInZone(first.startsAt, tz),
         isToday: formatDayKeyInTimeZone(new Date(), tz) === g.dayKey,
         rows: ordered,
       };
     });
   });
+
+  readonly listDayGroups = computed((): AdminBookingListDayGroup[] => {
+    const all = this.listDayGroupsUnfiltered();
+    if (this.listShowPastBookings()) return all;
+    return all.filter((g) => g.dayKey >= formatDayKeyInTimeZone(new Date(), g.timeZone));
+  });
+
+  /** Hay turnos con filtros actuales pero todos son anteriores a hoy y el switch está apagado. */
+  readonly listHiddenAllPast = computed(
+    () =>
+      !this.listShowPastBookings() &&
+      this.listFilteredRows().length > 0 &&
+      this.listDayGroupsUnfiltered().length > 0 &&
+      this.listDayGroups().length === 0,
+  );
 
   readonly listEmptyAfterFilter = computed(
     () => this.bookings().length > 0 && this.listFilteredRows().length === 0,
@@ -185,6 +315,14 @@ export class AdminBookingsPageComponent {
 
   formatListRowTime(row: AdminBookingRow): string {
     return formatBookingTimeInZone(row.startsAt, this.timeZoneForBooking(row));
+  }
+
+  /** Fecha + rango 24 h en la zona del negocio (detalle del modal). */
+  formatBookingDetailSchedule(row: AdminBookingRow): string {
+    const tz = this.timeZoneForBooking(row);
+    const d = formatBookingDateCompactInZone(row.startsAt, tz);
+    const range = formatBookingTimeRange24InZone(row.startsAt, row.durationMin, tz);
+    return `${d} · ${range}`;
   }
 
   private rowMatchesListSearch(r: AdminBookingRow, q: string): boolean {
@@ -238,18 +376,91 @@ export class AdminBookingsPageComponent {
     return res as AdminBookingRow[];
   }
 
-  prevMonth(): void {
+  setCalendarGranularity(id: string): void {
+    if (id !== 'month' && id !== 'week' && id !== 'day') return;
+    const next = id as AdminCalendarGranularity;
+    const prev = this.calendarGranularity();
+    const tz = this.calendarTimeZone();
+    if (prev === 'month' && (next === 'week' || next === 'day')) {
+      const anchor = this.viewAnchor();
+      const monthStartKey = formatDayKeyInTimeZone(
+        new Date(anchor.getFullYear(), anchor.getMonth(), 1),
+        tz,
+      );
+      const todayKey = formatDayKeyInTimeZone(new Date(), tz);
+      const ms = DateTime.fromISO(monthStartKey, { zone: tz });
+      const te = DateTime.fromISO(todayKey, { zone: tz });
+      if (ms.isValid && te.isValid && te >= ms.startOf('day') && te <= ms.endOf('month')) {
+        this.rangeDayKey.set(todayKey);
+      } else {
+        this.rangeDayKey.set(monthStartKey);
+      }
+    }
+    if (next === 'month' && (prev === 'week' || prev === 'day')) {
+      const dt = DateTime.fromISO(this.rangeDayKey(), { zone: tz });
+      if (dt.isValid) {
+        this.viewAnchor.set(dt.startOf('month').toJSDate());
+      }
+    }
+    this.calendarGranularity.set(next);
+    this.selectedBooking.set(null);
+  }
+
+  navigatePeriodPrev(): void {
+    const g = this.calendarGranularity();
+    const tz = this.calendarTimeZone();
+    if (g === 'month') {
+      this.prevMonth();
+      return;
+    }
+    if (g === 'week') {
+      const d = DateTime.fromISO(this.rangeDayKey(), { zone: tz }).minus({ weeks: 1 });
+      const iso = d.toISODate();
+      if (d.isValid && iso) this.rangeDayKey.set(iso);
+    } else {
+      const d = DateTime.fromISO(this.rangeDayKey(), { zone: tz }).minus({ days: 1 });
+      const iso = d.toISODate();
+      if (d.isValid && iso) this.rangeDayKey.set(iso);
+    }
+    this.selectedBooking.set(null);
+  }
+
+  navigatePeriodNext(): void {
+    const g = this.calendarGranularity();
+    const tz = this.calendarTimeZone();
+    if (g === 'month') {
+      this.nextMonth();
+      return;
+    }
+    if (g === 'week') {
+      const d = DateTime.fromISO(this.rangeDayKey(), { zone: tz }).plus({ weeks: 1 });
+      const iso = d.toISODate();
+      if (d.isValid && iso) this.rangeDayKey.set(iso);
+    } else {
+      const d = DateTime.fromISO(this.rangeDayKey(), { zone: tz }).plus({ days: 1 });
+      const iso = d.toISODate();
+      if (d.isValid && iso) this.rangeDayKey.set(iso);
+    }
+    this.selectedBooking.set(null);
+  }
+
+  private prevMonth(): void {
     this.viewAnchor.update((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
     this.selectedBooking.set(null);
   }
 
-  nextMonth(): void {
+  private nextMonth(): void {
     this.viewAnchor.update((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
     this.selectedBooking.set(null);
   }
 
   goToday(): void {
-    this.viewAnchor.set(monthStart(new Date()));
+    const tz = this.calendarTimeZone();
+    if (this.calendarGranularity() === 'month') {
+      this.viewAnchor.set(monthStart(new Date()));
+    } else {
+      this.rangeDayKey.set(formatDayKeyInTimeZone(new Date(), tz));
+    }
     this.selectedBooking.set(null);
   }
 
@@ -289,6 +500,7 @@ export class AdminBookingsPageComponent {
       if (list.length === 1) {
         this.filterBusinessId.set(list[0].id);
       }
+      this.rangeDayKey.set(formatDayKeyInTimeZone(new Date(), this.calendarTimeZone()));
       await this.reloadBookings();
       this.syncWorkspaceShellThemeFromFilter();
     } catch (e) {
@@ -318,6 +530,7 @@ export class AdminBookingsPageComponent {
   async onFilterBusinessChange(id: string): Promise<void> {
     this.filterBusinessId.set(id);
     await this.reloadBookings();
+    this.rangeDayKey.set(formatDayKeyInTimeZone(new Date(), this.calendarTimeZone()));
     this.syncWorkspaceShellThemeFromFilter();
   }
 

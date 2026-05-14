@@ -28,23 +28,28 @@
 
   <app-admin-bookings-calendar
     *ngIf="!loading() && viewMode() === 'calendar'"
+    [granularity]="calendarGranularity()"
     [cells]="flatCells()"
-    [monthLabel]="viewMonthLabel()"
+    [timeGridColumns]="timeGridColumns()"
+    [periodLabel]="calendarPeriodLabel()"
     [timeZone]="calendarTimeZone()"
     [selectedBookingId]="selectedBooking()?.id ?? null"
     [totalBookings]="bookings().length"
-    [bookingsInVisibleMonth]="bookingsInVisibleMonth().length"
-    (prevMonth)="prevMonth()"
-    (nextMonth)="nextMonth()"
+    [bookingsInVisiblePeriod]="bookingsInVisiblePeriodCount()"
+    [timeGridHourSlots]="timeGridHourSlots()"
+    [timeGridRangeCaption]="timeGridRangeCaption()"
+    (prevPeriod)="navigatePeriodPrev()"
+    (nextPeriod)="navigatePeriodNext()"
     (goToday)="goToday()"
     (bookingSelect)="selectBooking($event)"
+    (granularityChange)="setCalendarGranularity($event)"
   />
 
   <section class="bookings-list" *ngIf="!loading() && viewMode() === 'list'">
     <h2 class="bookings-list__title">Listado de turnos</h2>
     <p class="muted bookings-list__intro">
-      Agrupados por día según la zona de cada negocio. Zona de referencia del filtro superior:
-      {{ calendarTimeZone() }}.
+      Agrupados por día según la zona de cada negocio. Por defecto se listan turnos desde hoy; podés incluir los
+      anteriores con el interruptor de abajo. Zona de referencia del filtro superior: {{ calendarTimeZone() }}.
     </p>
 
     <div class="bookings-list__controls">
@@ -96,6 +101,17 @@
           </button>
         </div>
       </div>
+      <label class="bookings-list__past-toggle">
+        <span class="bookings-list__control-label">Ver turnos pasados</span>
+        <span class="bookings-list__switch">
+          <input
+            type="checkbox"
+            [ngModel]="listShowPastBookings()"
+            (ngModelChange)="listShowPastBookings.set($event)"
+          />
+          <span class="bookings-list__switch-ui" aria-hidden="true"></span>
+        </span>
+      </label>
     </div>
 
     <p class="muted bookings-list__empty" *ngIf="bookings().length === 0">
@@ -106,7 +122,12 @@
       No hay turnos que coincidan con la búsqueda o el filtro de estado.
     </p>
 
-    <div class="bookings-list__wrap" *ngIf="listFilteredRows().length > 0">
+    <p class="muted bookings-list__empty" *ngIf="listHiddenAllPast()">
+      Con los filtros actuales solo hay turnos anteriores a hoy (según la zona de cada negocio). Activá «Ver turnos
+      pasados» para listarlos.
+    </p>
+
+    <div class="bookings-list__wrap" *ngIf="listDayGroups().length > 0">
       <table class="bookings-list__table">
         <thead>
           <tr>
@@ -119,7 +140,7 @@
         @for (group of listDayGroups(); track group.trackKey) {
           <tbody class="bookings-list__tbody-day">
             <tr class="bookings-list__day-separator">
-              <td colspan="5">
+              <td colspan="4">
                 <div class="bookings-list__day-banner">
                   <div class="bookings-list__day-main">
                     <span class="bookings-list__day-title">{{ group.dayTitle }}</span>
@@ -181,6 +202,14 @@
         <div class="booking-detail__field">
           <span class="booking-detail__label">Contacto</span>
           <p class="booking-detail__readonly">{{ row.customerContact || '—' }}</p>
+        </div>
+        <div class="booking-detail__field booking-detail__full">
+          <span class="booking-detail__label">Servicio</span>
+          <p class="booking-detail__readonly">{{ row.service.name }}</p>
+        </div>
+        <div class="booking-detail__field booking-detail__full">
+          <span class="booking-detail__label">Horario</span>
+          <p class="booking-detail__readonly">{{ formatBookingDetailSchedule(row) }}</p>
         </div>
         <label class="booking-detail__full">
           <span>Fecha y hora de inicio</span>

@@ -1,28 +1,41 @@
-import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import type { AdminBookingRow } from '../../../core/services/admin-api.service';
-import { formatBookingTimeInZone } from './admin-bookings-calendar.utils';
-import type { AdminBookingCalendarCell } from './admin-bookings-calendar.types';
+import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
+import { formatBookingTimeInZone, formatBookingTimeRange24InZone } from './admin-bookings-calendar.utils';
+import type { AdminBookingCalendarCell, AdminCalendarGranularity } from './admin-bookings-calendar.types';
+import type { TimeGridDayColumn, TimeGridHourSlot } from './admin-bookings-timegrid.utils';
 
 @Component({
   standalone: true,
   selector: 'app-admin-bookings-calendar',
-  imports: [CommonModule],
+  imports: [SegmentedControlComponent],
   templateUrl: './admin-bookings-calendar.component.html',
-  styleUrl: './admin-bookings-calendar.component.scss',
+  styleUrls: ['./admin-bookings-calendar.component.scss', './admin-bookings-timegrid.scss'],
 })
 export class AdminBookingsCalendarComponent {
+  readonly granularity = input<AdminCalendarGranularity>('month');
   readonly cells = input.required<AdminBookingCalendarCell[]>();
-  readonly monthLabel = input.required<string>();
+  readonly timeGridColumns = input<TimeGridDayColumn[]>([]);
+  readonly timeGridHourSlots = input<TimeGridHourSlot[]>([]);
+  /** Leyenda del rango horario visible (p. ej. horario de apertura + turnos). */
+  readonly timeGridRangeCaption = input('');
+  readonly periodLabel = input.required<string>();
   readonly timeZone = input.required<string>();
   readonly selectedBookingId = input<string | null>(null);
   readonly totalBookings = input(0);
-  readonly bookingsInVisibleMonth = input(0);
+  readonly bookingsInVisiblePeriod = input(0);
 
-  readonly prevMonth = output<void>();
-  readonly nextMonth = output<void>();
+  readonly granularityItems = [
+    { id: 'month', label: 'Mes' },
+    { id: 'week', label: 'Semana' },
+    { id: 'day', label: 'Día' },
+  ] as const;
+
+  readonly prevPeriod = output<void>();
+  readonly nextPeriod = output<void>();
   readonly goToday = output<void>();
   readonly bookingSelect = output<AdminBookingRow>();
+  readonly granularityChange = output<AdminCalendarGranularity>();
 
   formatTime(iso: string): string {
     return formatBookingTimeInZone(iso, this.timeZone());
@@ -45,8 +58,33 @@ export class AdminBookingsCalendarComponent {
     this.bookingSelect.emit(row);
   }
 
+  formatTimeGridRange(row: AdminBookingRow): string {
+    return formatBookingTimeRange24InZone(row.startsAt, row.durationMin, this.timeZone());
+  }
+
   eventAriaLabel(row: AdminBookingRow): string {
-    const svc = row.service.name;
-    return `${this.formatTime(row.startsAt)}, ${svc}, ${row.customerFullName}`;
+    const range = this.formatTimeGridRange(row);
+    return `${range}, ${row.service.name}, ${row.customerFullName}`;
+  }
+
+  onGranularityChange(id: string): void {
+    if (id === 'month' || id === 'week' || id === 'day') {
+      this.granularityChange.emit(id);
+    }
+  }
+
+  evtLeftPct(placed: { lane: number; laneCount: number }): number {
+    const n = Math.max(1, placed.laneCount);
+    const gapPct = n > 1 ? 1.1 : 0;
+    const usable = 100 - gapPct * (n - 1);
+    const w = usable / n;
+    return placed.lane * (w + gapPct);
+  }
+
+  evtWidthPct(placed: { laneCount: number }): number {
+    const n = Math.max(1, placed.laneCount);
+    const gapPct = n > 1 ? 1.1 : 0;
+    const usable = 100 - gapPct * (n - 1);
+    return usable / n;
   }
 }

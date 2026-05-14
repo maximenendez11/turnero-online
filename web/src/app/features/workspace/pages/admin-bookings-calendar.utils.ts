@@ -72,6 +72,34 @@ export function formatBookingTimeInZone(iso: string, timeZone: string): string {
   });
 }
 
+/** Hora compacta 24 h (sin “a. m.”) para rejillas tipo agenda. */
+export function formatBookingTime24InZone(iso: string, timeZone: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const tz = safeIanaTimeZone(timeZone);
+  return d.toLocaleTimeString('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: tz,
+  });
+}
+
+/** Rango `HH:mm–HH:mm` en zona (fin = inicio + duración). */
+export function formatBookingTimeRange24InZone(
+  iso: string,
+  durationMin: number | null | undefined,
+  timeZone: string,
+): string {
+  const start = new Date(iso);
+  if (Number.isNaN(start.getTime())) return '';
+  const dur = Math.max(1, durationMin ?? 30);
+  const end = new Date(start.getTime() + dur * 60 * 1000);
+  const a = formatBookingTime24InZone(iso, timeZone);
+  const b = formatBookingTime24InZone(end.toISOString(), timeZone);
+  return `${a}–${b}`;
+}
+
 export function formatBookingDateMediumInZone(iso: string, timeZone: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;

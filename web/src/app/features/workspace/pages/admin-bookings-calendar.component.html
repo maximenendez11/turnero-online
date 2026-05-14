@@ -1,77 +1,198 @@
-<div class="booking-cal">
-  <div class="booking-cal__toolbar">
-    <div class="booking-cal__nav" role="group" aria-label="Cambiar mes del calendario">
-      <button type="button" class="booking-cal__nav-btn" (click)="prevMonth.emit()" aria-label="Mes anterior">
-        ‹
-      </button>
-      <span class="booking-cal__month" id="booking-cal-month-label" aria-live="polite">{{
-        monthLabel()
-      }}</span>
-      <button type="button" class="booking-cal__nav-btn" (click)="nextMonth.emit()" aria-label="Mes siguiente">
-        ›
-      </button>
-      <button type="button" class="booking-cal__today" (click)="goToday.emit()">Hoy</button>
-    </div>
-
-    <ul class="booking-cal__legend" aria-hidden="true">
-      <li><span class="booking-cal__dot booking-cal__dot--confirmed"></span> Confirmado</li>
-      <li><span class="booking-cal__dot booking-cal__dot--pending"></span> Pendiente</li>
-      <li><span class="booking-cal__dot booking-cal__dot--cancelled"></span> Cancelado</li>
-    </ul>
-  </div>
-
-  <div class="booking-cal__scroll" tabindex="0">
-    <div class="booking-cal__weekdays" aria-hidden="true">
-      <span>Lun</span>
-      <span>Mar</span>
-      <span>Mié</span>
-      <span>Jue</span>
-      <span>Vie</span>
-      <span>Sáb</span>
-      <span>Dom</span>
-    </div>
-
-    <div class="booking-cal__grid" role="grid" aria-labelledby="booking-cal-month-label">
-      @for (cell of cells(); track cell.trackKey) {
-        <div
-          class="booking-cal__cell"
-          [class.booking-cal__cell--muted]="!cell.inMonth"
-          [class.booking-cal__cell--today]="cell.isToday"
-          role="gridcell"
-          [attr.aria-label]="cellAriaLabel(cell)"
-        >
-          <span class="booking-cal__daynum">{{ cell.dayNum }}</span>
-          <div class="booking-cal__events">
-            @for (row of cell.bookings; track row.id) {
-              <button
-                type="button"
-                class="booking-cal__event"
-                [class.booking-cal__event--confirmed]="row.status !== 'pending' && row.status !== 'cancelled'"
-                [class.booking-cal__event--pending]="row.status === 'pending'"
-                [class.booking-cal__event--cancelled]="row.status === 'cancelled'"
-                [class.booking-cal__event--selected]="selectedBookingId() === row.id"
-                [attr.aria-label]="eventAriaLabel(row)"
-                (click)="onBookingClick(row)"
-              >
-                <span class="booking-cal__event-time">{{ formatTime(row.startsAt) }}</span>
-                <span class="booking-cal__event-title">{{ row.service.name }}</span>
-              </button>
-            }
-          </div>
+@if (granularity() === 'month') {
+  <div class="booking-cal">
+    <div class="booking-cal__toolbar">
+      <div class="booking-cal__toolbar-main">
+        <app-segmented-control
+          class="booking-cal__granularity"
+          ariaLabel="Vista del calendario"
+          [items]="granularityItems"
+          [activeId]="granularity()"
+          [scrollable]="true"
+          (change)="onGranularityChange($event)"
+        />
+        <div class="booking-cal__nav" role="group" aria-label="Cambiar mes del calendario">
+          <button type="button" class="booking-cal__nav-btn" (click)="prevPeriod.emit()" aria-label="Período anterior">
+            ‹
+          </button>
+          <span class="booking-cal__month" id="booking-cal-month-label" aria-live="polite">{{
+            periodLabel()
+          }}</span>
+          <button type="button" class="booking-cal__nav-btn" (click)="nextPeriod.emit()" aria-label="Período siguiente">
+            ›
+          </button>
+          <button type="button" class="booking-cal__today" (click)="goToday.emit()">Hoy</button>
         </div>
+      </div>
+
+      <ul class="booking-cal__legend" aria-hidden="true">
+        <li><span class="booking-cal__dot booking-cal__dot--confirmed"></span> Confirmado</li>
+        <li><span class="booking-cal__dot booking-cal__dot--pending"></span> Pendiente</li>
+        <li><span class="booking-cal__dot booking-cal__dot--cancelled"></span> Cancelado</li>
+      </ul>
+    </div>
+
+    <div class="booking-cal__scroll" tabindex="0">
+      <div class="booking-cal__weekdays" aria-hidden="true">
+        <span>Lun</span>
+        <span>Mar</span>
+        <span>Mié</span>
+        <span>Jue</span>
+        <span>Vie</span>
+        <span>Sáb</span>
+        <span>Dom</span>
+      </div>
+
+      <div class="booking-cal__grid" role="grid" aria-labelledby="booking-cal-month-label">
+        @for (cell of cells(); track cell.trackKey) {
+          <div
+            class="booking-cal__cell"
+            [class.booking-cal__cell--muted]="!cell.inMonth"
+            [class.booking-cal__cell--today]="cell.isToday"
+            role="gridcell"
+            [attr.aria-label]="cellAriaLabel(cell)"
+          >
+            <span class="booking-cal__daynum">{{ cell.dayNum }}</span>
+            <div class="booking-cal__events">
+              @for (row of cell.bookings; track row.id) {
+                <button
+                  type="button"
+                  class="booking-cal__event"
+                  [class.booking-cal__event--confirmed]="row.status !== 'pending' && row.status !== 'cancelled'"
+                  [class.booking-cal__event--pending]="row.status === 'pending'"
+                  [class.booking-cal__event--cancelled]="row.status === 'cancelled'"
+                  [class.booking-cal__event--selected]="selectedBookingId() === row.id"
+                  [attr.aria-label]="eventAriaLabel(row)"
+                  (click)="onBookingClick(row)"
+                >
+                  <span class="booking-cal__event-time">{{ formatTime(row.startsAt) }}</span>
+                  <span class="booking-cal__event-title">{{ row.service.name }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (totalBookings() === 0) {
+      <p class="booking-cal__hint booking-cal__hint--empty">No hay turnos cargados todavía.</p>
+    }
+    @if (totalBookings() > 0 && bookingsInVisiblePeriod() === 0) {
+      <p class="booking-cal__hint" role="status">
+        No hay turnos en este mes. Tenés {{ totalBookings() }} en total — usá las flechas para ir al mes donde caen las
+        reservas.
+      </p>
+    }
+  </div>
+} @else {
+  <div class="timegrid">
+    <div class="timegrid__toolbar">
+      <div class="timegrid__toolbar-main">
+        <app-segmented-control
+          class="timegrid__granularity"
+          ariaLabel="Vista del calendario"
+          [items]="granularityItems"
+          [activeId]="granularity()"
+          [scrollable]="true"
+          (change)="onGranularityChange($event)"
+        />
+        <div class="timegrid__nav" role="group" aria-label="Cambiar período visible">
+          <button type="button" class="timegrid__nav-btn" (click)="prevPeriod.emit()" aria-label="Período anterior">
+            ‹
+          </button>
+          <span class="timegrid__period" id="timegrid-period-label" aria-live="polite">{{ periodLabel() }}</span>
+          <button type="button" class="timegrid__nav-btn" (click)="nextPeriod.emit()" aria-label="Período siguiente">
+            ›
+          </button>
+          <button type="button" class="timegrid__today" (click)="goToday.emit()">Hoy</button>
+        </div>
+      </div>
+
+      <ul class="timegrid__legend" aria-hidden="true">
+        <li><span class="timegrid__dot timegrid__dot--confirmed"></span> Confirmado</li>
+        <li><span class="timegrid__dot timegrid__dot--pending"></span> Pendiente</li>
+        <li><span class="timegrid__dot timegrid__dot--cancelled"></span> Cancelado</li>
+      </ul>
+      @if (timeGridRangeCaption()) {
+        <p class="timegrid__range-caption" role="note">{{ timeGridRangeCaption() }}</p>
       }
     </div>
-  </div>
 
-  <p class="booking-cal__hint booking-cal__hint--empty" *ngIf="totalBookings() === 0">
-    No hay turnos cargados todavía.
-  </p>
-  <p
-    class="booking-cal__hint"
-    *ngIf="totalBookings() > 0 && bookingsInVisibleMonth() === 0"
-    role="status"
-  >
-    No hay turnos en este mes. Tenés {{ totalBookings() }} en total — usá las flechas para ir al mes donde caen las
-    reservas.
-  </p>
-</div>
+    <div class="timegrid__body-wrap" tabindex="0" aria-labelledby="timegrid-period-label">
+      <div class="timegrid__head-row">
+        <div class="timegrid__corner" aria-hidden="true"></div>
+        <div class="timegrid__day-heads" role="row">
+          @for (col of timeGridColumns(); track col.dayKey) {
+            <div
+              class="timegrid__day-head"
+              [class.timegrid__day-head--today]="col.isToday"
+              role="columnheader"
+            >
+              <span class="timegrid__dow">{{ col.headerWeekday }}</span>
+              <span class="timegrid__dnum">{{ col.headerDayNum }}</span>
+              @if (granularity() === 'week') {
+                <span class="timegrid__dmon">{{ col.headerMonth }}</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div
+        class="timegrid__grid-row"
+        [class.timegrid__grid-row--day]="granularity() === 'day'"
+        [style.--timegrid-slot-count]="timeGridHourSlots().length"
+      >
+        <div class="timegrid__hours" aria-hidden="true">
+          @for (slot of timeGridHourSlots(); track $index) {
+            <div class="timegrid__hour-cell" [class.timegrid__hour-cell--first]="slot.isFirst">
+              {{ slot.label }}
+            </div>
+          }
+        </div>
+        <div class="timegrid__tracks">
+          @for (col of timeGridColumns(); track col.dayKey) {
+            <div
+              class="timegrid__track"
+              [class.timegrid__track--today]="col.isToday"
+              role="presentation"
+            >
+              @for (slot of col.placed; track slot.row.id) {
+                <button
+                  type="button"
+                  class="timegrid__evt"
+                  [class.timegrid__evt--confirmed]="
+                    slot.row.status !== 'pending' && slot.row.status !== 'cancelled'
+                  "
+                  [class.timegrid__evt--pending]="slot.row.status === 'pending'"
+                  [class.timegrid__evt--cancelled]="slot.row.status === 'cancelled'"
+                  [class.timegrid__evt--selected]="selectedBookingId() === slot.row.id"
+                  [class.timegrid__evt--narrow]="slot.laneCount > 1"
+                  [attr.aria-label]="eventAriaLabel(slot.row)"
+                  [attr.title]="eventAriaLabel(slot.row)"
+                  [style.top.%]="slot.topPct"
+                  [style.height.%]="slot.heightPct"
+                  [style.left.%]="evtLeftPct(slot)"
+                  [style.width.%]="evtWidthPct(slot)"
+                  (click)="onBookingClick(slot.row)"
+                >
+                  <span class="timegrid__evt-title">{{ slot.row.service.name }}</span>
+                  <span class="timegrid__evt-sub">{{ slot.row.customerFullName }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (totalBookings() === 0) {
+      <p class="timegrid__hint">No hay turnos cargados todavía.</p>
+    }
+    @if (totalBookings() > 0 && bookingsInVisiblePeriod() === 0) {
+      <p class="timegrid__hint" role="status">
+        No hay turnos en este período. Tenés {{ totalBookings() }} en total — probá otra fecha o usá las flechas.
+      </p>
+    }
+  </div>
+}

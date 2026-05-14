@@ -9,3 +9,5 @@ export type AdminBookingCalendarCell = {
   bookings: AdminBookingRow[];
   trackKey: string;
 };
+
+export type AdminCalendarGranularity = 'month' | 'week' | 'day';
