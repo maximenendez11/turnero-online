@@ -99,7 +99,7 @@
             type="button"
             *ngFor="let slot of slots"
             class="slot-chip"
-            [class.selected]="flow.value.startsAt === slot"
+            [class.selected]="flow.value.startsAt && isSameSlotSelection(slot)"
             (click)="pickSlot(slot)"
           >
             {{ slotTimeLabel(slot) }}
@@ -107,17 +107,67 @@
         </div>
 
         <p class="empty-msg slots-empty" *ngIf="!slotsLoading && slots.length === 0">
-          No hay horarios disponibles para esta fecha. Probá con otro día.
+          <ng-container *ngIf="lastSlotsFetchSucceeded">
+            No hay horarios disponibles para esta fecha. Probá con otro día o proponé un horario abajo.
+          </ng-container>
+          <ng-container *ngIf="!lastSlotsFetchSucceeded">
+            No se pudieron cargar los horarios. Probá de nuevo en unos minutos o cambiá de día.
+          </ng-container>
         </p>
-      </div>
+
+        <div class="booking-warn" *ngIf="hasOffScheduleWarning()" role="status" aria-live="polite">
+          <strong class="booking-warn__title">Aviso</strong>
+          <p class="booking-warn__text">
+            El horario elegido no está entre los turnos que el negocio publicó para este día (puede ser día cerrado,
+            fuera de horario o sin cupos). Podés seguir con la reserva; el local te confirmará si puede atenderte.
+          </p>
+        </div>
+
+        <div class="slots-custom" *ngIf="!slotsLoading && lastSlotsFetchSucceeded && slots.length === 0">
+          <p class="slots-custom__label">Proponé fecha y hora (reloj de tu dispositivo)</p>
+          <div class="slots-custom__row">
+            <input
+              type="datetime-local"
+              class="slots-custom__input"
+              step="60"
+              [(ngModel)]="customStartsAtLocal"
+              name="customDt"
+            />
+            <button type="button" class="slots-custom__btn" (click)="applyCustomStartsAt()">Usar este horario</button>
+          </div>
+          <p class="slots-custom__err" *ngIf="slotProposalError">{{ slotProposalError }}</p>
+        </div>
+
+        <details class="slots-custom slots-custom--optional" *ngIf="!slotsLoading && lastSlotsFetchSucceeded && slots.length > 0">
+          <summary class="slots-custom__summary">Necesito otro horario (no aparece en la lista)</summary>
+          <div class="slots-custom__row">
+            <input
+              type="datetime-local"
+              class="slots-custom__input"
+              step="60"
+              [(ngModel)]="customStartsAtLocal"
+              name="customDtMore"
+            />
+            <button type="button" class="slots-custom__btn" (click)="applyCustomStartsAt()">Usar este horario</button>
+          </div>
+          <p class="slots-custom__err" *ngIf="slotProposalError">{{ slotProposalError }}</p>
+        </details>
 
       <p class="selection-preview" *ngIf="flow.value.startsAt">
         <span class="selection-preview-label">Selección</span>
         {{ selectedSlotSummary() }}
       </p>
+      </div>
     </div>
 
     <div *ngIf="step === 3" class="confirm">
+      <div class="booking-warn" *ngIf="hasOffScheduleWarning()" role="status" aria-live="polite">
+        <strong class="booking-warn__title">Aviso</strong>
+        <p class="booking-warn__text">
+          El horario no coincide con los turnos publicados para ese día. Podés reservar igual; el negocio te dirá si lo
+          puede confirmar.
+        </p>
+      </div>
       <p><strong>Servicio:</strong> {{ flow.value.service?.name }}</p>
       <p><strong>Horario:</strong> {{ confirmHorarioLine() }}</p>
       <label>

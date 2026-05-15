@@ -1,0 +1,198 @@
+@use '../../../../shared/styles/design-tokens' as dv;
+
+.muted {
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  font-size: 0.82rem;
+}
+
+.abd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: dv.$dv-space-md;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.abd-modal {
+  width: min(100%, 32rem);
+  max-height: min(90vh, 44rem);
+  overflow-y: auto;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border-radius: dv.$dv-radius-xl;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+  background: color-mix(
+    in srgb,
+    var(--booking-primary, #{dv.$dv-primary}) 22%,
+    var(--booking-surface-2, #{dv.$dv-surface-container-high})
+  );
+  border-left: 4px solid var(--booking-primary, #{dv.$dv-primary});
+}
+
+.abd-head {
+  position: relative;
+  padding-right: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.abd-head h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.abd-sub {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+}
+
+.abd-help {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.abd-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-high});
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  cursor: pointer;
+  padding: 0;
+}
+
+.abd-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.abd-error {
+  color: #ffb4ab;
+  margin: 0 0 0.65rem;
+  font-size: 0.88rem;
+}
+
+.abd-loading {
+  margin: 0.5rem 0;
+}
+
+.abd-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.75rem;
+}
+
+.abd-grid label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+}
+
+.abd-full {
+  grid-column: 1 / -1;
+}
+
+.abd-input {
+  background: var(--booking-surface-2, #{dv.$dv-surface-container-low});
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  padding: 0.4rem 0.45rem;
+  font-size: 0.85rem;
+}
+
+.abd-input--wide {
+  width: 100%;
+  min-width: 12rem;
+}
+
+.abd-hint {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+}
+
+.abd-warn {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0.35rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, #d4a574 55%, var(--booking-border, #{dv.$dv-outline-variant}));
+  background: color-mix(in srgb, #d4a574 16%, var(--booking-surface-2, #{dv.$dv-surface-container-high}));
+  color: var(--booking-text, #{dv.$dv-on-surface});
+}
+
+.abd-warn__title {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #e8c49a;
+  margin-bottom: 0.35rem;
+}
+
+.abd-warn__text {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.abd-empty {
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}
+
+.abd-foot {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.abd-primary {
+  background: var(--booking-primary, #{dv.$dv-primary});
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
+  border: 0;
+  border-radius: dv.$dv-radius-md;
+  padding: 0.45rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-height: 2.5rem;
+}
+
+.abd-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.abd-secondary {
+  background: transparent;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  border-radius: dv.$dv-radius-md;
+  padding: 0.45rem 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  min-height: 2.5rem;
+}
+
+.abd-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -28,6 +28,7 @@
         <li><span class="booking-cal__dot booking-cal__dot--confirmed"></span> Confirmado</li>
         <li><span class="booking-cal__dot booking-cal__dot--pending"></span> Pendiente</li>
         <li><span class="booking-cal__dot booking-cal__dot--cancelled"></span> Cancelado</li>
+        <li><span class="booking-cal__dot booking-cal__dot--blocked"></span> Agenda bloqueada</li>
       </ul>
     </div>
 
@@ -64,9 +65,20 @@
                   [attr.aria-label]="eventAriaLabel(row)"
                   (click)="onBookingClick(row)"
                 >
-                  <span class="booking-cal__event-time">{{ formatTime(row.startsAt) }}</span>
+                  <span class="booking-cal__event-time">{{ formatEventTimeRange(row) }}</span>
                   <span class="booking-cal__event-title">{{ row.service.name }}</span>
                 </button>
+              }
+              @for (blk of cell.agendaBlocks; track blk.id) {
+                <div
+                  class="booking-cal__block"
+                  role="note"
+                  [attr.title]="formatBlockMonthChip(blk, cell)"
+                  [attr.aria-label]="formatBlockMonthChip(blk, cell)"
+                >
+                  <span class="booking-cal__block-time">{{ formatBlockRangeOnCell(blk, cell) }}</span>
+                  <span class="booking-cal__block-title">Agenda bloqueada · {{ blk.reason }}</span>
+                </div>
               }
             </div>
           </div>
@@ -112,6 +124,7 @@
         <li><span class="timegrid__dot timegrid__dot--confirmed"></span> Confirmado</li>
         <li><span class="timegrid__dot timegrid__dot--pending"></span> Pendiente</li>
         <li><span class="timegrid__dot timegrid__dot--cancelled"></span> Cancelado</li>
+        <li><span class="timegrid__dot timegrid__dot--blocked"></span> Agenda bloqueada</li>
       </ul>
       @if (timeGridRangeCaption()) {
         <p class="timegrid__range-caption" role="note">{{ timeGridRangeCaption() }}</p>
@@ -157,6 +170,18 @@
               [class.timegrid__track--today]="col.isToday"
               role="presentation"
             >
+              @for (slot of col.placedBlocks; track slot.block.id) {
+                <div
+                  class="timegrid__block"
+                  [attr.title]="formatBlockTimegridTitle(slot.block, col.dayKey)"
+                  [attr.aria-label]="formatBlockTimegridTitle(slot.block, col.dayKey)"
+                  [style.top.%]="slot.topPct"
+                  [style.height.%]="slot.heightPct"
+                >
+                  <span class="timegrid__block-kicker">Agenda bloqueada</span>
+                  <span class="timegrid__block-reason">{{ slot.block.reason }}</span>
+                </div>
+              }
               @for (slot of col.placed; track slot.row.id) {
                 <button
                   type="button"

@@ -1,7 +1,12 @@
 import { Component, input, output } from '@angular/core';
 import type { AdminBookingRow } from '../../../core/services/admin-api.service';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
-import { formatBookingTimeInZone, formatBookingTimeRange24InZone } from './admin-bookings-calendar.utils';
+import {
+  formatAgendaBlockMonthChip,
+  formatAgendaBlockRangeOnZonedDay,
+  formatAgendaBlockTimegridTitle,
+  formatBookingTimeRangeLocalizedInZone,
+} from './admin-bookings-calendar.utils';
 import type { AdminBookingCalendarCell, AdminCalendarGranularity } from './admin-bookings-calendar.types';
 import type { TimeGridDayColumn, TimeGridHourSlot } from './admin-bookings-timegrid.utils';
 
@@ -37,8 +42,9 @@ export class AdminBookingsCalendarComponent {
   readonly bookingSelect = output<AdminBookingRow>();
   readonly granularityChange = output<AdminCalendarGranularity>();
 
-  formatTime(iso: string): string {
-    return formatBookingTimeInZone(iso, this.timeZone());
+  /** Inicio - fin (misma presentación que las tarjetas del mes). */
+  formatEventTimeRange(row: AdminBookingRow): string {
+    return formatBookingTimeRangeLocalizedInZone(row.startsAt, row.durationMin, this.timeZone());
   }
 
   cellAriaLabel(cell: { date: Date }): string {
@@ -58,13 +64,24 @@ export class AdminBookingsCalendarComponent {
     this.bookingSelect.emit(row);
   }
 
-  formatTimeGridRange(row: AdminBookingRow): string {
-    return formatBookingTimeRange24InZone(row.startsAt, row.durationMin, this.timeZone());
+  eventAriaLabel(row: AdminBookingRow): string {
+    const range = this.formatEventTimeRange(row);
+    return `${range}, ${row.service.name}, ${row.customerFullName}`;
   }
 
-  eventAriaLabel(row: AdminBookingRow): string {
-    const range = this.formatTimeGridRange(row);
-    return `${range}, ${row.service.name}, ${row.customerFullName}`;
+  formatBlockRangeOnCell(block: { startsAt: string; endsAt: string; reason: string }, cell: { date: Date }): string {
+    return formatAgendaBlockRangeOnZonedDay(block, cell.date, this.timeZone());
+  }
+
+  formatBlockMonthChip(block: { startsAt: string; endsAt: string; reason: string }, cell: { date: Date }): string {
+    return formatAgendaBlockMonthChip(block, cell.date, this.timeZone());
+  }
+
+  formatBlockTimegridTitle(
+    block: { startsAt: string; endsAt: string; reason: string },
+    dayKey: string,
+  ): string {
+    return formatAgendaBlockTimegridTitle(block, dayKey, this.timeZone());
   }
 
   onGranularityChange(id: string): void {

@@ -1,0 +1,92 @@
+<div class="abd-backdrop" (click)="onBackdropClick()">
+  <article
+    class="abd-modal booking-modal--confirmed"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="abd-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="abd-head">
+      <h2 id="abd-title">Registrar turno</h2>
+      <p class="abd-sub muted" *ngIf="businessName()">{{ businessName() }}</p>
+      <p class="abd-help muted">
+        Para reservas por teléfono o walk-in: queda guardado como turno del negocio (sin mail al cliente). El contacto
+        es opcional si la persona no lo dejó.
+      </p>
+      <button type="button" class="abd-close" (click)="cancel.emit()" [disabled]="saving()" aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <p class="abd-error" *ngIf="error()">{{ error() }}</p>
+
+    <div class="abd-loading muted" *ngIf="loading()">Cargando servicios…</div>
+
+    <ng-container *ngIf="!loading() && detail()">
+      <p class="abd-empty muted" *ngIf="activeServices().length === 0">
+        No hay servicios activos en este negocio. Creá o activá un servicio en «Mi negocio» antes de registrar turnos.
+      </p>
+
+      <div class="abd-grid" *ngIf="activeServices().length > 0">
+        <label class="abd-full">
+          <span>Servicio</span>
+          <select class="abd-input" [(ngModel)]="serviceId" name="svc">
+            <option *ngFor="let s of activeServices()" [value]="s.id">{{ s.name }} ({{ s.durationMin }} min)</option>
+          </select>
+        </label>
+        <label class="abd-full">
+          <span>Fecha y hora de inicio</span>
+          <input
+            type="datetime-local"
+            step="60"
+            class="abd-input abd-input--wide"
+            [(ngModel)]="startsAtLocal"
+            name="starts"
+          />
+          <span class="abd-hint muted">Horario del negocio: {{ timeZone() }}.</span>
+        </label>
+
+        <div class="abd-warn" *ngIf="outsideOpeningHoursWarning()" role="status" aria-live="polite">
+          <strong class="abd-warn__title">Día u horario fuera de agenda</strong>
+          <p class="abd-warn__text">
+            Según la configuración de apertura de este negocio, este momento figura como
+            <strong>cerrado o fuera de horario</strong> (por ejemplo fin de semana sin turnos o muy de madrugada). Podés
+            guardar el turno igual si hubo un acuerdo especial; el aviso es solo para no confundirlo con un horario
+            habitual.
+          </p>
+        </div>
+
+        <label>
+          <span>Cliente</span>
+          <input class="abd-input" type="text" [(ngModel)]="customerFullName" name="custName" autocomplete="name" />
+        </label>
+        <label>
+          <span>Contacto <span class="muted">(opcional)</span></span>
+          <input
+            class="abd-input"
+            type="text"
+            [(ngModel)]="customerContact"
+            name="custContact"
+            placeholder="Teléfono u otro — podés dejarlo vacío"
+            autocomplete="tel"
+          />
+        </label>
+        <label>
+          <span>Estado</span>
+          <select class="abd-input" [(ngModel)]="status" name="st">
+            <option value="confirmed">Confirmado</option>
+            <option value="pending">Pendiente</option>
+            <option value="cancelled">Cancelado</option>
+          </select>
+        </label>
+      </div>
+
+      <footer class="abd-foot" *ngIf="activeServices().length > 0">
+        <button type="button" class="abd-secondary" [disabled]="saving()" (click)="cancel.emit()">Cancelar</button>
+        <button type="button" class="abd-primary" [disabled]="saving()" (click)="submit()">
+          {{ saving() ? 'Guardando…' : 'Guardar turno' }}
+        </button>
+      </footer>
+    </ng-container>
+  </article>
+</div>

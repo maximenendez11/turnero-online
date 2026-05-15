@@ -1,0 +1,107 @@
+<div class="abd-backdrop" (click)="onBackdropClick()">
+  <article
+    class="abd-modal booking-modal--confirmed"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="aab-title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="abd-head">
+      <h2 id="aab-title">Bloquear agenda</h2>
+      <p class="abd-sub muted" *ngIf="businessName()">{{ businessName() }}</p>
+      <p class="abd-help muted">
+        No se pueden reservar turnos nuevos en la franja bloqueada. Si ya hay turnos, podés cancelarlos y avisar o
+        cancelar sin avisar.
+      </p>
+      <button type="button" class="abd-close" (click)="cancel.emit()" [disabled]="saving()" aria-label="Cerrar">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <p class="abd-error" *ngIf="error()">{{ error() }}</p>
+
+    <div *ngIf="successDone()" class="aab-success">
+      <p class="abd-help">El bloqueo quedó guardado.</p>
+      <ul class="aab-notice-list" *ngIf="successNotices().length > 0">
+        <li *ngFor="let n of successNotices()">
+          <span *ngIf="n.emailSent">Se envió un mail de cancelación al cliente.</span>
+          <a *ngIf="n.whatsappUrl" [href]="n.whatsappUrl" target="_blank" rel="noopener noreferrer">
+            Abrir WhatsApp para avisar
+          </a>
+          <span *ngIf="!n.emailSent && !n.whatsappUrl" class="muted">Sin mail ni WhatsApp sugerido para este turno.</span>
+        </li>
+      </ul>
+      <footer class="abd-foot">
+        <button type="button" class="abd-primary" (click)="finish()">Listo</button>
+      </footer>
+    </div>
+
+    <ng-container *ngIf="!successDone()">
+      <div class="abd-grid">
+        <label class="abd-full">
+          <span>Motivo</span>
+          <textarea
+            class="abd-input abd-textarea"
+            rows="2"
+            name="reason"
+            [(ngModel)]="reason"
+            placeholder="Ej.: emergencia, cita médica, mantenimiento…"
+            autocomplete="off"
+          ></textarea>
+        </label>
+        <label>
+          <span>Inicio</span>
+          <input type="datetime-local" class="abd-input" name="s" [(ngModel)]="startsAtLocal" step="60" />
+        </label>
+        <label>
+          <span>Fin</span>
+          <input type="datetime-local" class="abd-input" name="e" [(ngModel)]="endsAtLocal" step="60" />
+        </label>
+        <label class="abd-full">
+          <span>Repetir hasta (opcional)</span>
+          <input type="date" class="abd-input" name="rep" [(ngModel)]="repeatUntilDate" />
+          <span class="abd-hint muted"
+            >Mismo horario cada día civil desde «Inicio» hasta esta fecha (inclusive), en la zona del negocio.</span
+          >
+        </label>
+      </div>
+
+      <div class="aab-actions">
+        <button type="button" class="abd-secondary" [disabled]="saving()" (click)="runPreview()">
+          {{ saving() ? '…' : 'Vista previa (turnos superpuestos)' }}
+        </button>
+      </div>
+
+      <div *ngIf="conflicts().length > 0" class="aab-conflicts">
+        <h3 class="aab-h3">Turnos que chocan con el bloqueo ({{ conflicts().length }})</h3>
+        <ul class="aab-conflict-ul">
+          <li *ngFor="let c of conflicts()">
+            <strong>{{ c.customerFullName }}</strong> · {{ conflictSchedule(c) }} · {{ c.code }}
+          </li>
+        </ul>
+        <fieldset class="aab-fieldset" (change)="onConflictModelChange()">
+          <legend class="abd-hint">Si confirmás el bloqueo</legend>
+          <label class="aab-radio">
+            <input type="radio" name="oc" [(ngModel)]="onConflict" value="fail" />
+            No hacer nada (abortar si sigue habiendo superposición)
+          </label>
+          <label class="aab-radio">
+            <input type="radio" name="oc" [(ngModel)]="onConflict" value="cancel_silent" />
+            Cancelar esos turnos sin avisar
+          </label>
+          <label class="aab-radio">
+            <input type="radio" name="oc" [(ngModel)]="onConflict" value="cancel_with_notice" />
+            Cancelar turnos e intentar avisar (mail si el contacto es email; si no, enlace WhatsApp)
+          </label>
+        </fieldset>
+      </div>
+
+      <footer class="abd-foot">
+        <button type="button" class="abd-ghost" (click)="cancel.emit()" [disabled]="saving()">Cerrar</button>
+        <button type="button" class="abd-primary" [disabled]="saving()" (click)="confirmBlock()">
+          {{ saving() ? 'Guardando…' : 'Confirmar bloqueo' }}
+        </button>
+      </footer>
+    </ng-container>
+  </article>
+</div>

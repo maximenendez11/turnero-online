@@ -76,4 +76,42 @@ export class MailService {
       html,
     });
   }
+
+  /** Aviso al cliente de que su turno se canceló por un bloqueo de agenda en el local. */
+  async sendBookingCancelledAgendaBlock(model: {
+    to: string;
+    businessName: string;
+    customerName: string;
+    serviceName: string;
+    bookingCode: string;
+    blockReason: string;
+    whenLine: string;
+  }): Promise<void> {
+    const from = this.config.get<string>('mail.from') ?? 'noreply@localhost';
+    const subject = `Turno cancelado — ${model.businessName}`;
+    const text = `Hola ${model.customerName},
+
+Tu reserva en ${model.businessName} (${model.serviceName}, código ${model.bookingCode}) fue cancelada porque el local bloqueó la agenda en ese horario.
+
+Motivo indicado por el negocio: ${model.blockReason}
+Franja bloqueada: ${model.whenLine}
+
+Si tenés dudas, contactá directamente al comercio.
+
+Saludos.`;
+    if (!this.transporter) {
+      if (process.env.NODE_ENV !== 'production') {
+        this.logger.warn(`[DEV] Cancelación agenda (sin SMTP) → ${model.to}\n${text}`);
+        return;
+      }
+      this.logger.warn('SMTP no configurado: no se envió el aviso de cancelación por bloqueo de agenda.');
+      return;
+    }
+    await this.transporter.sendMail({
+      from,
+      to: model.to,
+      subject,
+      text,
+    });
+  }
 }

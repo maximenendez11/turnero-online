@@ -1,5 +1,7 @@
 /** Semana que empieza en lunes (es-AR). */
 
+import { DateTime } from 'luxon';
+
 export type CalendarDayCell = { date: Date; inMonth: boolean };
 
 export function buildCalendarWeeks(year: number, month: number): CalendarDayCell[][] {
@@ -61,6 +63,82 @@ export function isSameZonedCalendarDay(a: Date, b: Date, timeZone: string): bool
   }
 }
 
+export type AgendaBlockLike = { startsAt: string; endsAt: string; reason: string };
+
+/** El intervalo del bloqueo intersecta el día civil de `cellDate` en `timeZone`. */
+export function agendaBlockTouchesZonedCalendarDay(
+  block: AgendaBlockLike,
+  cellDate: Date,
+  timeZone: string,
+): boolean {
+  const tz = safeIanaTimeZone(timeZone);
+  const dayKey = formatDayKeyInTimeZone(cellDate, tz);
+  const day0 = DateTime.fromISO(dayKey, { zone: tz }).startOf('day');
+  if (!day0.isValid) return false;
+  const day1 = day0.endOf('day');
+  const b0 = DateTime.fromJSDate(new Date(block.startsAt)).setZone(tz);
+  const b1 = DateTime.fromJSDate(new Date(block.endsAt)).setZone(tz);
+  if (!b0.isValid || !b1.isValid) return false;
+  return b0 < day1 && b1 > day0;
+}
+
+/** Rango `HH:mm–HH:mm` recortado al día civil de la celda (bloqueos que cruzan medianoche). */
+export function formatAgendaBlockRangeOnZonedDay(
+  block: AgendaBlockLike,
+  cellDate: Date,
+  timeZone: string,
+): string {
+  const tz = safeIanaTimeZone(timeZone);
+  const dayKey = formatDayKeyInTimeZone(cellDate, tz);
+  const day0 = DateTime.fromISO(dayKey, { zone: tz }).startOf('day');
+  if (!day0.isValid) return '';
+  const day1 = day0.endOf('day');
+  const b0 = DateTime.fromJSDate(new Date(block.startsAt)).setZone(tz);
+  const b1 = DateTime.fromJSDate(new Date(block.endsAt)).setZone(tz);
+  if (!b0.isValid || !b1.isValid) return '';
+  const clip0 = b0 > day0 ? b0 : day0;
+  const clip1 = b1 < day1 ? b1 : day1;
+  if (!clip0.isValid || !clip1.isValid || clip0 >= clip1) return '';
+  const t0 = clip0.setLocale('es').toFormat('HH:mm');
+  const t1 = clip1.setLocale('es').toFormat('HH:mm');
+  return `${t0}–${t1}`;
+}
+
+/** Texto compacto para la tarjeta del mes. */
+export function formatAgendaBlockMonthChip(
+  block: AgendaBlockLike,
+  cellDate: Date,
+  timeZone: string,
+): string {
+  const range = formatAgendaBlockRangeOnZonedDay(block, cellDate, timeZone);
+  const r = block.reason.trim();
+  const short = r.length > 48 ? `${r.slice(0, 46)}…` : r;
+  return `${range} · Agenda bloqueada · Motivo: ${short}`;
+}
+
+/** Misma lógica que `formatAgendaBlockRangeOnZonedDay` pero con clave `YYYY-MM-DD` en la zona. */
+export function formatAgendaBlockRangeForDayKey(
+  block: AgendaBlockLike,
+  dayKey: string,
+  timeZone: string,
+): string {
+  const tz = safeIanaTimeZone(timeZone);
+  const probe = DateTime.fromISO(dayKey, { zone: tz });
+  if (!probe.isValid) return '';
+  return formatAgendaBlockRangeOnZonedDay(block, probe.toJSDate(), tz);
+}
+
+export function formatAgendaBlockTimegridTitle(
+  block: AgendaBlockLike,
+  dayKey: string,
+  timeZone: string,
+): string {
+  const range = formatAgendaBlockRangeForDayKey(block, dayKey, timeZone);
+  const r = block.reason.trim();
+  const short = r.length > 36 ? `${r.slice(0, 34)}…` : r;
+  return `Agenda bloqueada · ${range} · ${short}`;
+}
+
 export function formatBookingTimeInZone(iso: string, timeZone: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -70,6 +148,23 @@ export function formatBookingTimeInZone(iso: string, timeZone: string): string {
     minute: '2-digit',
     timeZone: tz,
   });
+}
+
+/** Rango de hora con el mismo criterio que `formatBookingTimeInZone` (es-AR, zona del negocio). */
+export function formatBookingTimeRangeLocalizedInZone(
+  iso: string,
+  durationMin: number | null | undefined,
+  timeZone: string,
+): string {
+  const start = new Date(iso);
+  if (Number.isNaN(start.getTime())) return '';
+  const dur = Math.max(1, durationMin ?? 30);
+  const end = new Date(start.getTime() + dur * 60 * 1000);
+  const tz = safeIanaTimeZone(timeZone);
+  const opts: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', timeZone: tz };
+  const a = start.toLocaleTimeString('es-AR', opts);
+  const b = end.toLocaleTimeString('es-AR', opts);
+  return `${a} - ${b}`;
 }
 
 /** Hora compacta 24 h (sin “a. m.”) para rejillas tipo agenda. */

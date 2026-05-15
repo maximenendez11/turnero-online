@@ -88,6 +88,7 @@ model Business {
   staff          BusinessStaff[]
   bookings           Booking[]
   bookingContactOtps BookingContactOtp[]
+  agendaBlocks       AgendaBlock[]
 
   @@index([ownerUserId])
   @@map("businesses")
@@ -207,4 +208,20 @@ model Booking {
 
   @@index([businessId, startsAt])
   @@map("bookings")
+}
+
+/// Franja bloqueada en la agenda (emergencia, cierre puntual, etc.).
+model AgendaBlock {
+  id         String   @id @default(uuid())
+  businessId String   @map("business_id")
+  startsAt   DateTime @map("starts_at")
+  endsAt     DateTime @map("ends_at")
+  reason     String   @db.VarChar(500)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, startsAt])
+  @@map("agenda_blocks")
 }

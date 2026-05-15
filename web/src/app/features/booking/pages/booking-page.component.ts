@@ -57,7 +57,16 @@ export class BookingPageComponent {
   selectedDay = '';
   slots: string[] = [];
   slotsLoading = false;
+  /** Última respuesta de disponibilidad para `selectedDay` (para aviso fuera de agenda). */
+  private lastFetchedDay = '';
+  private lastFetchedSlots: string[] = [];
+  /** Si la última llamada a disponibilidad falló, no inferimos “fuera de agenda”. */
+  lastSlotsFetchSucceeded = false;
   servicesLoading = false;
+  /** Propuesta de horario fuera de los chips (reloj del dispositivo). */
+  customStartsAtLocal = '';
+  /** Error al interpretar la fecha/hora propuesta (paso 2). */
+  slotProposalError = '';
 
   readonly stepperLabels = ['Servicio', 'Fecha', 'Datos', 'Listo'] as const;
   customerFullName = '';
@@ -156,6 +165,8 @@ export class BookingPageComponent {
         await this.router.navigateByUrl(`/${this.tenantSlug}/book/service`);
       } else {
         this.ensureSelectedDayForSlot(this.flow.value.startsAt);
+        this.days = this.generateNextDays();
+        await this.loadSlots();
       }
     } else if (this.step === 4) {
       await businessLoad;
@@ -177,15 +188,49 @@ export class BookingPageComponent {
 
   async pickDay(day: string): Promise<void> {
     this.selectedDay = day;
+    this.slotProposalError = '';
     await this.loadSlots();
     const current = this.flow.value.startsAt;
-    if (current && !this.slots.includes(current)) {
+    if (current && !this.slots.some((s) => this.isSameInstant(s, current))) {
       this.flow.selectSlot(null);
     }
   }
 
   pickSlot(slot: string): void {
+    this.customStartsAtLocal = '';
+    this.slotProposalError = '';
     this.flow.selectSlot(slot);
+  }
+
+  /** Comparación por instante para el chip seleccionado (evita mismatch de string ISO). */
+  isSameSlotSelection(slot: string): boolean {
+    const at = this.flow.value.startsAt;
+    return !!at && this.isSameInstant(slot, at);
+  }
+
+  /** El horario elegido no está entre los turnos publicados para ese día (cerrado, completo u horario manual). */
+  hasOffScheduleWarning(): boolean {
+    if (this.slotsLoading) return false;
+    const at = this.flow.value.startsAt;
+    if (!at || !this.lastSlotsFetchSucceeded) return false;
+    if (this.lastFetchedDay !== this.selectedDay) return false;
+    return !this.lastFetchedSlots.some((s) => this.isSameInstant(s, at));
+  }
+
+  applyCustomStartsAt(): void {
+    this.slotProposalError = '';
+    const v = this.customStartsAtLocal?.trim();
+    if (!v) return;
+    const d = new Date(v);
+    if (Number.isNaN(d.getTime())) {
+      this.slotProposalError = 'Revisá la fecha y hora propuestas.';
+      this.cdr.markForCheck();
+      return;
+    }
+    const t = d.getTime();
+    const snapped = this.slots.find((s) => new Date(s).getTime() === t);
+    this.flow.selectSlot(snapped ?? d.toISOString());
+    this.cdr.markForCheck();
   }
 
   stepAriaLabel(index: number, stepNumber: number): string {
@@ -480,6 +525,12 @@ export class BookingPageComponent {
     return s.charAt(0).toLocaleUpperCase('es') + s.slice(1);
   }
 
+  private isSameInstant(isoA: string, isoB: string): boolean {
+    const ta = new Date(isoA).getTime();
+    const tb = new Date(isoB).getTime();
+    return Number.isFinite(ta) && Number.isFinite(tb) && ta === tb;
+  }
+
   private async loadSlots(): Promise<void> {
     if (!this.flow.value.service) return;
     this.slotsLoading = true;
@@ -490,10 +541,14 @@ export class BookingPageComponent {
         this.api.getAvailability(this.tenantSlug, this.flow.value.service.id, this.selectedDay),
       );
       this.slots = availability.slots;
+      this.lastSlotsFetchSucceeded = true;
     } catch {
       this.slots = [];
+      this.lastSlotsFetchSucceeded = false;
     } finally {
       this.slotsLoading = false;
+      this.lastFetchedDay = this.selectedDay;
+      this.lastFetchedSlots = [...this.slots];
       this.cdr.markForCheck();
     }
   }

@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import type { AdminBookingRow } from '../../../core/services/admin-api.service';
+import type { AdminAgendaBlockRow, AdminBookingRow } from '../../../core/services/admin-api.service';
 import type { OpeningWindowLike } from '../utils/opening-hours-now.utils';
 import { formatDayKeyInTimeZone, safeIanaTimeZone } from './admin-bookings-calendar.utils';
 
@@ -42,6 +42,13 @@ export type TimeGridDayColumn = {
   headerMonth: string;
   isToday: boolean;
   placed: PlacedTimeGridBooking[];
+  placedBlocks: PlacedTimeGridBlock[];
+};
+
+export type PlacedTimeGridBlock = {
+  block: AdminAgendaBlockRow;
+  topPct: number;
+  heightPct: number;
 };
 
 function zonedDayStartMinutes(iso: string, timeZone: string): number {
@@ -106,6 +113,33 @@ export function bookingDaySegmentsInKeys(
   return out;
 }
 
+/** Segmentos de bloqueos de agenda por día civil visible (para ampliar la franja vertical). */
+export function agendaBlockSegmentsInKeys(
+  blocks: AdminAgendaBlockRow[],
+  dayKeys: string[],
+  timeZone: string,
+): { startMin: number; endMin: number }[] {
+  const tz = safeIanaTimeZone(timeZone);
+  const out: { startMin: number; endMin: number }[] = [];
+  for (const dayKey of dayKeys) {
+    const day0 = DateTime.fromISO(dayKey, { zone: tz }).startOf('day');
+    if (!day0.isValid) continue;
+    const day1 = day0.endOf('day');
+    for (const block of blocks) {
+      const b0 = DateTime.fromJSDate(new Date(block.startsAt)).setZone(tz);
+      const b1 = DateTime.fromJSDate(new Date(block.endsAt)).setZone(tz);
+      if (!b0.isValid || !b1.isValid) continue;
+      if (b0 >= day1 || b1 <= day0) continue;
+      const clip0 = b0 > day0 ? b0 : day0;
+      const clip1 = b1 < day1 ? b1 : day1;
+      const startMin = Math.max(0, Math.round(clip0.diff(day0, 'minutes').minutes));
+      const endMin = Math.min(MINUTES_PER_DAY, Math.round(clip1.diff(day0, 'minutes').minutes));
+      if (endMin > startMin) out.push({ startMin, endMin });
+    }
+  }
+  return out;
+}
+
 /**
  * Rango vertical de la rejilla: unión de horarios de apertura por cada día visible,
  * ampliado con turnos reales y padding; alineado a horas enteras.
@@ -114,6 +148,7 @@ export function computeVisibleTimeRange(opts: {
   dayKeys: string[];
   openingWindows: OpeningWindowLike[] | undefined;
   bookingSegments: { startMin: number; endMin: number }[];
+  blockSegments?: { startMin: number; endMin: number }[];
   timeZone: string;
 }): TimeGridVisibleRange {
   const windows = opts.openingWindows ?? [];
@@ -140,6 +175,11 @@ export function computeVisibleTimeRange(opts: {
   }
 
   for (const seg of opts.bookingSegments) {
+    minS = Math.min(minS, seg.startMin);
+    maxE = Math.max(maxE, seg.endMin);
+  }
+
+  for (const seg of opts.blockSegments ?? []) {
     minS = Math.min(minS, seg.startMin);
     maxE = Math.max(maxE, seg.endMin);
   }
@@ -262,11 +302,51 @@ export function placeBookingsInDayColumn(
   return placed;
 }
 
+export function placeAgendaBlocksInDayColumn(
+  blocks: AdminAgendaBlockRow[],
+  dayKey: string,
+  timeZone: string,
+  visible: TimeGridVisibleRange,
+): PlacedTimeGridBlock[] {
+  const tz = safeIanaTimeZone(timeZone);
+  const span = Math.max(60, visible.endMin - visible.startMin);
+  const placed: PlacedTimeGridBlock[] = [];
+  const day0 = DateTime.fromISO(dayKey, { zone: tz }).startOf('day');
+  if (!day0.isValid) return [];
+  const day1 = day0.endOf('day');
+
+  for (const block of blocks) {
+    const b0 = DateTime.fromJSDate(new Date(block.startsAt)).setZone(tz);
+    const b1 = DateTime.fromJSDate(new Date(block.endsAt)).setZone(tz);
+    if (!b0.isValid || !b1.isValid) continue;
+    if (b0 >= day1 || b1 <= day0) continue;
+    const clip0 = b0 > day0 ? b0 : day0;
+    const clip1 = b1 < day1 ? b1 : day1;
+    const startMin = Math.max(0, Math.round(clip0.diff(day0, 'minutes').minutes));
+    const endMin = Math.min(MINUTES_PER_DAY, Math.round(clip1.diff(day0, 'minutes').minutes));
+    if (endMin <= startMin) continue;
+
+    const visStart = Math.max(startMin, visible.startMin);
+    const visEnd = Math.min(endMin, visible.endMin);
+    if (visEnd <= visible.startMin || visStart >= visible.endMin) {
+      continue;
+    }
+
+    const rawH = ((visEnd - visStart) / span) * 100;
+    const heightPct = Math.max(rawH, MIN_EVENT_HEIGHT_PCT);
+    const topPct = ((visStart - visible.startMin) / span) * 100;
+    placed.push({ block, topPct, heightPct });
+  }
+
+  return placed.sort((a, b) => a.topPct - b.topPct);
+}
+
 export function buildTimeGridColumns(
   dayKeys: string[],
   allBookings: AdminBookingRow[],
   timeZone: string,
   visible: TimeGridVisibleRange,
+  agendaBlocks: AdminAgendaBlockRow[] = [],
 ): TimeGridDayColumn[] {
   const tz = safeIanaTimeZone(timeZone);
   const nowKey = formatDayKeyInTimeZone(new Date(), tz);
@@ -282,6 +362,7 @@ export function buildTimeGridColumns(
       headerMonth,
       isToday: dayKey === nowKey,
       placed: placeBookingsInDayColumn(allBookings, dayKey, tz, visible),
+      placedBlocks: placeAgendaBlocksInDayColumn(agendaBlocks, dayKey, tz, visible),
     };
   });
 }

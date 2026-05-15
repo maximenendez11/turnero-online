@@ -139,6 +139,11 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, #cf6679 35%, transparent);
 }
 
+.booking-cal__dot--blocked {
+  background: #8b7cb8;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #8b7cb8 45%, transparent);
+}
+
 .booking-cal__scroll {
   overflow-x: auto;
   overflow-y: visible;
@@ -284,9 +289,41 @@
   outline-offset: 1px;
 }
 
+.booking-cal__block {
+  border-radius: dv.$dv-radius-sm;
+  border-left: 3px solid #8b7cb8;
+  padding: 0.28rem 0.4rem 0.28rem 0.35rem;
+  min-height: 2.1rem;
+  text-align: left;
+  font-size: 0.66rem;
+  line-height: 1.25;
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  justify-content: center;
+  background: color-mix(in srgb, #8b7cb8 22%, var(--booking-surface-2, #{dv.$dv-surface-container-high}));
+}
+
+.booking-cal__block-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.7rem;
+}
+
+.booking-cal__block-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.65rem;
+  opacity: 0.95;
+}
+
 .booking-cal__event-time {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+  font-size: 0.72rem;
 }
 
 .booking-cal__event-title {

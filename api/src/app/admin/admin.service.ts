@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BookingStatus, Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import type { Request } from 'express';
 import { mkdir, writeFile } from 'fs/promises';
@@ -18,6 +18,7 @@ import type { PatchBusinessAdminDto } from './dto/patch-business-admin.dto';
 import type { ReplaceOpeningWindowsDto } from './dto/replace-opening-windows.dto';
 import type { CreateServiceAdminDto, PatchServiceAdminDto } from './dto/patch-service-admin.dto';
 import type { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
+import type { CreateBookingAdminDto } from './dto/create-booking-admin.dto';
 import type { CreateStaffAdminDto, PatchStaffAdminDto } from './dto/staff-admin.dto';
 import { publicBaseUrlFromRequest } from './public-base-url';
 import { getUploadsDir } from '../../uploads-path';
@@ -668,6 +669,70 @@ export class AdminService {
       orderBy: { startsAt: 'desc' },
       take: 500,
     });
+  }
+
+  async createBookingAdmin(user: JwtPayload, businessId: string, dto: CreateBookingAdminDto) {
+    await this.assertBusinessAccess(user, businessId);
+    const service = await this.prisma.businessService.findFirst({
+      where: { id: dto.serviceId, businessId, isActive: true },
+      select: { durationMin: true },
+    });
+    if (!service) throw new BadRequestException('Servicio no válido para este negocio');
+
+    const startsAt = new Date(dto.startsAt);
+    if (Number.isNaN(startsAt.getTime())) throw new BadRequestException('startsAt inválido');
+
+    const durationMin = service.durationMin;
+    const newEndMs = startsAt.getTime() + durationMin * 60_000;
+    const windowStart = new Date(startsAt.getTime() - 36 * 60 * 60 * 1000);
+    const windowEnd = new Date(startsAt.getTime() + 36 * 60 * 60 * 1000);
+
+    const existing = await this.prisma.booking.findMany({
+      where: {
+        businessId,
+        status: { not: BookingStatus.cancelled },
+        startsAt: { gte: windowStart, lte: windowEnd },
+      },
+      select: { startsAt: true, durationMin: true },
+    });
+
+    for (const ex of existing) {
+      const exStart = new Date(ex.startsAt).getTime();
+      const exEnd = exStart + ex.durationMin * 60_000;
+      if (startsAt.getTime() < exEnd && exStart < newEndMs) {
+        throw new ConflictException('Ese horario coincide con otro turno activo.');
+      }
+    }
+
+    const status = dto.status ?? BookingStatus.confirmed;
+
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const code = `BK-${randomBytes(3).toString('hex').toUpperCase()}`;
+      try {
+        return await this.prisma.booking.create({
+          data: {
+            code,
+            businessId,
+            serviceId: dto.serviceId,
+            customerFullName: dto.customerFullName.trim(),
+            customerContact: (dto.customerContact ?? '').trim(),
+            startsAt,
+            durationMin,
+            status,
+          },
+          include: {
+            service: { select: { id: true, name: true } },
+            business: { select: { id: true, name: true, slug: true } },
+          },
+        });
+      } catch (e) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          continue;
+        }
+        throw e;
+      }
+    }
+    throw new BadRequestException('No se pudo generar un código de turno único. Reintentá.');
   }
 
   async patchBooking(user: JwtPayload, bookingId: string, dto: PatchBookingAdminDto) {

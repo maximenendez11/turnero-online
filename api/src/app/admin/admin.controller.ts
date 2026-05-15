@@ -6,16 +6,22 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtPayload } from '../auth/jwt-payload.types';
 import { AdminService } from './admin.service';
+import { AdminAgendaBlockService } from './admin-agenda-block.service';
+import { CreateAgendaBlockAdminDto } from './dto/create-agenda-block-admin.dto';
 import { PatchBusinessAdminDto } from './dto/patch-business-admin.dto';
 import { ReplaceOpeningWindowsDto } from './dto/replace-opening-windows.dto';
 import { CreateServiceAdminDto, PatchServiceAdminDto } from './dto/patch-service-admin.dto';
+import { CreateBookingAdminDto } from './dto/create-booking-admin.dto';
 import { PatchBookingAdminDto } from './dto/patch-booking-admin.dto';
 import { CreateStaffAdminDto, PatchStaffAdminDto } from './dto/staff-admin.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(
+    private readonly admin: AdminService,
+    private readonly agendaBlocks: AdminAgendaBlockService,
+  ) {}
 
   @Get('dashboard/metrics')
   dashboardMetrics(@CurrentUser() user: JwtPayload) {
@@ -122,8 +128,41 @@ export class AdminController {
     return this.admin.listBookings(user, businessId);
   }
 
+  @Post('businesses/:businessId/bookings')
+  createBooking(
+    @CurrentUser() user: JwtPayload,
+    @Param('businessId') businessId: string,
+    @Body() dto: CreateBookingAdminDto,
+  ) {
+    return this.admin.createBookingAdmin(user, businessId, dto);
+  }
+
   @Patch('bookings/:bookingId')
   patchBooking(@CurrentUser() user: JwtPayload, @Param('bookingId') bookingId: string, @Body() dto: PatchBookingAdminDto) {
     return this.admin.patchBooking(user, bookingId, dto);
+  }
+
+  @Get('businesses/:businessId/agenda-blocks')
+  listAgendaBlocks(
+    @CurrentUser() user: JwtPayload,
+    @Param('businessId') businessId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.agendaBlocks.listAgendaBlocks(user, businessId, from, to);
+  }
+
+  @Post('businesses/:businessId/agenda-blocks')
+  createAgendaBlock(
+    @CurrentUser() user: JwtPayload,
+    @Param('businessId') businessId: string,
+    @Body() dto: CreateAgendaBlockAdminDto,
+  ) {
+    return this.agendaBlocks.createAgendaBlock(user, businessId, dto);
+  }
+
+  @Delete('agenda-blocks/:blockId')
+  deleteAgendaBlock(@CurrentUser() user: JwtPayload, @Param('blockId') blockId: string) {
+    return this.agendaBlocks.deleteAgendaBlock(user, blockId);
   }
 }

@@ -89,6 +89,51 @@ export type AdminBookingRow = {
   business: { id: string; name: string; slug: string | null };
 };
 
+export type AdminAgendaBlockRow = {
+  id: string;
+  businessId: string;
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AgendaBlockOnConflict = 'fail' | 'cancel_silent' | 'cancel_with_notice';
+
+export type AdminAgendaBlockConflict = {
+  id: string;
+  code: string;
+  startsAt: string;
+  durationMin: number;
+  status: string;
+  customerFullName: string;
+  customerContact: string;
+  service: { name: string };
+};
+
+export type CreateAgendaBlockBody = {
+  startsAt: string;
+  endsAt: string;
+  reason: string;
+  dryRun?: boolean;
+  onConflict?: AgendaBlockOnConflict;
+};
+
+export type AdminAgendaBlockDryRunResponse = {
+  dryRun: true;
+  conflicts: AdminAgendaBlockConflict[];
+};
+
+export type AdminAgendaBlockCreateResponse = {
+  dryRun: false;
+  block: AdminAgendaBlockRow;
+  cancelledBookingIds: string[];
+  notices: { bookingId: string; emailSent: boolean; whatsappUrl: string | null }[];
+};
+
+export type AdminAgendaBlockCreateResult = AdminAgendaBlockDryRunResponse | AdminAgendaBlockCreateResponse;
+
 export type AdminDashboardMetricsByBusiness = {
   businessId: string;
   businessName: string;
@@ -287,6 +332,37 @@ export class AdminApiService {
 
   patchBooking(bookingId: string, body: Record<string, unknown>): Observable<AdminBookingRow> {
     return this.http.patch<AdminBookingRow>(this.url(`/bookings/${bookingId}`), body);
+  }
+
+  createBooking(
+    businessId: string,
+    body: {
+      serviceId: string;
+      startsAt: string;
+      customerFullName: string;
+      customerContact?: string;
+      status?: 'pending' | 'confirmed' | 'cancelled';
+    },
+  ): Observable<AdminBookingRow> {
+    return this.http.post<AdminBookingRow>(this.url(`/businesses/${businessId}/bookings`), body);
+  }
+
+  getAgendaBlocks(businessId: string, fromIso: string, toIso: string): Observable<AdminAgendaBlockRow[]> {
+    return this.http.get<AdminAgendaBlockRow[]>(this.url(`/businesses/${businessId}/agenda-blocks`), {
+      params: this.cacheBustParams({ from: fromIso, to: toIso }),
+      headers: this.jsonNoCacheHeaders(),
+    });
+  }
+
+  createAgendaBlock(
+    businessId: string,
+    body: CreateAgendaBlockBody,
+  ): Observable<AdminAgendaBlockCreateResult> {
+    return this.http.post<AdminAgendaBlockCreateResult>(this.url(`/businesses/${businessId}/agenda-blocks`), body);
+  }
+
+  deleteAgendaBlock(blockId: string): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(this.url(`/agenda-blocks/${blockId}`));
   }
 
   uploadLandingMedia(businessId: string, file: File, kind: 'banner' | 'staff'): Observable<{ url: string }> {

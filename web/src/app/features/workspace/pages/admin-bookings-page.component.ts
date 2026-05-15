@@ -1,17 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { catchError, firstValueFrom, of } from 'rxjs';
-import { AdminApiService, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
+import { AdminApiService, type AdminAgendaBlockRow, type AdminBookingRow, type AdminBusinessListItem } from '../../../core/services/admin-api.service';
 import { apiErrorMessage } from '../../../core/utils/api-error-message';
 import { WorkspaceThemeService } from '../services/workspace-theme.service';
 import { AdminPageSkeletonComponent } from '../components/admin-page-skeleton/admin-page-skeleton.component';
 import { AdminBookingsCalendarComponent } from './admin-bookings-calendar.component';
+import { AdminBookingCreateDialogComponent } from '../components/admin-booking-create-dialog/admin-booking-create-dialog.component';
+import { AdminAgendaBlockDialogComponent } from '../components/admin-agenda-block-dialog/admin-agenda-block-dialog.component';
 import { SegmentedControlComponent } from '../../../shared/ui/segmented-control/segmented-control.component';
 import type { AdminBookingCalendarCell, AdminCalendarGranularity } from './admin-bookings-calendar.types';
 import type { OpeningWindowLike } from '../utils/opening-hours-now.utils';
 import {
+  agendaBlockTouchesZonedCalendarDay,
   buildCalendarWeeks,
   FALLBACK_CALENDAR_TIMEZONE,
   formatBookingDateCompactInZone,
@@ -27,6 +30,7 @@ import {
   safeIanaTimeZone,
 } from './admin-bookings-calendar.utils';
 import {
+  agendaBlockSegmentsInKeys,
   bookingDaySegmentsInKeys,
   buildHourSlots,
   buildTimeGridColumns,
@@ -53,6 +57,8 @@ type AdminBookingListDayGroup = {
     CommonModule,
     FormsModule,
     AdminBookingsCalendarComponent,
+    AdminBookingCreateDialogComponent,
+    AdminAgendaBlockDialogComponent,
     AdminPageSkeletonComponent,
     SegmentedControlComponent,
   ],
@@ -65,6 +71,8 @@ export class AdminBookingsPageComponent {
 
   readonly businesses = signal<AdminBusinessListItem[]>([]);
   readonly bookings = signal<AdminBookingRow[]>([]);
+  readonly agendaBlocks = signal<AdminAgendaBlockRow[]>([]);
+  private agendaBlocksLoadGen = 0;
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly savingId = signal<string | null>(null);
@@ -77,6 +85,8 @@ export class AdminBookingsPageComponent {
   readonly calendarGranularity = signal<AdminCalendarGranularity>('month');
   readonly selectedBooking = signal<AdminBookingRow | null>(null);
   readonly viewMode = signal<'calendar' | 'list'>('calendar');
+  readonly manualCreateOpen = signal(false);
+  readonly agendaBlockOpen = signal(false);
   readonly viewModeItems = [
     { id: 'calendar', label: 'Calendario' },
     { id: 'list', label: 'Listado' },
@@ -139,10 +149,12 @@ export class AdminBookingsPageComponent {
     const keys = this.timeGridDayKeys();
     const tz = this.calendarTimeZone();
     const segs = bookingDaySegmentsInKeys(this.bookings(), keys, tz);
+    const blockSegs = agendaBlockSegmentsInKeys(this.agendaBlocks(), keys, tz);
     return computeVisibleTimeRange({
       dayKeys: keys,
       openingWindows: this.openingWindowsForCalendar(),
       bookingSegments: segs,
+      blockSegments: blockSegs,
       timeZone: tz,
     });
   });
@@ -155,7 +167,13 @@ export class AdminBookingsPageComponent {
   readonly timeGridColumns = computed(() => {
     if (this.calendarGranularity() === 'month') return [];
     const keys = this.timeGridDayKeys();
-    return buildTimeGridColumns(keys, this.bookings(), this.calendarTimeZone(), this.timeGridVisibleRange());
+    return buildTimeGridColumns(
+      keys,
+      this.bookings(),
+      this.calendarTimeZone(),
+      this.timeGridVisibleRange(),
+      this.agendaBlocks(),
+    );
   });
 
   readonly timeGridRangeCaption = computed(() => {
@@ -198,6 +216,7 @@ export class AdminBookingsPageComponent {
     const anchor = this.viewAnchor();
     const weeks = buildCalendarWeeks(anchor.getFullYear(), anchor.getMonth());
     const rows = this.bookings();
+    const blocks = this.agendaBlocks();
     const today = new Date();
     const out: AdminBookingCalendarCell[] = [];
     for (const week of weeks) {
@@ -210,6 +229,9 @@ export class AdminBookingsPageComponent {
           isToday: isSameZonedCalendarDay(d, today, tz),
           bookings: rows
             .filter((r) => isSameZonedCalendarDay(new Date(r.startsAt), d, tz))
+            .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()),
+          agendaBlocks: blocks
+            .filter((b) => agendaBlockTouchesZonedCalendarDay(b, d, tz))
             .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()),
           trackKey: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
         });
@@ -230,6 +252,11 @@ export class AdminBookingsPageComponent {
   });
 
   readonly filterBusinessId = signal('');
+  readonly filterBusinessName = computed(() => {
+    const id = this.filterBusinessId().trim();
+    if (!id) return '';
+    return this.businesses().find((b) => b.id === id)?.name ?? '';
+  });
   readonly listSearchQuery = signal('');
   readonly listStatusFilter = signal<'all' | 'pending' | 'confirmed' | 'cancelled'>('all');
   /** Si es false, el listado solo muestra grupos de día desde hoy (por zona de cada negocio). */
@@ -302,6 +329,13 @@ export class AdminBookingsPageComponent {
   );
 
   constructor() {
+    effect(() => {
+      this.filterBusinessId();
+      this.calendarGranularity();
+      this.viewAnchor();
+      this.rangeDayKey();
+      queueMicrotask(() => void this.reloadAgendaBlocks());
+    });
     void this.init();
   }
 
@@ -374,6 +408,52 @@ export class AdminBookingsPageComponent {
     if (res == null) return [];
     if (!Array.isArray(res)) return [];
     return res as AdminBookingRow[];
+  }
+
+  private agendaBlocksQueryRange(): { from: string; to: string } {
+    const tz = this.calendarTimeZone();
+    const g = this.calendarGranularity();
+    if (g === 'month') {
+      const anchor = this.viewAnchor();
+      const start = DateTime.fromObject(
+        { year: anchor.getFullYear(), month: anchor.getMonth() + 1, day: 1 },
+        { zone: tz },
+      )
+        .minus({ days: 7 })
+        .toUTC();
+      const end = DateTime.fromObject(
+        { year: anchor.getFullYear(), month: anchor.getMonth() + 1, day: 1 },
+        { zone: tz },
+      )
+        .endOf('month')
+        .plus({ days: 14 })
+        .toUTC();
+      return { from: start.toISO()!, to: end.toISO()! };
+    }
+    const keys = this.timeGridDayKeys();
+    const first = keys[0] ?? this.rangeDayKey();
+    const last = keys[keys.length - 1] ?? this.rangeDayKey();
+    const d0 = DateTime.fromISO(first, { zone: tz }).startOf('day').minus({ hours: 12 });
+    const d1 = DateTime.fromISO(last, { zone: tz }).endOf('day').plus({ hours: 12 });
+    return { from: d0.toUTC().toISO()!, to: d1.toUTC().toISO()! };
+  }
+
+  private async reloadAgendaBlocks(): Promise<void> {
+    const gen = ++this.agendaBlocksLoadGen;
+    const bid = this.filterBusinessId().trim();
+    if (!bid) {
+      if (gen === this.agendaBlocksLoadGen) this.agendaBlocks.set([]);
+      return;
+    }
+    const { from, to } = this.agendaBlocksQueryRange();
+    try {
+      const rows = await firstValueFrom(this.api.getAgendaBlocks(bid, from, to).pipe(catchError(() => of([]))));
+      if (gen !== this.agendaBlocksLoadGen) return;
+      this.agendaBlocks.set(Array.isArray(rows) ? rows : []);
+    } catch {
+      if (gen !== this.agendaBlocksLoadGen) return;
+      this.agendaBlocks.set([]);
+    }
   }
 
   setCalendarGranularity(id: string): void {
@@ -478,6 +558,67 @@ export class AdminBookingsPageComponent {
     }
   }
 
+  canRegisterManualBooking(): boolean {
+    const list = this.businesses();
+    if (list.length === 0) return false;
+    const fid = this.filterBusinessId().trim();
+    if (list.length > 1 && !fid) return false;
+    return fid !== '' || list.length === 1;
+  }
+
+  canBlockAgenda(): boolean {
+    return this.canRegisterManualBooking();
+  }
+
+  blockAgendaDisabledHint(): string | null {
+    if (this.canBlockAgenda()) return null;
+    if (this.businesses().length > 1) return 'Elegí un negocio en el filtro para bloquear la agenda.';
+    return null;
+  }
+
+  manualCreateDisabledHint(): string | null {
+    if (this.canRegisterManualBooking()) return null;
+    if (this.businesses().length > 1) return 'Elegí un negocio en el filtro para registrar un turno.';
+    return null;
+  }
+
+  openManualCreate(): void {
+    if (!this.canRegisterManualBooking()) return;
+    this.clearSelection();
+    this.agendaBlockOpen.set(false);
+    this.manualCreateOpen.set(true);
+  }
+
+  closeManualCreate(): void {
+    this.manualCreateOpen.set(false);
+  }
+
+  openBlockAgenda(): void {
+    if (!this.canBlockAgenda()) return;
+    this.clearSelection();
+    this.manualCreateOpen.set(false);
+    this.agendaBlockOpen.set(true);
+  }
+
+  closeBlockAgenda(): void {
+    this.agendaBlockOpen.set(false);
+  }
+
+  async onAgendaBlockCompleted(): Promise<void> {
+    this.agendaBlockOpen.set(false);
+    await this.reloadBookings();
+    await this.reloadAgendaBlocks();
+  }
+
+  onManualBookingCreated(row: AdminBookingRow): void {
+    this.bookings.update((list) => {
+      const next = [...list, row];
+      next.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
+      return next;
+    });
+    this.manualCreateOpen.set(false);
+  }
+
   onListRowActivate(row: AdminBookingRow, ev: Event): void {
     const t = ev.target as HTMLElement | null;
     if (t?.closest('a, button, input, select, textarea')) return;
@@ -486,6 +627,14 @@ export class AdminBookingsPageComponent {
 
   @HostListener('document:keydown.escape')
   onDocumentEscape(): void {
+    if (this.agendaBlockOpen()) {
+      this.closeBlockAgenda();
+      return;
+    }
+    if (this.manualCreateOpen()) {
+      this.closeManualCreate();
+      return;
+    }
     if (this.selectedBooking()) {
       this.clearSelection();
     }

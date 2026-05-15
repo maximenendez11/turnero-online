@@ -13,16 +13,54 @@
       </select>
     </label>
 
-    <app-segmented-control
-      class="view-mode"
-      ariaLabel="Vista de turnos"
-      [items]="viewModeItems"
-      [activeId]="viewMode()"
-      (change)="setViewMode($event)"
-    />
+    <div class="toolbar__actions">
+      <app-segmented-control
+        class="view-mode"
+        ariaLabel="Vista de turnos"
+        [items]="viewModeItems"
+        [activeId]="viewMode()"
+        (change)="setViewMode($event)"
+      />
+      <button
+        type="button"
+        class="btn-register-booking"
+        [disabled]="!canRegisterManualBooking()"
+        [attr.title]="manualCreateDisabledHint() ?? null"
+        (click)="openManualCreate()"
+      >
+        Registrar turno
+      </button>
+      <button
+        type="button"
+        class="btn-block-agenda"
+        [disabled]="!canBlockAgenda()"
+        [attr.title]="blockAgendaDisabledHint() ?? null"
+        (click)="openBlockAgenda()"
+      >
+        Bloquear agenda
+      </button>
+    </div>
   </div>
 
   <p class="error" *ngIf="error()">{{ error() }}</p>
+
+  @if (manualCreateOpen() && filterBusinessId().trim()) {
+    <app-admin-booking-create-dialog
+      [businessId]="filterBusinessId().trim()"
+      (cancel)="closeManualCreate()"
+      (created)="onManualBookingCreated($event)"
+    />
+  }
+
+  @if (agendaBlockOpen() && filterBusinessId().trim()) {
+    <app-admin-agenda-block-dialog
+      [businessId]="filterBusinessId().trim()"
+      [businessName]="filterBusinessName()"
+      [timeZone]="calendarTimeZone()"
+      (cancel)="closeBlockAgenda()"
+      (completed)="onAgendaBlockCompleted()"
+    />
+  }
 
   <app-admin-page-skeleton *ngIf="loading()" variant="bookings" />
 
