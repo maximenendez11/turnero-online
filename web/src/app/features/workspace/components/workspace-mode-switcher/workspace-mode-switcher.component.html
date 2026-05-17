@@ -1,0 +1,42 @@
+<div
+  class="mode-switch"
+  [class.mode-switch--compact]="compact"
+  [class.mode-switch--stacked]="stacked"
+  [class.mode-switch--loading]="hasBusiness === null"
+  role="tablist"
+  aria-label="Cambiar entre reservar turnos y administrar negocio"
+>
+  <button
+    type="button"
+    class="mode-switch__seg"
+    role="tab"
+    [class.mode-switch__seg--active]="activeMode === 'customer'"
+    [attr.aria-selected]="activeMode === 'customer'"
+    [attr.aria-label]="compact || stacked ? 'Modo reservar turnos' : null"
+    [title]="compact || stacked ? 'Reservar turnos' : null"
+    (click)="goCustomer()"
+  >
+    <span class="material-symbols-outlined mode-switch__icon" aria-hidden="true">event</span>
+    <span class="mode-switch__label">Reservar</span>
+  </button>
+
+  @if (hasBusiness !== null) {
+    <button
+      type="button"
+      class="mode-switch__seg"
+      role="tab"
+      [class.mode-switch__seg--active]="activeMode === 'business'"
+      [attr.aria-selected]="activeMode === 'business'"
+      [attr.aria-label]="compact || stacked ? businessLabelLong() : null"
+      [title]="businessLabelLong()"
+      (click)="goBusiness()"
+    >
+      <span class="material-symbols-outlined mode-switch__icon" aria-hidden="true">{{ businessIcon() }}</span>
+      <span class="mode-switch__label">{{ businessLabel() }}</span>
+    </button>
+  } @else {
+    <span class="mode-switch__seg mode-switch__seg--placeholder" aria-hidden="true">
+      <span class="mode-switch__label">…</span>
+    </span>
+  }
+</div>

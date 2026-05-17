@@ -26,9 +26,19 @@
       </button>
     </div>
 
-    <p class="nav-sidebar__section-label">Menú</p>
+    <app-workspace-mode-switcher
+      class="nav-sidebar__mode-switch"
+      [activeMode]="activeMode"
+      [hasBusiness]="hasBusiness"
+      [compact]="collapsed"
+      [stacked]="collapsed"
+    />
 
-    <ul class="nav-sidebar__list">
+    @if (resolvedLinks.length) {
+      <p class="nav-sidebar__section-label">Menú</p>
+    }
+
+    <ul class="nav-sidebar__list" *ngIf="resolvedLinks.length">
       <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__item">
         <a
           class="nav-sidebar__link"
@@ -77,6 +87,15 @@
         <span class="nav-mobile__hamburger-line" aria-hidden="true"></span>
         <span class="nav-mobile__hamburger-line" aria-hidden="true"></span>
       </button>
+
+      <app-workspace-mode-switcher
+        class="nav-mobile__mode-switch"
+        [activeMode]="activeMode"
+        [hasBusiness]="hasBusiness"
+        [compact]="true"
+        (modeNavigate)="closeMenu()"
+      />
+
       <div class="nav-mobile__brand">
         <span class="nav-sidebar__eyebrow nav-sidebar__eyebrow--topbar">{{ eyebrow }}</span>
         <span class="nav-mobile__title">{{ title }}</span>
@@ -114,14 +133,25 @@
             <span class="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>
-        <p class="nav-sidebar__section-label">Menú</p>
-        <ul class="nav-sidebar__list">
+
+        <app-workspace-mode-switcher
+          class="nav-sidebar__mode-switch"
+          [activeMode]="activeMode"
+          [hasBusiness]="hasBusiness"
+          (modeNavigate)="closeMenu()"
+        />
+
+        @if (resolvedLinks.length) {
+          <p class="nav-sidebar__section-label">Menú</p>
+        }
+        <ul class="nav-sidebar__list" *ngIf="resolvedLinks.length">
           <li *ngFor="let link of resolvedLinks; trackBy: trackByPath" class="nav-sidebar__item">
             <a
               class="nav-sidebar__link"
               [routerLink]="link.path"
               routerLinkActive="nav-sidebar__link--active"
               [routerLinkActiveOptions]="link.exact ? linkActiveExact : linkActiveSubset"
+              (click)="closeMenu()"
             >
               <span class="material-symbols-outlined nav-sidebar__link-icon" aria-hidden="true">
                 {{ linkIconName(link) }}

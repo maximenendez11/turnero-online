@@ -7,21 +7,32 @@
     <app-workspace-nav-sidebar
       variant="rail"
       [title]="workspaceNavTitle()"
-      eyebrow="Administración"
+      [eyebrow]="navEyebrow()"
+      [links]="navLinks()"
+      [activeMode]="activeWorkspaceMode()"
+      [hasBusiness]="hasBusinessAccess()"
       [collapsed]="railCollapsed()"
       (collapsedChange)="onRailCollapsedChange($event)"
     />
   </aside>
   <div class="workspace-layout__body">
     <div class="workspace-layout__mobile-topnav">
-      <app-workspace-nav-sidebar variant="topbar" [title]="workspaceNavTitle()" eyebrow="Administración" />
+      <app-workspace-nav-sidebar
+        variant="topbar"
+        [title]="workspaceNavTitle()"
+        [eyebrow]="navEyebrow()"
+        [links]="navLinks()"
+        [activeMode]="activeWorkspaceMode()"
+        [hasBusiness]="hasBusinessAccess()"
+      />
     </div>
     <header class="workspace-layout__top">
-      <a class="workspace-layout__public-link" *ngIf="publicBookingPath" [routerLink]="publicBookingPath">
-        Ver reserva pública: {{ publicBookingPath }}
-      </a>
+
     </header>
-    <div class="workspace-layout__outlet">
+    <div
+      class="workspace-layout__outlet"
+      [class.workspace-layout__outlet--focused]="isCreateBusinessFlow()"
+    >
       <router-outlet />
     </div>
   </div>

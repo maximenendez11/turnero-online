@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, firstValueFrom, of, timeout } from 'rxjs';
-import { rememberBooking } from '../../customer/recent-bookings.storage';
 import { BookingFlowService } from '../services/booking-flow.service';
 import { PublicBookingApiService, PublicService } from '../services/public-booking-api.service';
 import { hydrateBookingShellSnapshot, persistBookingShellSnapshot } from '../utils/booking-theme-shell.cache';
@@ -12,6 +11,7 @@ import { buildBookingShellCssVars } from '../utils/booking-theme.utils';
 import { formatListPrice as formatPriceArs, formatServiceListPrice } from '../utils/price-display.utils';
 import { AppSplashService } from '../../../core/services/app-splash.service';
 import { ConfigService, type PublicConfig } from '../../../core/services/config.service';
+import { SessionService } from '../../../core/services/session.service';
 import { BookingConfirmContactComponent } from '../components/booking-confirm-contact.component';
 
 type ConfirmedBooking = {
@@ -37,6 +37,7 @@ export class BookingPageComponent {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly splash = inject(AppSplashService);
   private readonly publicConfig = inject(ConfigService);
+  private readonly session = inject(SessionService);
   readonly flow = inject(BookingFlowService);
 
   readonly tenantSlug = this.route.snapshot.paramMap.get('tenantSlug') ?? 'peluqueria-demo';
@@ -72,6 +73,9 @@ export class BookingPageComponent {
   customerFullName = '';
   googleOAuthClientId: string | null = null;
   bookingContactToken = '';
+  verifiedContactEmail = '';
+  sessionContactLoading = false;
+  sessionContactFailed = false;
   reserveSubmitting = false;
   reserveError = '';
   confirmedBooking: ConfirmedBooking | null = null;
@@ -167,6 +171,7 @@ export class BookingPageComponent {
         this.ensureSelectedDayForSlot(this.flow.value.startsAt);
         this.days = this.generateNextDays();
         await this.loadSlots();
+        await this.tryApplySessionContact();
       }
     } else if (this.step === 4) {
       await businessLoad;
@@ -256,8 +261,33 @@ export class BookingPageComponent {
 
   onContactVerified(ev: { token: string; email: string } | null): void {
     this.bookingContactToken = ev?.token?.trim() ?? '';
+    this.verifiedContactEmail = ev?.email?.trim() ?? '';
     this.reserveError = '';
     this.cdr.markForCheck();
+  }
+
+  get isAuthenticated(): boolean {
+    return this.session.isAuthenticated();
+  }
+
+  confirmLoginReturnUrl(): string {
+    return `/${this.tenantSlug}/book/confirm`;
+  }
+
+  private async tryApplySessionContact(): Promise<void> {
+    if (!this.session.isAuthenticated()) return;
+    this.sessionContactLoading = true;
+    this.sessionContactFailed = false;
+    this.cdr.markForCheck();
+    try {
+      const res = await firstValueFrom(this.api.verifySessionBookingContact(this.tenantSlug));
+      this.onContactVerified({ token: res.bookingContactToken, email: res.email });
+    } catch {
+      this.sessionContactFailed = true;
+    } finally {
+      this.sessionContactLoading = false;
+      this.cdr.markForCheck();
+    }
   }
 
   async goNext(): Promise<void> {
@@ -284,11 +314,6 @@ export class BookingPageComponent {
           bookingContactToken: this.bookingContactToken.trim(),
         }),
       );
-      rememberBooking({
-        tenantSlug: this.tenantSlug,
-        code: result.code,
-        at: new Date().toISOString(),
-      });
       this.flow.reset();
       await this.router.navigateByUrl(`/${this.tenantSlug}/book/success/${result.code}`);
     } catch (e) {

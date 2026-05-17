@@ -17,7 +17,7 @@ export class AppController {
   /** Configuración pública para el frontend (p. ej. API key de Google Maps, reCAPTCHA site key). */
   @Get('config')
   getPublicConfig() {
-    const googleMapsApiKey = this.config.get<string>('googleMaps.apiKey');
+    const googleMapsApiKey = this.config.get<string>('googleMaps.apiKey')?.trim();
     const recaptchaSiteKey = this.config.get<string>('recaptcha.siteKey');
     const googleOAuthClientId = this.config.get<string>('google.oauthClientId');
     return {

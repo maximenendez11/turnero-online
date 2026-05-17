@@ -1,0 +1,26 @@
+<a
+  class="biz-card"
+  [class.biz-card--selected]="selected()"
+  [routerLink]="['/', business().slug]"
+  (mouseenter)="hovered.emit()"
+  (focus)="hovered.emit()"
+>
+  <div class="biz-card__media">
+    <img [src]="banner(business())" [alt]="business().name" loading="lazy" />
+  </div>
+  <div class="biz-card__body">
+    <div class="biz-card__head">
+      <h3>{{ business().name }}</h3>
+      <span class="biz-card__rating">
+        <span class="material-symbols-outlined" aria-hidden="true">star</span>
+        {{ rating(business()) }}
+      </span>
+    </div>
+    <p class="biz-card__category">{{ categoryLabel(business().category) }}</p>
+    <p class="biz-card__address">
+      {{ shortAddress(business().address) }}
+      <span *ngIf="business().distanceKm != null"> · {{ business().distanceKm | number: '1.1-1' }} km</span>
+    </p>
+    <p class="biz-card__desc" *ngIf="business().description">{{ business().description }}</p>
+  </div>
+</a>

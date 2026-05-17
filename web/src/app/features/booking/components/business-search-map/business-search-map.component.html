@@ -1,0 +1,8 @@
+<div class="map-panel">
+  <div #mapHost class="map-panel__canvas" role="application" aria-label="Mapa de comercios"></div>
+  <p class="map-panel__fallback" *ngIf="mapError">{{ mapError }}</p>
+  <p class="map-panel__fallback" *ngIf="!mapError && !state.mapsApiKey()">
+    Mapa no disponible: configurá <code>GOOGLE_MAPS_API_KEY</code> en el <code>.env</code> del backend y reiniciá la API.
+  </p>
+  <p class="map-panel__fallback" *ngIf="!mapError && state.mapsApiKey() && !mapReady">Cargando mapa…</p>
+</div>

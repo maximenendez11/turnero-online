@@ -1,0 +1,21 @@
+<section class="results" aria-live="polite">
+  <p class="results__error" *ngIf="state.error()">{{ state.error() }}</p>
+  <p class="results__hint" *ngIf="!state.loading() && !state.error() && !state.hasSearched()">
+    Cargando comercios cerca tuyo…
+  </p>
+  <p class="results__hint" *ngIf="!state.loading() && !state.error() && state.hasSearched() && !state.results().length">
+    No encontramos comercios con ese criterio.
+  </p>
+  <div class="results__skeleton" *ngIf="state.loading()" aria-hidden="true">
+    <div class="sk" *ngFor="let _ of [1, 2, 3]"></div>
+  </div>
+  <ul class="results__list" *ngIf="!state.loading() && state.results().length">
+    <li *ngFor="let business of state.results()">
+      <app-business-search-card
+        [business]="business"
+        [selected]="state.selectedId() === business.id"
+        (hovered)="onHover(business.id)"
+      />
+    </li>
+  </ul>
+</section>

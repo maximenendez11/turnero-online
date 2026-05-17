@@ -7,8 +7,14 @@ export class PublicBookingController {
   constructor(private readonly service: PublicBookingService) {}
 
   @Get('businesses')
-  searchBusinesses(@Query('query') query?: string) {
-    return this.service.searchBusinesses(query);
+  searchBusinesses(
+    @Query('query') query?: string,
+    @Query('category') category?: string,
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+    @Query('radiusKm') radiusKm?: string,
+  ) {
+    return this.service.searchBusinesses({ query, category, lat, lng, radiusKm });
   }
 
   @Get('businesses/:slug')

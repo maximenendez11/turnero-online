@@ -1,0 +1,90 @@
+<section class="onboarding-panel">
+  <header class="onboarding-panel__head">
+    <a class="onboarding-panel__exit" routerLink="/c/appointments">← Volver a mis turnos</a>
+    <p class="onboarding-panel__eyebrow">Crear mi negocio</p>
+    <p class="onboarding-panel__steps">Paso {{ data.step }} de {{ data.total }}</p>
+    <div class="onboarding-panel__progress" aria-hidden="true">
+      <span [style.width.%]="(data.step / data.total) * 100"></span>
+    </div>
+  </header>
+
+  <article class="onboarding-panel__card">
+    <h1>{{ data.title }}</h1>
+    <p class="onboarding-panel__desc">{{ data.description }}</p>
+
+    <form class="onboarding-panel__form" (submit)="$event.preventDefault()">
+      <ng-container [ngSwitch]="stepId">
+        <ng-container *ngSwitchCase="'business-profile'">
+          <label>
+            <span>Nombre del negocio</span>
+            <input [(ngModel)]="draft.businessName" name="businessName" type="text" autocomplete="organization" />
+          </label>
+          <label>
+            <span>Categoría</span>
+            <input [(ngModel)]="draft.businessCategory" name="businessCategory" type="text" />
+          </label>
+          <label>
+            <span>Descripción</span>
+            <input [(ngModel)]="draft.businessDescription" name="businessDescription" type="text" />
+          </label>
+          <label>
+            <span>Dirección</span>
+            <input [(ngModel)]="draft.address" name="address" type="text" autocomplete="street-address" />
+          </label>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'services'">
+          <label>
+            <span>Servicio principal</span>
+            <input [(ngModel)]="draft.serviceName" name="serviceName" type="text" />
+          </label>
+          <label>
+            <span>Duración (min)</span>
+            <input [(ngModel)]="draft.serviceDurationMin" name="serviceDurationMin" type="number" min="5" />
+          </label>
+          <label>
+            <span>Precio</span>
+            <input [(ngModel)]="draft.servicePrice" name="servicePrice" type="number" min="0" />
+          </label>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'schedule'">
+          <label>
+            <span>Zona horaria</span>
+            <input [(ngModel)]="draft.timezone" name="timezone" type="text" />
+          </label>
+          <label>
+            <span>Intervalo entre turnos (min)</span>
+            <input [(ngModel)]="draft.bookingIntervalMin" name="bookingIntervalMin" type="number" min="5" />
+          </label>
+          <p class="onboarding-panel__hint">
+            El horario inicial es lun–vie 9:00–18:00. Podés ajustarlo después en la configuración del negocio.
+          </p>
+        </ng-container>
+
+        <ng-container *ngSwitchDefault>
+          <div class="onboarding-panel__review">
+            <p><strong>Negocio:</strong> {{ draft.businessName || '—' }}</p>
+            <p><strong>Categoría:</strong> {{ draft.businessCategory || '—' }}</p>
+            <p><strong>Dirección:</strong> {{ draft.address || '—' }}</p>
+            <p><strong>Zona horaria:</strong> {{ draft.timezone || '—' }}</p>
+            <p><strong>Intervalo:</strong> {{ draft.bookingIntervalMin || 0 }} min</p>
+            <p><strong>Servicio:</strong> {{ draft.serviceName || '—' }} ({{ draft.servicePrice || 0 }})</p>
+            <p><strong>Link público:</strong></p>
+            <code>{{ bookingLink || '(completá el nombre del negocio)' }}</code>
+          </div>
+        </ng-container>
+      </ng-container>
+    </form>
+
+    <p class="onboarding-panel__error" *ngIf="setupError()">{{ setupError() }}</p>
+
+    <footer class="onboarding-panel__foot">
+      <a *ngIf="data.prev" class="onboarding-panel__back" [routerLink]="data.prev">Anterior</a>
+      <span *ngIf="!data.prev"></span>
+      <button class="onboarding-panel__primary" *ngIf="data.next" type="button" [disabled]="submitting()" (click)="continue()">
+        {{ submitting() ? 'Guardando…' : finishStep ? 'Publicar negocio' : 'Continuar' }}
+      </button>
+    </footer>
+  </article>
+</section>

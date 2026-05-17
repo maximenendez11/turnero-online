@@ -1,8 +1,16 @@
 <main class="auth-shell">
   <section class="auth-card">
     <h1>{{ data.title }}</h1>
-    <p>{{ data.subtitle }}</p>
+    <p class="auth-lead">{{ data.subtitle }}</p>
     <p class="error" *ngIf="errorMessage()">{{ errorMessage() }}</p>
+
+    <div *ngIf="showGoogleSignIn" class="auth-google-block">
+      <div #googleBtnHost class="auth-google-host" [class.is-loading]="googleLoading()"></div>
+      <p *ngIf="googleLoading()" class="auth-google-hint">Cargando Google…</p>
+    </div>
+
+    <p *ngIf="showGoogleSignIn" class="auth-divider" role="separator"><span>o</span></p>
+
     <form (submit)="$event.preventDefault(); submit()">
       <label>
         <span>Email</span>
@@ -47,6 +55,7 @@
         {{ loading() ? 'Conectando…' : data.submitLabel }}
       </button>
     </form>
+
     <p *ngIf="showRecaptchaTerms()" class="auth-recaptcha-terms">
       Este sitio está protegido por reCAPTCHA; aplican la
       <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer"
@@ -58,8 +67,16 @@
       >
       de Google.
     </p>
-    <a *ngIf="data.secondaryLabel && data.secondaryHref" [routerLink]="data.secondaryHref">
-      {{ data.secondaryLabel }}
-    </a>
+
+    <nav class="auth-secondary" *ngIf="data.secondaryLabel && data.secondaryHref">
+      <a [routerLink]="data.secondaryHref" [queryParams]="intentQueryParams">{{ data.secondaryLabel }}</a>
+      <a *ngIf="!isRegister" routerLink="/auth/register" [queryParams]="intentQueryParams">Crear cuenta</a>
+      <a
+        *ngIf="!isRegister && intent === 'customer'"
+        routerLink="/auth/register"
+        [queryParams]="{ intent: 'workspace' }"
+        >Publicar mi negocio</a
+      >
+    </nav>
   </section>
 </main>

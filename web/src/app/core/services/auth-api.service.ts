@@ -23,4 +23,8 @@ export class AuthApiService {
   login(body: { email: string; password: string; recaptchaToken?: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.config.getApiUrl()}/auth/login`, body);
   }
+
+  loginWithGoogle(body: { idToken: string }): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.config.getApiUrl()}/auth/google`, body);
+  }
 }

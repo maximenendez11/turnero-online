@@ -37,14 +37,14 @@ import { NgIf } from '@angular/common';
         transform: scale(0.98);
       }
       .btn-primary {
-        background: #adc6ff;
-        color: #002e6a;
-        box-shadow: 0 0 16px rgba(173, 198, 255, 0.2);
+        background: #1a5fd4;
+        color: #ffffff;
+        box-shadow: 0 4px 18px rgba(26, 95, 212, 0.22);
       }
       .btn-glass {
-        background: rgba(30, 30, 30, 0.8);
-        border-color: #2d2d30;
-        color: #e5e2e1;
+        background: rgba(255, 255, 255, 0.86);
+        border-color: #c8ccd8;
+        color: #1a1b1f;
       }
       .btn-full {
         width: 100%;

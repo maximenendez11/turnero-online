@@ -1,0 +1,104 @@
+<section class="customer-page">
+  <header class="customer-page__head">
+    <h1>{{ data.title }}</h1>
+    <p>{{ data.subtitle }}</p>
+    <p *ngIf="accountEmail" class="customer-page__email">
+      <span class="material-symbols-outlined" aria-hidden="true">mail</span>
+      {{ accountEmail }}
+    </p>
+  </header>
+
+  <div
+    *ngIf="isAppointmentsHub"
+    class="customer-card customer-card--bookings"
+    [attr.aria-busy]="myBookingsLoading"
+    aria-live="polite"
+  >
+    <div class="customer-card__top">
+      <div>
+        <h2>Mis turnos</h2>
+        <p class="customer-card__hint">
+          Reservas asociadas al email de tu cuenta (el mismo que usaste al confirmar con código o Google).
+        </p>
+      </div>
+      <span *ngIf="!myBookingsLoading && myBookings.length > 0" class="customer-card__count">
+        {{ myBookings.length }}
+      </span>
+    </div>
+
+    <div *ngIf="myBookingsLoading" class="bookings-skeleton" aria-hidden="true">
+      <div class="bookings-skeleton__row" *ngFor="let _ of bookingSkeletonSlots">
+        <span class="bookings-skeleton__icon"></span>
+        <span class="bookings-skeleton__lines">
+          <span class="bookings-skeleton__line bookings-skeleton__line--short"></span>
+          <span class="bookings-skeleton__line"></span>
+          <span class="bookings-skeleton__line bookings-skeleton__line--medium"></span>
+        </span>
+      </div>
+    </div>
+
+    <div *ngIf="!myBookingsLoading && myBookingsError" class="bookings-alert bookings-alert--error" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <div>
+        <strong>No se pudieron cargar tus turnos</strong>
+        <p>{{ myBookingsError }}</p>
+      </div>
+    </div>
+
+    <ul *ngIf="!myBookingsLoading && !myBookingsError && myBookings.length > 0" class="bookings-list">
+      <li *ngFor="let b of myBookings">
+        <button
+          type="button"
+          [class]="'booking-row booking-row--' + statusModifier(b.status)"
+          (click)="openBookingModal(b)"
+        >
+          <span class="booking-row__icon material-symbols-outlined" aria-hidden="true">event</span>
+          <span class="booking-row__body">
+            <span class="booking-row__title">{{ b.serviceName }}</span>
+            <span class="booking-row__meta">
+              <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+              {{ b.businessName }}
+            </span>
+            <span class="booking-row__when">
+              <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+              {{ b.startsAt | date: 'EEE d MMM · HH:mm' }}
+            </span>
+            <span class="booking-row__code">Código {{ b.code }}</span>
+          </span>
+          <span class="booking-row__aside">
+            <span class="booking-row__badge" [class]="'booking-row__badge--' + statusModifier(b.status)">
+              {{ statusLabel(b.status) }}
+            </span>
+            <span class="material-symbols-outlined booking-row__chevron" aria-hidden="true">chevron_right</span>
+          </span>
+        </button>
+      </li>
+    </ul>
+
+    <div *ngIf="!myBookingsLoading && !myBookingsError && myBookings.length === 0" class="bookings-empty">
+      <span class="material-symbols-outlined bookings-empty__icon" aria-hidden="true">calendar_month</span>
+      <p><strong>Todavía no tenés turnos</strong></p>
+      <p>Usá «Buscar comercio» en el menú para reservar tu próximo turno.</p>
+    </div>
+  </div>
+
+  <div *ngIf="isProfile" class="customer-card customer-card--profile">
+    <h2>Cuenta</h2>
+    <dl class="profile-fields" *ngIf="accountEmail">
+      <div>
+        <dt>Email</dt>
+        <dd>{{ accountEmail }}</dd>
+      </div>
+    </dl>
+    <p class="customer-card__hint">Próximamente: editar nombre y notificaciones desde acá.</p>
+  </div>
+</section>
+
+<app-customer-booking-modal
+  *ngIf="selectedBooking() as row"
+  [row]="row"
+  [detail]="bookingDetail()"
+  [loading]="bookingDetailLoading()"
+  [error]="bookingDetailError()"
+  (closed)="closeBookingModal()"
+/>

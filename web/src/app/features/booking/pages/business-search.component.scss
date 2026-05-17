@@ -1,0 +1,113 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
+.search-page {
+  --search-surface: #{dv.$dv-surface-container-lowest};
+  --search-surface-2: #{dv.$dv-surface-container};
+  --search-text: #{dv.$dv-on-surface};
+  --search-muted: #{dv.$dv-on-surface-variant};
+  --search-border: #{dv.$dv-outline-variant};
+  --search-primary: #{dv.$dv-primary};
+  --search-on-primary: #{dv.$dv-on-primary};
+  --search-map-h: clamp(380px, 52vh, 560px);
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: min(1400px, 100%);
+  margin-inline: auto;
+  min-height: auto;
+  background: #{dv.$dv-background};
+  color: var(--search-text);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.search-page--embedded {
+  max-width: none;
+  margin-inline: 0;
+  padding: 0;
+  background: transparent;
+  --search-map-h: clamp(340px, 46vh, 500px);
+  --search-surface: var(--booking-surface, #{dv.$dv-surface-container-lowest});
+  --search-surface-2: var(--booking-surface-2, #{dv.$dv-surface-container});
+  --search-text: var(--booking-text, #{dv.$dv-on-surface});
+  --search-muted: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  --search-border: var(--booking-border, #{dv.$dv-outline-variant});
+  --search-primary: var(--booking-primary, #{dv.$dv-primary});
+  --search-on-primary: var(--booking-on-primary, #{dv.$dv-on-primary});
+}
+
+.search-page__head h1 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.85rem);
+  letter-spacing: -0.02em;
+}
+
+.search-page__head p {
+  margin: 0.35rem 0 0;
+  color: var(--search-muted);
+  font-size: 0.92rem;
+}
+
+.search-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.search-page__list {
+  max-height: var(--search-map-h);
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.search-page__map {
+  position: sticky;
+  top: 0.75rem;
+  height: var(--search-map-h);
+  max-height: calc(100svh - 11rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  app-business-search-map {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: block;
+  }
+}
+
+.search-page--embedded .search-page__map {
+  max-height: calc(100dvh - 15rem);
+}
+
+.search-page__map-hint {
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--search-muted, #{dv.$dv-on-surface-variant});
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search-page__map-hint .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+@media (max-width: 900px) {
+  .search-page__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .search-page__map {
+    display: none;
+  }
+
+  .search-page__list {
+    max-height: none;
+  }
+}

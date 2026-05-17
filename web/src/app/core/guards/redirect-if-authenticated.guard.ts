@@ -1,19 +1,24 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { OnboardingService } from '../services/onboarding.service';
+import { AuthRedirectService } from '../services/auth-redirect.service';
 import { SessionService } from '../services/session.service';
+import { safeReturnUrl } from '../utils/safe-return-url';
 
 /** Evita mostrar login/registro si ya hay sesión activa. */
-export const redirectIfAuthenticatedGuard: CanActivateFn = () => {
+export const redirectIfAuthenticatedGuard: CanActivateFn = async (route) => {
   const session = inject(SessionService);
   const router = inject(Router);
-  const onboarding = inject(OnboardingService);
+  const authRedirect = inject(AuthRedirectService);
 
   if (!session.isAuthenticated()) {
     return true;
   }
-  if (!onboarding.isCompleted()) {
-    return router.parseUrl('/onboarding/business-profile');
+
+  const returnUrl = safeReturnUrl(route.queryParamMap.get('returnUrl'));
+  if (returnUrl) {
+    return router.parseUrl(returnUrl);
   }
-  return router.parseUrl('/app/dashboard');
+
+  const target = await authRedirect.resolveAuthenticatedHome(route.queryParamMap.get('intent'));
+  return router.parseUrl(target);
 };

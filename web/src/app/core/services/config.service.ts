@@ -27,8 +27,8 @@ export class ConfigService {
   /** API key de Google Maps/Places. Se obtiene de window.__env o del endpoint /api/config. */
   getGoogleMapsApiKey(): string | null {
     const fromEnv = (window as any).__env?.GOOGLE_MAPS_API_KEY;
-    if (fromEnv) return fromEnv;
-    return this.googleMapsApiKey;
+    const key = (typeof fromEnv === 'string' ? fromEnv : this.googleMapsApiKey)?.trim();
+    return key || null;
   }
 
   /** Site key de reCAPTCHA v3. Se obtiene de window.__env o del endpoint /api/config. */
@@ -52,9 +52,12 @@ export class ConfigService {
       .get<PublicConfig>(`${this.getApiUrl()}/config`)
       .pipe(
         tap((c) => {
-          if (c.googleMapsApiKey) this.googleMapsApiKey = c.googleMapsApiKey;
-          if (c.recaptchaSiteKey) this.recaptchaSiteKey = c.recaptchaSiteKey;
-          if (c.googleOAuthClientId) this.googleOAuthClientId = c.googleOAuthClientId;
+          const mapsKey = c.googleMapsApiKey?.trim();
+          if (mapsKey) this.googleMapsApiKey = mapsKey;
+          const recaptcha = c.recaptchaSiteKey?.trim();
+          if (recaptcha) this.recaptchaSiteKey = recaptcha;
+          const googleClient = c.googleOAuthClientId?.trim();
+          if (googleClient) this.googleOAuthClientId = googleClient;
         }),
         shareReplay(1)
       );

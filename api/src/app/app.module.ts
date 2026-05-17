@@ -13,6 +13,7 @@ import { PublicBookingModule } from './public-booking/public-booking.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { AdminModule } from './admin/admin.module';
 import { MediaModule } from './media/media.module';
+import { CustomerModule } from './customer/customer.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { MediaModule } from './media/media.module';
     OnboardingModule,
     AdminModule,
     MediaModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [AppService],

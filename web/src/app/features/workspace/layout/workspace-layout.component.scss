@@ -1,4 +1,7 @@
 @use '../../../shared/styles/design-tokens' as dv;
+@use '../../../shared/styles/workspace-shell-transitions' as theme;
+
+@include theme.workspace-shell-theme-properties();
 
 .workspace-layout {
   min-height: 100vh;
@@ -6,6 +9,8 @@
   color: var(--booking-text, #{dv.$dv-on-surface});
   display: grid;
   grid-template-columns: 1fr;
+  @include theme.workspace-shell-theme-transition();
+  @include theme.workspace-shell-theme-transition-reduced-motion();
 }
 
 .workspace-layout__rail {
@@ -44,6 +49,13 @@
 .workspace-layout__outlet {
   flex: 1;
   padding: dv.$dv-space-md dv.$dv-space-md dv.$dv-space-md;
+}
+
+.workspace-layout__outlet--focused {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: clamp(1rem, 4vw, 2rem);
 }
 
 @media (min-width: 920px) {

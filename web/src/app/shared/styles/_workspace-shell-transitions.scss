@@ -1,0 +1,102 @@
+// Transiciones suaves de --booking-* al alternar modo cliente ↔ negocio.
+$workspace-theme-ease: cubic-bezier(0.4, 0, 0.2, 1);
+$workspace-theme-duration: 0.32s;
+
+@mixin workspace-shell-theme-properties(
+  $initial-bg: #f7f8fa,
+  $initial-primary: #1a5fd4,
+  $initial-on-primary: #ffffff,
+  $initial-text: #1a1b1f
+) {
+  @property --booking-page-bg {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$initial-bg};
+  }
+  @property --booking-primary {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$initial-primary};
+  }
+  @property --booking-on-primary {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$initial-on-primary};
+  }
+  @property --booking-text {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #{$initial-text};
+  }
+  @property --booking-text-muted {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #4a4d5c;
+  }
+  @property --booking-text-hint {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #6b7080;
+  }
+  @property --booking-surface {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #ffffff;
+  }
+  @property --booking-surface-2 {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #eef0f5;
+  }
+  @property --booking-border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #c8ccd8;
+  }
+  @property --booking-stepper-track {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #e4e7ef;
+  }
+  @property --booking-stepper-todo-bg {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #f3f4f8;
+  }
+  @property --booking-stepper-todo-border {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #c8ccd8;
+  }
+  @property --booking-stepper-current-inner {
+    syntax: '<color>';
+    inherits: true;
+    initial-value: #ffffff;
+  }
+}
+
+@mixin workspace-shell-theme-transition($duration: $workspace-theme-duration) {
+  transition:
+    --booking-page-bg $duration $workspace-theme-ease,
+    --booking-primary $duration $workspace-theme-ease,
+    --booking-on-primary $duration $workspace-theme-ease,
+    --booking-text $duration $workspace-theme-ease,
+    --booking-text-muted $duration $workspace-theme-ease,
+    --booking-text-hint $duration $workspace-theme-ease,
+    --booking-surface $duration $workspace-theme-ease,
+    --booking-surface-2 $duration $workspace-theme-ease,
+    --booking-border $duration $workspace-theme-ease,
+    --booking-stepper-track $duration $workspace-theme-ease,
+    --booking-stepper-todo-bg $duration $workspace-theme-ease,
+    --booking-stepper-todo-border $duration $workspace-theme-ease,
+    --booking-stepper-current-inner $duration $workspace-theme-ease,
+    background-color $duration $workspace-theme-ease,
+    color $duration $workspace-theme-ease,
+    border-color $duration $workspace-theme-ease;
+}
+
+@mixin workspace-shell-theme-transition-reduced-motion() {
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

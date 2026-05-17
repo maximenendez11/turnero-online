@@ -17,6 +17,7 @@ import {
 } from './availability-calendar.utils';
 import { CreatePublicBookingDto } from './dto/create-public-booking.dto';
 import { BookingContactTokenService } from './booking-contact-token.service';
+import { haversineKm, parseCoord } from './geo-distance.utils';
 
 @Injectable()
 export class PublicBookingService {
@@ -29,22 +30,38 @@ export class PublicBookingService {
     private readonly config: ConfigService,
   ) {}
 
-  async searchBusinesses(query?: string) {
+  async searchBusinesses(opts: {
+    query?: string;
+    category?: string;
+    lat?: string;
+    lng?: string;
+    radiusKm?: string;
+  }) {
+    const q = opts.query?.trim();
+    const cat = opts.category?.trim().toLowerCase();
+    const centerLat = parseCoord(opts.lat);
+    const centerLng = parseCoord(opts.lng);
+    const radius = parseCoord(opts.radiusKm) ?? 10;
+    const hasGeoCenter = centerLat != null && centerLng != null;
+    const hasTextFilter = !!q || (!!cat && cat !== 'all');
+
     const where: Prisma.BusinessWhereInput = {
       status: 'active',
       deletedAt: null,
-      ...(query
+      ...(cat && cat !== 'all' ? { category: cat } : {}),
+      ...(q
         ? {
             OR: [
-              { name: { contains: query } },
-              { description: { contains: query } },
-              { address: { contains: query } },
+              { name: { contains: q } },
+              { description: { contains: q } },
+              { address: { contains: q } },
+              { category: { contains: q } },
             ],
           }
         : {}),
     };
 
-    return this.prisma.business.findMany({
+    const rows = await this.prisma.business.findMany({
       where,
       select: {
         id: true,
@@ -52,10 +69,51 @@ export class PublicBookingService {
         name: true,
         description: true,
         address: true,
+        category: true,
+        latitude: true,
+        longitude: true,
+        ratingAverage: true,
+        ratingCount: true,
+        bannerImageUrl: true,
       },
-      orderBy: { name: 'asc' },
-      take: 20,
+      take: 100,
     });
+
+    if (!hasGeoCenter) {
+      return rows.map((r) => ({ ...r, distanceKm: null as number | null }));
+    }
+
+    const withDistance = rows.map((r) => {
+      const hasCoords =
+        typeof r.latitude === 'number' &&
+        typeof r.longitude === 'number' &&
+        Number.isFinite(r.latitude) &&
+        Number.isFinite(r.longitude);
+      const distanceKm = hasCoords
+        ? haversineKm(centerLat, centerLng, r.latitude as number, r.longitude as number)
+        : null;
+      return { ...r, distanceKm };
+    });
+
+    if (!hasTextFilter) {
+      const inRadius = withDistance
+        .filter((r) => r.distanceKm != null && r.distanceKm <= radius)
+        .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+      const pendingGeocode = withDistance
+        .filter((r) => r.distanceKm == null)
+        .slice(0, 20);
+      return [...inRadius, ...pendingGeocode].slice(0, 50);
+    }
+
+    return withDistance
+      .filter((r) => r.distanceKm == null || r.distanceKm <= radius)
+      .sort((a, b) => {
+        if (a.distanceKm == null && b.distanceKm == null) return a.name.localeCompare(b.name);
+        if (a.distanceKm == null) return 1;
+        if (b.distanceKm == null) return -1;
+        return a.distanceKm - b.distanceKm;
+      })
+      .slice(0, 50);
   }
 
   /**
@@ -247,14 +305,16 @@ export class PublicBookingService {
         businessId: business.id,
         serviceId: dto.serviceId,
         customerFullName: dto.customerFullName.trim(),
-        customerContact: claims.email,
+        customerContact: claims.email.trim().toLowerCase(),
         startsAt,
         durationMin: service.durationMin,
         status: BookingStatus.confirmed,
       },
       include: {
         service: { select: { name: true, durationMin: true, price: true, priceOnRequest: true } },
-        business: { select: { name: true, slug: true, address: true, timezone: true } },
+        business: {
+          select: { name: true, slug: true, address: true, timezone: true, themePrimaryHex: true },
+        },
       },
     });
 
@@ -288,6 +348,7 @@ export class PublicBookingService {
         timezoneLabel: tz,
         bookingCode: booking.code,
         manageUrl,
+        brandPrimaryHex: booking.business.themePrimaryHex,
       })
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);

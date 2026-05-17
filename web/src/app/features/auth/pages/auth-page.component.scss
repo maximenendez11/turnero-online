@@ -1,32 +1,81 @@
+@use '../../../shared/styles/design-tokens' as dv;
+
 .auth-shell {
   min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: #131313;
+  background: dv.$dv-background;
 }
 
 .auth-card {
   width: min(460px, 100%);
-  background: rgba(30, 30, 30, 0.8);
-  border: 1px solid #2d2d30;
+  background: dv.$dv-surface-container-lowest;
+  border: 1px solid dv.$dv-outline-variant;
   border-radius: 1rem;
   padding: 1.25rem;
+  box-shadow: 0 12px 40px rgba(26, 27, 31, 0.08);
 }
 
 h1 {
   margin: 0;
-  color: #e5e2e1;
+  color: dv.$dv-on-surface;
   font-size: 1.6rem;
 }
 
 p {
   margin: 0.5rem 0 1rem;
-  color: #c2c6d6;
+  color: dv.$dv-on-surface-variant;
+}
+
+.auth-lead {
+  margin-bottom: 1.1rem;
+}
+
+.auth-google-block {
+  margin-bottom: 0.25rem;
+}
+
+.auth-google-host {
+  display: flex;
+  justify-content: center;
+  min-height: 2.75rem;
+
+  &.is-loading {
+    opacity: 0.55;
+  }
+}
+
+.auth-google-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  color: dv.$dv-outline;
+  font-size: 0.8rem;
+  text-transform: lowercase;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: dv.$dv-outline-variant;
+  }
+
+  span {
+    flex-shrink: 0;
+  }
 }
 
 .error {
-  color: #ffb4a9;
+  color: #b3261e;
   font-size: 0.9rem;
   margin-bottom: 0.75rem;
 }
@@ -42,25 +91,25 @@ label {
 }
 
 label span {
-  color: #c2c6d6;
+  color: dv.$dv-on-surface-variant;
   text-transform: uppercase;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
 }
 
 input {
-  background: #1c1b1b;
-  border: 1px solid #424754;
+  background: dv.$dv-surface-container-lowest;
+  border: 1px solid dv.$dv-outline-variant;
   border-radius: 0.6rem;
   padding: 0.72rem 0.8rem;
-  color: #e5e2e1;
+  color: dv.$dv-on-surface;
   outline: none;
   /* iOS (Safari, Chrome, etc.): WebKit hace zoom al enfocar si el texto del input es <16px */
   font-size: 16px;
 }
 
 input:focus {
-  border-color: #adc6ff;
+  border-color: dv.$dv-primary;
 }
 
 input:disabled {
@@ -98,7 +147,7 @@ input:disabled {
   border: 0;
   border-radius: 0.45rem;
   background: transparent;
-  color: #c2c6d6;
+  color: dv.$dv-on-surface-variant;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -106,12 +155,12 @@ input:disabled {
 }
 
 .auth-password-toggle:hover:not(:disabled) {
-  color: #e5e2e1;
-  background: rgba(255, 255, 255, 0.06);
+  color: dv.$dv-on-surface;
+  background: dv.$dv-surface-container;
 }
 
 .auth-password-toggle:focus-visible {
-  outline: 2px solid #adc6ff;
+  outline: 2px solid dv.$dv-primary;
   outline-offset: 2px;
 }
 
@@ -131,8 +180,8 @@ form > button[type='submit'] {
   border-radius: 0.75rem;
   padding: 0.78rem;
   font-weight: 700;
-  color: #002e6a;
-  background: #adc6ff;
+  color: dv.$dv-on-primary;
+  background: dv.$dv-primary;
   cursor: pointer;
 }
 
@@ -145,10 +194,10 @@ form > button[type='submit']:disabled {
   margin: 0.85rem 0 0;
   font-size: 0.7rem;
   line-height: 1.45;
-  color: #8c909f;
+  color: dv.$dv-outline;
 
   a {
-    color: #adc6ff;
+    color: dv.$dv-primary;
     text-decoration: none;
   }
 
@@ -157,9 +206,18 @@ form > button[type='submit']:disabled {
   }
 }
 
-a {
-  display: inline-block;
+.auth-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
   margin-top: 0.95rem;
-  color: #adc6ff;
-  text-decoration: none;
+
+  a {
+    color: dv.$dv-primary;
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
 }

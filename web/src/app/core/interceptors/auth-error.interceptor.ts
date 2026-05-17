@@ -24,7 +24,7 @@ export const authErrorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       const url = req.url;
-      if (url.includes('/auth/login') || url.includes('/auth/register')) {
+      if (url.includes('/auth/login') || url.includes('/auth/google') || url.includes('/auth/register')) {
         session.signOut();
         void router.navigateByUrl('/auth/login', { replaceUrl: true });
         return throwError(() => err);

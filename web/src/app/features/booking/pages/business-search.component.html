@@ -1,0 +1,25 @@
+<div class="search-page" [class.search-page--embedded]="embedded">
+  <header class="search-page__head">
+    <h1>Encontrá tu próximo turno</h1>
+    <p *ngIf="embedded">Explorá comercios y reservá desde tu panel.</p>
+    <p *ngIf="!embedded">Compará locales, ubicación y rubros en un solo lugar.</p>
+  </header>
+
+  <app-business-search-toolbar (searchSubmit)="onSearch()" />
+
+  <div class="search-page__layout">
+    <div class="search-page__list">
+      <app-business-search-results />
+    </div>
+    <aside class="search-page__map" aria-label="Mapa">
+      <app-business-search-map
+        [businesses]="state.results()"
+        [selectedId]="state.selectedId()"
+      />
+      <p class="search-page__map-hint" *ngIf="state.searchCenter() as c">
+        <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+        Buscando a {{ state.radiusKm() }} km desde {{ c.label }}
+      </p>
+    </aside>
+  </div>
+</div>

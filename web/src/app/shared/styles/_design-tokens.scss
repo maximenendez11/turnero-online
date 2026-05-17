@@ -1,17 +1,18 @@
-// Tokens Deep Velocity — alineados con DESIGN.md (YAML + guía escrita)
-$dv-background: #131313;
-$dv-surface-container-lowest: #0e0e0e;
-$dv-surface-container-low: #1c1b1b;
-$dv-surface-container: #201f1f;
-$dv-surface-container-high: #2a2a2a;
-$dv-surface-container-highest: #353534;
-$dv-on-surface: #e5e2e1;
-$dv-on-surface-variant: #c2c6d6;
-$dv-outline: #8c909f;
-$dv-outline-variant: #424754;
-$dv-primary: #adc6ff;
-$dv-on-primary: #002e6a;
-$dv-primary-glow: rgba(173, 198, 255, 0.22);
+// Tokens del shell de la app (marketing, auth, workspace sin tema de negocio).
+// Los colores de marca por negocio viven en --booking-* (booking-theme.utils.ts).
+$dv-background: #f7f8fa;
+$dv-surface-container-lowest: #ffffff;
+$dv-surface-container-low: #f3f4f8;
+$dv-surface-container: #eef0f5;
+$dv-surface-container-high: #e4e7ef;
+$dv-surface-container-highest: #d8dce6;
+$dv-on-surface: #1a1b1f;
+$dv-on-surface-variant: #4a4d5c;
+$dv-outline: #6b7080;
+$dv-outline-variant: #c8ccd8;
+$dv-primary: #1a5fd4;
+$dv-on-primary: #ffffff;
+$dv-primary-glow: rgba(26, 95, 212, 0.16);
 
 $dv-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 

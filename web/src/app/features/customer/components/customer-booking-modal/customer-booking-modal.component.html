@@ -1,0 +1,91 @@
+<div class="cbm-backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+
+<article
+  class="cbm-dialog"
+  [class.cbm-dialog--pending]="statusModifier(effectiveStatus()) === 'pending'"
+  [class.cbm-dialog--cancelled]="statusModifier(effectiveStatus()) === 'cancelled'"
+  [class.cbm-dialog--confirmed]="statusModifier(effectiveStatus()) === 'confirmed'"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'cbm-title-' + row.code"
+  [attr.aria-busy]="loading"
+  (click)="$event.stopPropagation()"
+>
+  <div class="cbm-grab" aria-hidden="true"></div>
+
+  <header class="cbm-head">
+    <div class="cbm-head__main">
+      <span class="cbm-badge" [class]="'cbm-badge--' + statusModifier(effectiveStatus())">
+        {{ statusLabel(effectiveStatus()) }}
+      </span>
+      <h2 [id]="'cbm-title-' + row.code">{{ row.serviceName }}</h2>
+      <p class="cbm-meta">
+        <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+        {{ row.businessName }}
+      </p>
+      <p class="cbm-code">
+        Código <code>{{ row.code }}</code>
+      </p>
+    </div>
+    <button type="button" class="cbm-close" (click)="closed.emit()" aria-label="Cerrar">
+      <span class="material-symbols-outlined" aria-hidden="true">close</span>
+    </button>
+  </header>
+
+  <section class="cbm-body" aria-live="polite">
+    <div *ngIf="loading" class="cbm-skeleton" aria-hidden="true">
+      <div class="cbm-skeleton__row" *ngFor="let _ of [1, 2, 3, 4]">
+        <span class="cbm-skeleton__icon"></span>
+        <span class="cbm-skeleton__lines">
+          <span class="cbm-skeleton__line cbm-skeleton__line--short"></span>
+          <span class="cbm-skeleton__line"></span>
+        </span>
+      </div>
+    </div>
+
+    <div *ngIf="!loading && error" class="cbm-alert cbm-alert--error" role="alert">
+      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+      <div>
+        <strong>No se pudo cargar el detalle</strong>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+
+    <ul *ngIf="!loading && !error" class="cbm-facts">
+      <li class="cbm-fact">
+        <span class="cbm-fact__icon material-symbols-outlined" aria-hidden="true">calendar_month</span>
+        <div>
+          <span class="cbm-fact__label">Horario</span>
+          <span class="cbm-fact__value">{{ (detail?.startsAt ?? row.startsAt) | date: 'EEEE d MMM · HH:mm' }}</span>
+        </div>
+      </li>
+      <li class="cbm-fact" *ngIf="detail?.durationMin ?? row.durationMin">
+        <span class="cbm-fact__icon material-symbols-outlined" aria-hidden="true">schedule</span>
+        <div>
+          <span class="cbm-fact__label">Duración</span>
+          <span class="cbm-fact__value">{{ detail?.durationMin ?? row.durationMin }} min</span>
+        </div>
+      </li>
+      <li class="cbm-fact" *ngIf="detail?.customerFullName ?? row.customerFullName">
+        <span class="cbm-fact__icon material-symbols-outlined" aria-hidden="true">person</span>
+        <div>
+          <span class="cbm-fact__label">Reservado a nombre de</span>
+          <span class="cbm-fact__value">{{ detail?.customerFullName ?? row.customerFullName }}</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <footer class="cbm-foot">
+    <button type="button" class="cbm-btn cbm-btn--ghost" (click)="closed.emit()">Cerrar</button>
+    <a
+      *ngIf="businessSlug() as slug"
+      class="cbm-btn cbm-btn--primary"
+      [routerLink]="['/', slug]"
+      (click)="onNavigateAway()"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+      Ver comercio
+    </a>
+  </footer>
+</article>

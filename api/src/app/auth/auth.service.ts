@@ -1,6 +1,13 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
+import {
+  ConflictException,
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcryptjs';
 import type { JwtSignOptions } from '@nestjs/jwt';
 import type { Role } from '@prisma/client';
@@ -54,6 +61,53 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
     return this.issueTokens(user.id, user.email, user.role);
+  }
+
+  async loginWithGoogle(idToken: string): Promise<AuthTokens> {
+    const email = await this.verifyGoogleEmail(idToken);
+    let user = await this.prisma.user.findFirst({
+      where: { email, deletedAt: null },
+      select: { id: true, email: true, role: true },
+    });
+    if (!user) {
+      const passwordHash = bcrypt.hashSync(randomBytes(32).toString('hex'), 10);
+      user = await this.prisma.user.create({
+        data: { email, password: passwordHash, role: 'USER' },
+        select: { id: true, email: true, role: true },
+      });
+    }
+    return this.issueTokens(user.id, user.email, user.role);
+  }
+
+  private async verifyGoogleEmail(idToken: string): Promise<string> {
+    const trimmed = idToken.trim();
+    if (!trimmed) {
+      throw new UnauthorizedException('Token de Google requerido');
+    }
+    const clientId = this.config.get<string>('google.oauthClientId')?.trim() ?? '';
+    if (!clientId) {
+      throw new ServiceUnavailableException('Inicio de sesión con Google no está configurado.');
+    }
+    const client = new OAuth2Client(clientId);
+    try {
+      const ticket = await client.verifyIdToken({ idToken: trimmed, audience: clientId });
+      const payload = ticket.getPayload();
+      if (!payload?.email) {
+        throw new UnauthorizedException('No se pudo verificar el email con Google.');
+      }
+      if (payload.email_verified === false) {
+        throw new UnauthorizedException('El email de Google no está verificado.');
+      }
+      return payload.email.trim().toLowerCase();
+    } catch (e) {
+      if (
+        e instanceof UnauthorizedException ||
+        e instanceof ServiceUnavailableException
+      ) {
+        throw e;
+      }
+      throw new UnauthorizedException('Token de Google inválido.');
+    }
   }
 
   async refresh(refreshToken: string): Promise<AuthTokens> {

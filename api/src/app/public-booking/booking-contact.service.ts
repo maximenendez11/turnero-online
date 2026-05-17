@@ -10,6 +10,7 @@ import { OAuth2Client } from 'google-auth-library';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import type { JwtPayload } from '../auth/jwt-payload.types';
 import { BookingContactTokenService } from './booking-contact-token.service';
 
 @Injectable()
@@ -112,6 +113,28 @@ export class BookingContactService {
     });
 
     return { bookingContactToken, email };
+  }
+
+  /** Usuario con sesión JWT: reutiliza el email de la cuenta sin OTP. */
+  async verifySession(slug: string, user: JwtPayload) {
+    const email = this.normalizeEmail(user.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException('Email de sesión inválido');
+    }
+
+    const business = await this.requireActiveBusinessForContact(slug);
+
+    const bookingContactToken = this.tokens.signToken({
+      email,
+      businessId: business.id,
+      slug: business.slug,
+    });
+
+    return {
+      bookingContactToken,
+      email,
+      name: null,
+    };
   }
 
   async verifyGoogle(slug: string, idToken: string) {

@@ -174,7 +174,23 @@
         Nombre completo
         <input [(ngModel)]="customerFullName" name="customerFullName" />
       </label>
+      <p class="muted small" *ngIf="!isAuthenticated">
+        ¿Ya tenés cuenta?
+        <a
+          routerLink="/auth/login"
+          [queryParams]="{ returnUrl: confirmLoginReturnUrl(), intent: 'customer' }"
+        >
+          Iniciá sesión
+        </a>
+        para usar el email de tu cuenta, o verificá un contacto abajo sin registrarte.
+      </p>
+      <p class="muted small" *ngIf="sessionContactLoading">Usando el email de tu sesión…</p>
+      <div *ngIf="verifiedContactEmail && isAuthenticated" class="contact-session" role="status">
+        <strong>Contacto de tu cuenta</strong>
+        <span>{{ verifiedContactEmail }}</span>
+      </div>
       <app-booking-confirm-contact
+        *ngIf="!sessionContactLoading && (!isAuthenticated || sessionContactFailed || !verifiedContactEmail)"
         [tenantSlug]="tenantSlug"
         [googleOAuthClientId]="googleOAuthClientId"
         (verifiedChange)="onContactVerified($event)"
@@ -196,7 +212,8 @@
         Código de reserva: <strong>{{ bookingCode }}</strong>. Podés ver el detalle en «Mis turnos» o «Ver turno».
       </p>
       <p class="success-hint muted">
-        Tus reservas hechas desde este navegador aparecen en <a routerLink="/c/appointments">Mis turnos</a>.
+        Iniciá sesión con el mismo email que usaste para confirmar y vas a ver este turno en
+        <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/c/appointments' }">Mis turnos</a>.
       </p>
     </div>
   </section>

@@ -181,16 +181,16 @@
   flex-direction: column;
   padding: 1.35rem 1.25rem 1.5rem;
   border-radius: 1rem;
-  background: rgba(28, 28, 30, 0.95);
-  border: 1px solid #2d2d30;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 28px rgba(26, 27, 31, 0.06);
 }
 
 .pricing-card--featured {
-  border-color: rgba(173, 198, 255, 0.45);
+  border-color: rgba(26, 95, 212, 0.35);
   box-shadow:
-    0 0 0 1px rgba(173, 198, 255, 0.12),
-    0 12px 40px rgba(0, 46, 106, 0.2);
+    0 0 0 1px rgba(26, 95, 212, 0.1),
+    0 12px 36px rgba(26, 95, 212, 0.12);
 }
 
 .pricing-card h3 {
@@ -225,7 +225,7 @@
   gap: 0.5rem;
   font-size: 0.875rem;
   line-height: 1.45;
-  color: #dfe2ec;
+  color: var(--text);
 }
 
 .pricing-icon {
@@ -237,7 +237,7 @@
 }
 
 .pricing-icon--check {
-  color: #5b8cff;
+  color: var(--primary);
 }
 
 .pricing-icon--plus {
@@ -247,7 +247,7 @@
 .pricing-staff {
   margin-top: 1.25rem;
   padding-top: 1.1rem;
-  border-top: 1px solid rgba(66, 71, 84, 0.45);
+  border-top: 1px solid var(--border);
 }
 
 .pricing-staff-label {
@@ -256,7 +256,7 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #8c909f;
+  color: var(--muted);
   margin-bottom: 0.55rem;
 }
 
@@ -271,8 +271,8 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.55rem;
-  border: 1px solid rgba(173, 198, 255, 0.35);
-  background: rgba(173, 198, 255, 0.1);
+  border: 1px solid rgba(26, 95, 212, 0.28);
+  background: rgba(26, 95, 212, 0.08);
   color: var(--primary);
   font-size: 1.25rem;
   font-weight: 700;
@@ -284,7 +284,7 @@
 }
 
 .pricing-staff-btn:hover:not(:disabled) {
-  background: rgba(173, 198, 255, 0.18);
+  background: rgba(26, 95, 212, 0.14);
 }
 
 .pricing-staff-btn:disabled {
@@ -324,12 +324,12 @@
 .footer-bottom {
   margin-top: 0;
   padding: 1.25rem 0 2.25rem;
-  border-top: 1px solid rgba(66, 71, 84, 0.4);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  color: #8c909f;
+  color: var(--muted);
   font-size: 0.8125rem;
   text-align: center;
 }

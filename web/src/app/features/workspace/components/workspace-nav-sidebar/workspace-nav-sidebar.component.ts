@@ -14,7 +14,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
 import { SessionService } from '../../../../core/services/session.service';
+import { WorkspaceModeSwitcherComponent } from '../workspace-mode-switcher/workspace-mode-switcher.component';
 import { WORKSPACE_NAV_LINKS, type WorkspaceNavLink } from '../../workspace-nav.config';
+import type { WorkspaceMode } from '../../workspace-mode.config';
 
 /** `rail`: columna lateral (desktop). `topbar`: barra móvil con menú hamburguesa y cajón lateral. */
 export type WorkspaceNavSidebarVariant = 'rail' | 'topbar';
@@ -22,7 +24,7 @@ export type WorkspaceNavSidebarVariant = 'rail' | 'topbar';
 @Component({
   standalone: true,
   selector: 'app-workspace-nav-sidebar',
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, WorkspaceModeSwitcherComponent],
   templateUrl: './workspace-nav-sidebar.component.html',
   styleUrl: './workspace-nav-sidebar.component.scss',
 })
@@ -58,6 +60,11 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
    */
   @Input() links: WorkspaceNavLink[] | null = null;
 
+  @Input() activeMode: WorkspaceMode = 'customer';
+
+  /** null = cargando acceso al panel de negocio. */
+  @Input() hasBusiness: boolean | null = null;
+
   /** Solo variante `topbar`: cajón lateral abierto. */
   readonly menuOpen = signal(false);
 
@@ -77,7 +84,7 @@ export class WorkspaceNavSidebarComponent implements OnDestroy {
   }
 
   get resolvedLinks(): WorkspaceNavLink[] {
-    return this.links?.length ? this.links : WORKSPACE_NAV_LINKS;
+    return this.links ?? WORKSPACE_NAV_LINKS;
   }
 
   trackByPath(_index: number, link: WorkspaceNavLink): string {

@@ -1,9 +1,14 @@
 import { Route } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { redirectIfAuthenticatedGuard } from './core/guards/redirect-if-authenticated.guard';
-import { onboardingCompleteGuard } from './core/guards/onboarding-complete.guard';
+import { onboardingCreateGuard } from './core/guards/onboarding-create.guard';
+import { workspaceBusinessGuard } from './core/guards/workspace-business.guard';
 import { tenantGuard } from './core/guards/tenant.guard';
 import { adminBusinessCanDeactivate } from './features/workspace/pages/admin-business-page.deactivate';
+import {
+  customerOnboardingRoutes,
+  legacyOnboardingRedirects,
+} from './features/onboarding/onboarding.routes';
 
 export const appRoutes: Route[] = [
   {
@@ -16,11 +21,12 @@ export const appRoutes: Route[] = [
     canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
     data: {
-      title: 'Iniciar Sesion',
-      subtitle: 'Accede a tu workspace empresarial.',
-      submitLabel: 'Ingresar',
-      secondaryLabel: 'Olvide mi contrasena',
+      title: 'Iniciar sesión',
+      subtitle: 'Ingresa para gestionar tus reservas.',
+      submitLabel: 'Continuar con email',
+      secondaryLabel: 'Olvidé mi contraseña',
       secondaryHref: '/auth/forgot-password',
+      intent: 'customer',
     },
   },
   {
@@ -28,11 +34,12 @@ export const appRoutes: Route[] = [
     canActivate: [redirectIfAuthenticatedGuard],
     loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
     data: {
-      title: 'Crear Cuenta',
-      subtitle: 'Comienza tu prueba y crea tu negocio de reservas.',
-      submitLabel: 'Crear cuenta',
+      title: 'Crear cuenta',
+      subtitle: 'Registrate para publicar tu negocio o reservar turnos en minutos.',
+      submitLabel: 'Crear cuenta con email',
       secondaryLabel: 'Ya tengo cuenta',
       secondaryHref: '/auth/login',
+      intent: 'customer',
     },
   },
   {
@@ -47,68 +54,15 @@ export const appRoutes: Route[] = [
       secondaryHref: '/auth/login',
     },
   },
+  ...legacyOnboardingRedirects,
   {
-    path: 'onboarding/business-profile',
-    canActivate: [authGuard],
+    path: 'buscar',
     loadComponent: () =>
-      import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
-    data: {
-      step: 1,
-      total: 4,
-      title: 'Perfil del Negocio',
-      description: 'Configura identidad y datos principales de tu negocio.',
-      fields: ['Nombre', 'Categoria', 'Descripcion'],
-      next: '/onboarding/services',
-    },
-  },
-  {
-    path: 'onboarding/services',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
-    data: {
-      step: 2,
-      total: 4,
-      title: 'Servicios Iniciales',
-      description: 'Define duracion y precio de tu primer servicio.',
-      fields: ['Servicio', 'Duracion', 'Precio'],
-      prev: '/onboarding/business-profile',
-      next: '/onboarding/schedule',
-    },
-  },
-  {
-    path: 'onboarding/schedule',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
-    data: {
-      step: 3,
-      total: 4,
-      title: 'Disponibilidad',
-      description: 'Zona horaria e intervalo entre turnos ofrecidos.',
-      fields: ['Zona horaria', 'Intervalo de reserva'],
-      prev: '/onboarding/services',
-      next: '/onboarding/review',
-    },
-  },
-  {
-    path: 'onboarding/review',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./features/onboarding/pages/onboarding-step.component').then((m) => m.OnboardingStepComponent),
-    data: {
-      step: 4,
-      total: 4,
-      title: 'Revision Final',
-      description: 'Valida tu configuracion antes de activar el negocio.',
-      fields: ['Resumen', 'Publicacion'],
-      prev: '/onboarding/schedule',
-      next: '/app/dashboard',
-    },
+      import('./features/booking/pages/business-search.component').then((m) => m.BusinessSearchComponent),
   },
   {
     path: 'app',
-    canActivate: [authGuard, onboardingCompleteGuard],
+    canActivate: [authGuard, workspaceBusinessGuard],
     loadComponent: () =>
       import('./features/workspace/layout/workspace-layout.component').then((m) => m.WorkspaceLayoutComponent),
     children: [
@@ -148,30 +102,52 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'c/auth/login',
-    loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
-    data: {
-      title: 'Login Cliente',
-      subtitle: 'Gestiona tus reservas y recordatorios.',
-      submitLabel: 'Entrar',
-      secondaryLabel: 'No tengo cuenta',
-      secondaryHref: '/c/auth/register',
-    },
+    redirectTo: '/auth/login?intent=customer',
+    pathMatch: 'full',
   },
   {
     path: 'c/auth/register',
-    loadComponent: () => import('./features/auth/pages/auth-page.component').then((m) => m.AuthPageComponent),
-    data: {
-      title: 'Registro Cliente',
-      subtitle: 'Crea tu perfil para reservar en segundos.',
-      submitLabel: 'Crear perfil',
-      secondaryLabel: 'Ya tengo cuenta',
-      secondaryHref: '/c/auth/login',
-    },
+    redirectTo: '/auth/register?intent=customer',
+    pathMatch: 'full',
   },
   {
-    path: 'c/search',
+    path: 'c',
+    canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/booking/pages/business-search.component').then((m) => m.BusinessSearchComponent),
+      import('./features/workspace/layout/workspace-layout.component').then((m) => m.WorkspaceLayoutComponent),
+    data: { workspaceNavMode: 'customer' },
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'appointments' },
+      {
+        path: 'appointments',
+        loadComponent: () =>
+          import('./features/customer/pages/customer-page.component').then((m) => m.CustomerPageComponent),
+        data: {
+          title: 'Mis turnos',
+          subtitle: 'Turnos vinculados al email de tu cuenta.',
+        },
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/customer/pages/customer-page.component').then((m) => m.CustomerPageComponent),
+        data: {
+          title: 'Mi perfil',
+          subtitle: 'Datos de tu cuenta y preferencias.',
+        },
+      },
+      {
+        path: 'search',
+        loadComponent: () =>
+          import('./features/booking/pages/business-search.component').then((m) => m.BusinessSearchComponent),
+        data: { embeddedInWorkspace: true },
+      },
+      {
+        path: 'create-business',
+        canActivate: [onboardingCreateGuard],
+        children: customerOnboardingRoutes,
+      },
+    ],
   },
   {
     path: ':tenantSlug',
@@ -240,24 +216,6 @@ export const appRoutes: Route[] = [
     data: {
       title: 'Gestion de Reserva',
       subtitle: 'Cancela o reprograma tu turno desde esta vista.',
-    },
-  },
-  {
-    path: 'c/appointments',
-    loadComponent: () =>
-      import('./features/customer/pages/customer-page.component').then((m) => m.CustomerPageComponent),
-    data: {
-      title: 'Mis Turnos',
-      subtitle: 'Historial y proximas reservas del cliente.',
-    },
-  },
-  {
-    path: 'c/profile',
-    loadComponent: () =>
-      import('./features/customer/pages/customer-page.component').then((m) => m.CustomerPageComponent),
-    data: {
-      title: 'Mi Perfil',
-      subtitle: 'Datos personales y preferencias de reserva.',
     },
   },
   {

@@ -1,5 +1,8 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import { CurrentUser } from '../auth/current-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import type { JwtPayload } from '../auth/jwt-payload.types';
 import { BookingContactService } from './booking-contact.service';
 import { SendBookingEmailCodeDto } from './dto/send-booking-email-code.dto';
 import { VerifyBookingEmailCodeDto } from './dto/verify-booking-email-code.dto';
@@ -26,5 +29,12 @@ export class PublicBookingContactController {
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   verifyGoogle(@Param('slug') slug: string, @Body() dto: VerifyGoogleBookingContactDto) {
     return this.bookingContact.verifyGoogle(slug, dto.idToken);
+  }
+
+  @Post('session')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  verifySession(@Param('slug') slug: string, @CurrentUser() user: JwtPayload) {
+    return this.bookingContact.verifySession(slug, user);
   }
 }

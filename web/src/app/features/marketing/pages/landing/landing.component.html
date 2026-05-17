@@ -7,7 +7,6 @@
     <div class="nav-links">
       <a href="#features">Funcionalidades</a>
       <a href="#pricing">Precios</a>
-      <a class="nav-accent" routerLink="/app">Acceso</a>
     </div>
     <div class="nav-right">
       <button
@@ -21,7 +20,7 @@
         <span class="material-symbols-outlined" aria-hidden="true">{{ menuOpen() ? 'close' : 'menu' }}</span>
       </button>
       <div class="nav-actions">
-        <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+        <a class="nav-accent" routerLink="/auth/login">Acceso</a>
       </div>
     </div>
   </nav>
@@ -57,7 +56,7 @@
     <span class="material-symbols-outlined" aria-hidden="true">payments</span>
     Precios
   </a>
-  <a routerLink="/app" class="drawer-link drawer-link--accent" (click)="closeMenu()">
+  <a routerLink="/auth/login" class="drawer-link drawer-link--accent" (click)="closeMenu()">
     <span class="material-symbols-outlined" aria-hidden="true">login</span>
     Acceso al panel
   </a>
@@ -78,7 +77,7 @@
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" routerLink="/auth/register">Comenzar Prueba Gratis</a>
-        <a class="btn btn-glass" routerLink="/c/search">Reservar como cliente</a>
+        <a class="btn btn-glass" routerLink="/buscar">Reservar como cliente</a>
       </div>
     </div>
   </section>

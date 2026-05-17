@@ -1,0 +1,130 @@
+@use '../../../../shared/styles/design-tokens' as dv;
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.mode-switch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--booking-border, #{dv.$dv-outline-variant});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container});
+  transition:
+    background-color 0.48s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.48s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mode-switch__seg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 0.55rem;
+  border: 1px solid transparent;
+  margin: 0;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Evita el fondo blanco por defecto de <button> (muy visible en tema oscuro del negocio). */
+  background: var(--booking-stepper-todo-bg, color-mix(in srgb, var(--booking-text, #{dv.$dv-on-surface}) 6%, transparent));
+  color: var(--booking-text-muted, #{dv.$dv-on-surface-variant});
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.15;
+  transition:
+    background-color 0.28s ease,
+    color 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mode-switch__label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mode-switch__seg:hover:not(.mode-switch__seg--active) {
+  color: var(--booking-text, #{dv.$dv-on-surface});
+  background: var(--booking-surface-2, #{dv.$dv-surface-container});
+  border-color: color-mix(in srgb, var(--booking-border, #{dv.$dv-outline-variant}) 70%, transparent);
+}
+
+.mode-switch__seg--active,
+.mode-switch__seg.mode-switch__seg--active {
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
+  background: var(--booking-primary, #{dv.$dv-primary});
+  border-color: color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 80%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--booking-primary, #{dv.$dv-primary}) 28%, transparent);
+}
+
+.mode-switch__seg--active:hover {
+  color: var(--booking-on-primary, #{dv.$dv-on-primary});
+  background: var(--booking-primary, #{dv.$dv-primary});
+}
+
+.mode-switch__seg:focus-visible {
+  outline: 2px solid var(--booking-primary, #{dv.$dv-primary});
+  outline-offset: 2px;
+}
+
+.mode-switch__icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.mode-switch__seg--placeholder {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.mode-switch--compact {
+  gap: 0.28rem;
+  padding: 0.22rem;
+  border-radius: 0.65rem;
+}
+
+.mode-switch--compact .mode-switch__seg {
+  min-height: 2.15rem;
+  padding: 0.35rem 0.4rem;
+}
+
+.mode-switch--compact .mode-switch__label {
+  display: none;
+}
+
+.mode-switch--compact .mode-switch__icon {
+  font-size: 1.12rem;
+}
+
+.mode-switch--stacked {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(2, minmax(0, auto));
+  gap: 0.3rem;
+}
+
+.mode-switch--stacked .mode-switch__seg {
+  width: 100%;
+  min-height: 2.2rem;
+  padding: 0.4rem;
+}
+
+.mode-switch--stacked.mode-switch--compact .mode-switch__label {
+  display: none;
+}
+
+.mode-switch--loading .mode-switch__seg:not(.mode-switch__seg--placeholder) {
+  opacity: 0.55;
+}

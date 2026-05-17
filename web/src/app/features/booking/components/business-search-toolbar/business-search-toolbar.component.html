@@ -1,0 +1,31 @@
+<div class="toolbar">
+  <div class="toolbar__search">
+    <span class="material-symbols-outlined toolbar__icon" aria-hidden="true">search</span>
+    <input
+      type="search"
+      [ngModel]="state.query()"
+      (ngModelChange)="state.query.set($event)"
+      placeholder="Dirección, comercio o rubro…"
+      (keyup.enter)="submit()"
+      aria-label="Buscar comercios"
+    />
+    <button type="button" class="toolbar__submit" (click)="submit()" [disabled]="state.loading()">
+      {{ state.loading() ? '…' : 'Buscar' }}
+    </button>
+  </div>
+  <div class="toolbar__categories" role="tablist" aria-label="Categorías">
+    <button
+      type="button"
+      *ngFor="let cat of categories"
+      class="cat-chip"
+      role="tab"
+      [class.cat-chip--active]="state.category() === cat.id"
+      [attr.aria-selected]="state.category() === cat.id"
+      (click)="onCategoryClick(cat.id)"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">{{ cat.icon }}</span>
+      {{ cat.label }}
+    </button>
+  </div>
+  <p class="toolbar__meta" *ngIf="state.resultCountLabel()">{{ state.resultCountLabel() }}</p>
+</div>

@@ -10,6 +10,21 @@ export type PublicBusinessListItem = {
   name: string;
   description: string | null;
   address: string;
+  category?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  ratingAverage?: number | null;
+  ratingCount?: number;
+  bannerImageUrl?: string | null;
+  distanceKm?: number | null;
+};
+
+export type BusinessSearchParams = {
+  query?: string;
+  category?: string;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 };
 
 export type PublicStaffMember = {
@@ -69,8 +84,16 @@ export class PublicBookingApiService {
     return `${this.config.getApiUrl()}/public${path}`;
   }
 
-  searchBusinesses(query: string): Observable<PublicBusinessListItem[]> {
-    const params = query ? new HttpParams().set('query', query) : undefined;
+  searchBusinesses(opts: BusinessSearchParams = {}): Observable<PublicBusinessListItem[]> {
+    let params = new HttpParams();
+    const q = opts.query?.trim();
+    if (q) params = params.set('query', q);
+    if (opts.category && opts.category !== 'all') params = params.set('category', opts.category);
+    if (opts.lat != null && Number.isFinite(opts.lat)) params = params.set('lat', String(opts.lat));
+    if (opts.lng != null && Number.isFinite(opts.lng)) params = params.set('lng', String(opts.lng));
+    if (opts.radiusKm != null && Number.isFinite(opts.radiusKm)) {
+      params = params.set('radiusKm', String(opts.radiusKm));
+    }
     return this.http.get<PublicBusinessListItem[]>(this.api('/businesses'), { params });
   }
 
@@ -124,6 +147,15 @@ export class PublicBookingApiService {
     return this.http.post<{ bookingContactToken: string; email: string; name: string | null }>(
       this.api(`/businesses/${slug}/booking-contact/google`),
       { idToken },
+    );
+  }
+
+  verifySessionBookingContact(
+    slug: string,
+  ): Observable<{ bookingContactToken: string; email: string; name: string | null }> {
+    return this.http.post<{ bookingContactToken: string; email: string; name: string | null }>(
+      this.api(`/businesses/${slug}/booking-contact/session`),
+      {},
     );
   }
 

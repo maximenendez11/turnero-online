@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, map, shareReplay, tap } from 'rxjs';
 import { ConfigService } from './config.service';
 
 export type AdminBusinessListItem = {
@@ -161,6 +161,9 @@ export class AdminApiService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(ConfigService);
 
+  /** Una sola petición en vuelo / sesión; evita GET /businesses repetidos al cambiar de modo. */
+  private businessesListCache$?: Observable<AdminBusinessListItem[]>;
+
   private url(path: string): string {
     return `${this.config.getApiUrl()}/admin${path}`;
   }
@@ -186,11 +189,24 @@ export class AdminApiService {
     });
   }
 
-  getBusinesses(): Observable<AdminBusinessListItem[]> {
-    return this.http.get<AdminBusinessListItem[]>(this.url('/businesses'), {
-      params: this.cacheBustParams(),
-      headers: this.jsonNoCacheHeaders(),
-    });
+  getBusinesses(opts?: { fresh?: boolean }): Observable<AdminBusinessListItem[]> {
+    if (opts?.fresh) {
+      this.invalidateBusinessesList();
+    }
+    if (this.businessesListCache$) {
+      return this.businessesListCache$;
+    }
+    this.businessesListCache$ = this.http
+      .get<AdminBusinessListItem[]>(this.url('/businesses'), {
+        params: this.cacheBustParams(),
+        headers: this.jsonNoCacheHeaders(),
+      })
+      .pipe(shareReplay(1));
+    return this.businessesListCache$;
+  }
+
+  invalidateBusinessesList(): void {
+    this.businessesListCache$ = undefined;
   }
 
   getDashboardMetrics(): Observable<AdminDashboardMetrics> {
@@ -208,14 +224,18 @@ export class AdminApiService {
   }
 
   patchBusiness(id: string, body: Record<string, unknown>): Observable<AdminBusinessDetail> {
-    return this.http.patch<AdminBusinessDetail>(this.url(`/businesses/${id}`), body);
+    return this.http.patch<AdminBusinessDetail>(this.url(`/businesses/${id}`), body).pipe(
+      tap(() => this.invalidateBusinessesList()),
+    );
   }
 
   replaceOpeningWindows(
     businessId: string,
     windows: { weekday: number; startMin: number; endMin: number; sortOrder: number }[],
   ): Observable<AdminBusinessDetail> {
-    return this.http.put<AdminBusinessDetail>(this.url(`/businesses/${businessId}/opening-windows`), { windows });
+    return this.http
+      .put<AdminBusinessDetail>(this.url(`/businesses/${businessId}/opening-windows`), { windows })
+      .pipe(tap(() => this.invalidateBusinessesList()));
   }
 
   createService(
